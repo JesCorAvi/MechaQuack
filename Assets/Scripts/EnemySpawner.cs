@@ -69,6 +69,7 @@ public class EnemySpawner : MonoBehaviour
         if (isSpawningEnabled)
         {
             ProceduralAudio.Instance?.PlayAlarm();
+            Debug.Log("[GAME] Modo Invasión de Robots: ACTIVADA");
             SpawnEnemy();
             SpawnEnemy();
             spawnTimer = 2.0f;
@@ -81,6 +82,7 @@ public class EnemySpawner : MonoBehaviour
         else
         {
             ProceduralAudio.Instance?.PlayButtonClick();
+            Debug.Log("[GAME] Modo Invasión de Robots: PAUSADA");
             if (MechaController.Instance != null)
             {
                 FloatingText.Spawn(MechaController.Instance.transform.position + Vector3.up * 8f, "EXPLORACIÓN: INVASIÓN PAUSADA", Color.cyan, 0.42f);
@@ -132,6 +134,7 @@ public class EnemySpawner : MonoBehaviour
 
         GameObject botObj = new GameObject("EnemyBot_" + Time.frameCount);
         botObj.transform.position = spawnPos;
+        Debug.Log($"[GAME] Robot enemigo generado en ({spawnPos.x:F1}, {spawnPos.y:F1}, {spawnPos.z:F1})");
 
         // Torso
         GameObject torso = GameObject.CreatePrimitive(PrimitiveType.Cube);

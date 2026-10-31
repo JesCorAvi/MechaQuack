@@ -97,6 +97,7 @@ public class CockpitFloorButton : MonoBehaviour
             {
                 isPressed = true;
                 ProceduralAudio.Instance?.PlayButtonClick();
+                Debug.Log($"[GAME] Botón {buttonId} ({label}) presionado");
             }
         }
         else if (type == ButtonType.Stomp)
@@ -114,6 +115,7 @@ public class CockpitFloorButton : MonoBehaviour
             {
                 stompCooldownTimer = 1.2f;
                 isPressed = !isPressed;
+                Debug.Log($"[GAME] Botón {buttonId} conmutado a: {isPressed}");
                 ExecuteToggleAction();
             }
         }
@@ -124,9 +126,10 @@ public class CockpitFloorButton : MonoBehaviour
     /// </summary>
     public void OnDuckExit()
     {
-        if (type == ButtonType.Hold)
+        if (type == ButtonType.Hold && isPressed)
         {
             isPressed = false;
+            Debug.Log($"[GAME] Botón {buttonId} liberado");
         }
     }
 
@@ -140,6 +143,7 @@ public class CockpitFloorButton : MonoBehaviour
             isPressed = true;
             stompCooldownTimer = 0.35f;
             ProceduralAudio.Instance?.PlayStomp();
+            Debug.Log($"[GAME] Botón de arma {buttonId} activado con culazo");
 
             // Hundir instantáneamente el cap
             if (capTransform != null)
@@ -155,6 +159,7 @@ public class CockpitFloorButton : MonoBehaviour
             isPressed = true;
             stompCooldownTimer = 0.5f;
             ProceduralAudio.Instance?.PlayButtonClick();
+            Debug.Log($"[GAME] Botón de movimiento {buttonId} pisado con fuerza");
             return true;
         }
         else if (type == ButtonType.Toggle)
@@ -163,6 +168,7 @@ public class CockpitFloorButton : MonoBehaviour
             isPressed = !isPressed;
             ExecuteToggleAction();
             ProceduralAudio.Instance?.PlayStomp();
+            Debug.Log($"[GAME] Botón conmutador {buttonId} activado con culazo (Estado: {isPressed})");
             return true;
         }
 

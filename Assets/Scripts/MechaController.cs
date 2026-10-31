@@ -43,6 +43,7 @@ public class MechaController : MonoBehaviour
     private bool isGameOver = false;
     private bool isOverturned = false;
     private float overturnPromptTimer = 0f;
+    private float recoveryGraceTimer = 0f;
 
     private float walkCycle = 0f;
     private float stepTimer = 0f;
@@ -72,6 +73,8 @@ public class MechaController : MonoBehaviour
     public bool RightGrounded => rightGrounded;
     public float LaserCooldown => currentLaserCooldown;
     public float ShakeIntensity => shakeIntensity;
+    public GameObject PunchWaveObject => punchWaveObject;
+    public GameObject LaserBeamObject => laserBeamObject;
 
     private void Awake()
     {
@@ -162,6 +165,8 @@ public class MechaController : MonoBehaviour
     /// </summary>
     private void ApplyLocomotionAndSuspension()
     {
+        if (isOverturned) return;
+
         int groundMask = ~LayerMask.GetMask("Player", "Ignore Raycast");
 
         // Origen de los rayos de soporte (raíz de cadera de cada pierna)
@@ -271,12 +276,24 @@ public class MechaController : MonoBehaviour
     /// </summary>
     private void CheckOverturnedState()
     {
+        if (recoveryGraceTimer > 0f)
+        {
+            recoveryGraceTimer -= Time.deltaTime;
+            isOverturned = false;
+            return;
+        }
+
         float tiltAngle = Vector3.Angle(transform.up, Vector3.up);
         bool wasOverturned = isOverturned;
         isOverturned = tiltAngle > 60f;
 
         if (isOverturned)
         {
+            if (!wasOverturned)
+            {
+                Debug.Log($"[GAME] ¡MECHA VOLCADO! Inclinación: {tiltAngle:F1}°");
+            }
+
             overturnPromptTimer -= Time.deltaTime;
             if (overturnPromptTimer <= 0f)
             {
@@ -288,6 +305,7 @@ public class MechaController : MonoBehaviour
         else if (wasOverturned)
         {
             overturnPromptTimer = 0f;
+            Debug.Log("[GAME] Mecha equilibrado de nuevo");
         }
     }
 
@@ -301,15 +319,19 @@ public class MechaController : MonoBehaviour
 
         ProceduralAudio.Instance?.PlayHydraulicRecover();
         FloatingText.Spawn(transform.position + Vector3.up * 7f, "¡PATALETA HIDRÁULICA!", Color.yellow, 0.45f);
+        Debug.Log("[GAME] ¡PATALETA HIDRÁULICA ejecutada! Mecha reincorporado");
 
         // Impulso vertical y reseteo de velocidad angular
         rb.linearVelocity = new Vector3(rb.linearVelocity.x * 0.2f, 18f, rb.linearVelocity.z * 0.2f);
         rb.angularVelocity = Vector3.zero;
 
-        // Orientar erguido en el aire
-        transform.rotation = Quaternion.Euler(0f, transform.eulerAngles.y, 0f);
+        // Orientar erguido en el aire tanto en transform como en Rigidbody
+        Quaternion uprightRot = Quaternion.Euler(0f, transform.eulerAngles.y, 0f);
+        transform.rotation = uprightRot;
+        rb.rotation = uprightRot;
 
         isOverturned = false;
+        recoveryGraceTimer = 0.65f;
         overturnPromptTimer = 0f;
     }
 
@@ -403,6 +425,7 @@ public class MechaController : MonoBehaviour
             punchTimer = 0.45f;
             shakeIntensity = 0.5f;
             ProceduralAudio.Instance?.PlayPunch();
+            Debug.Log("[GAME] ¡PUÑETAZO activado! Onda expansiva proyectada");
 
             FloatingText.Spawn(buttonWorldPos + Vector3.up * 1.5f, "💥 ¡MEGA PUÑO!", new Color(1f, 0.25f, 0.4f), 0.35f);
 
@@ -447,6 +470,7 @@ public class MechaController : MonoBehaviour
             currentLaserCooldown = laserCooldownDuration;
             shakeIntensity = 0.4f;
             ProceduralAudio.Instance?.PlayLaser();
+            Debug.Log($"[GAME] ¡LÁSER disparado! Cooldown iniciado: {currentLaserCooldown:F1}s");
 
             FloatingText.Spawn(buttonWorldPos + Vector3.up * 1.5f, "⚡ ¡CAÑÓN LÁSER!", new Color(0.2f, 0.9f, 1f), 0.35f);
 
@@ -483,6 +507,7 @@ public class MechaController : MonoBehaviour
 
         currentHp = Mathf.Max(0, currentHp - damage);
         shakeIntensity = 0.8f;
+        Debug.Log($"[GAME] Mecha recibió {damage} de daño. HP: {currentHp}/{maxHp}");
 
         if (duckInCockpit != null)
         {
@@ -503,6 +528,7 @@ public class MechaController : MonoBehaviour
         isGameOver = true;
         shakeIntensity = 1.2f;
         ProceduralAudio.Instance?.PlayExplosion();
+        Debug.Log($"[GAME] ¡MECHA DESTRUIDO! Score final: {score}");
 
         FloatingText.Spawn(transform.position + Vector3.up * 8f, "¡MECHA DESTRUIDO!", Color.red, 0.5f);
         MechaHUD.Instance?.ShowGameOver(score);
@@ -520,6 +546,7 @@ public class MechaController : MonoBehaviour
         shakeIntensity = 0f;
         walkCycle = 0f;
         stepTimer = 0f;
+        Debug.Log("[GAME] Partida reiniciada. Mecha restaurado en plataforma inicial");
 
         if (rb != null)
         {

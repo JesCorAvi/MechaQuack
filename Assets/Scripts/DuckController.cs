@@ -264,13 +264,14 @@ public class DuckController : MonoBehaviour
         }
     }
 
-    private void PerformJump()
+    public void PerformJump()
     {
         localVel.y = jumpForce;
         isGrounded = false;
         wingFlapTimer = 0.45f;
         TriggerSquash(0.75f, 1.35f, 0.25f);
         ProceduralAudio.Instance?.PlayJump();
+        Debug.Log("[GAME] Pato saltó en la cabina");
 
         if (MechaController.Instance != null && MechaController.Instance.IsOverturned)
         {
@@ -278,7 +279,7 @@ public class DuckController : MonoBehaviour
         }
     }
 
-    private void PerformStomp()
+    public void PerformStomp()
     {
         isStomping = true;
         localVel.y = -stompSpeed;
@@ -286,12 +287,14 @@ public class DuckController : MonoBehaviour
         localVel.z *= 0.2f;
         wingFlapTimer = 0.35f;
         TriggerSquash(0.7f, 1.45f, 0.35f);
+        Debug.Log("[GAME] ¡Culazo de pato iniciado en el aire!");
     }
 
     private void OnStompLanded()
     {
         TriggerSquash(1.45f, 0.45f, 0.35f);
         ProceduralAudio.Instance?.PlayStomp();
+        Debug.Log($"[GAME] Culazo de pato aterrizó en ({localPos.x:F2}, {localPos.z:F2})");
 
         // Comprobar si cayó sobre un botón de armas
         CockpitFloorButton hitBtn = null;
@@ -334,9 +337,23 @@ public class DuckController : MonoBehaviour
 
         TriggerSquash(1.25f, 0.8f, 0.2f);
         ProceduralAudio.Instance?.PlayQuack();
+        Debug.Log("[GAME] ¡CUAC! Graznido cómico emitido");
 
         string phrase = quackPhrases[Random.Range(0, quackPhrases.Length)];
         FloatingText.Spawn(transform.position + Vector3.up * 1.6f, phrase, new Color(1f, 0.9f, 0.15f), 0.32f);
+    }
+
+    public void TeleportToLocal(Vector3 targetLocalPos)
+    {
+        localPos = targetLocalPos;
+        localVel = Vector3.zero;
+        transform.localPosition = localPos;
+    }
+
+    public void ForceTriggerStompAt(Vector3 targetLocalPos)
+    {
+        TeleportToLocal(new Vector3(targetLocalPos.x, 2.5f, targetLocalPos.z));
+        PerformStomp();
     }
 
     public void ApplyExternalNudge(Vector3 velocityImpulse)

@@ -23,6 +23,7 @@ public class AcidHazard : MonoBehaviour
             if (mecha != null && !mecha.IsGameOver)
             {
                 int dmg = Mathf.CeilToInt(damagePerSecond * damageInterval);
+                Debug.Log($"[GAME] ¡Contacto con ácido tóxico! Aplicando {dmg} daño corrosivo");
                 mecha.TakeDamage(dmg);
 
                 ProceduralAudio.Instance?.PlayAcidSizzle();

@@ -12,7 +12,7 @@ public static class AssembleMechaPrototype
         // 1. Limpiar objetos antiguos
         string[] toClear = new string[] {
             "Mecha_Root", "Cockpit", "Duck", "OutsideCityView",
-            "EnemySpawner", "ProceduralAudio", "HUD_Canvas", "HUD", "EventSystem", "CinemachineCamera_ThirdPerson"
+            "EnemySpawner", "ProceduralAudio", "HUD_Canvas", "HUD", "EventSystem", "CinemachineCamera_ThirdPerson", "AutoPlayTester"
         };
         foreach (string name in toClear)
         {
@@ -109,18 +109,24 @@ public static class AssembleMechaPrototype
         GameObject bridgeGroup = new GameObject("Broken_Bridge");
         bridgeGroup.transform.parent = outside.transform;
 
-        // Tramo 1: Entrada estable
-        CreateBlock("Bridge_Span_1", bridgeGroup.transform, new Vector3(0f, -0.6f, 21f), new Vector3(7.6f, 1.2f, 14f), Quaternion.identity, matAsphalt);
-        // Tramo 2: Estrechamiento peligroso (colapso lateral derecho)
-        CreateBlock("Bridge_Span_2_Narrow", bridgeGroup.transform, new Vector3(-1.4f, -0.6f, 35f), new Vector3(4.8f, 1.2f, 14f), Quaternion.identity, matAsphalt);
-        CreateBlock("Bridge_Fallen_Chunk", bridgeGroup.transform, new Vector3(2.5f, -9.5f, 35f), new Vector3(3.2f, 1.2f, 12f), Quaternion.Euler(30f, 15f, -20f), matRubble);
-        // Tramo 3: Losa inclinada (balanceo dinámico)
-        CreateBlock("Bridge_Span_3_Tilted", bridgeGroup.transform, new Vector3(0f, -0.4f, 49f), new Vector3(7.6f, 1.2f, 14f), Quaternion.Euler(0f, 0f, 7.5f), matAsphalt);
-        // Tramo 4: Desembarco en la ciudad en ruinas
-        CreateBlock("Bridge_Span_4_Exit", bridgeGroup.transform, new Vector3(0f, -0.6f, 62f), new Vector3(7.6f, 1.2f, 12f), Quaternion.identity, matAsphalt);
+        // Tramo 1: Entrada ancha con bordillos guía
+        CreateBlock("Bridge_Span_1", bridgeGroup.transform, new Vector3(0f, -0.6f, 21f), new Vector3(10.5f, 1.2f, 14f), Quaternion.identity, matAsphalt);
+        CreateBlock("Bridge_Span_1_RailL", bridgeGroup.transform, new Vector3(-5.1f, 0.4f, 21f), new Vector3(0.35f, 0.8f, 14f), Quaternion.identity, matHazard);
+        CreateBlock("Bridge_Span_1_RailR", bridgeGroup.transform, new Vector3(5.1f, 0.4f, 21f), new Vector3(0.35f, 0.8f, 14f), Quaternion.identity, matHazard);
 
-        CreateBlock("Bridge_Pillar_1", bridgeGroup.transform, new Vector3(0f, -6f, 21f), new Vector3(4f, 12f, 4f), Quaternion.identity, matRubble);
-        CreateBlock("Bridge_Pillar_2", bridgeGroup.transform, new Vector3(0f, -6f, 49f), new Vector3(4f, 12f, 4f), Quaternion.identity, matRubble);
+        // Tramo 2: Estrechamiento peligroso (8.0m de ancho para patas de 6.2m = 0.9m de margen a cada lado)
+        CreateBlock("Bridge_Span_2_Narrow", bridgeGroup.transform, new Vector3(0f, -0.6f, 35f), new Vector3(8.0f, 1.2f, 14f), Quaternion.identity, matAsphalt);
+        CreateBlock("Bridge_Fallen_Chunk", bridgeGroup.transform, new Vector3(4.8f, -9.5f, 35f), new Vector3(3.2f, 1.2f, 12f), Quaternion.Euler(30f, 15f, -20f), matRubble);
+        CreateBlock("Bridge_Span_2_WarnL", bridgeGroup.transform, new Vector3(-3.9f, 0.3f, 35f), new Vector3(0.3f, 0.6f, 14f), Quaternion.identity, matHazard);
+
+        // Tramo 3: Losa con leve inclinación (3.5 grados de balanceo sutil)
+        CreateBlock("Bridge_Span_3_Tilted", bridgeGroup.transform, new Vector3(0f, -0.5f, 49f), new Vector3(9.5f, 1.2f, 14f), Quaternion.Euler(0f, 0f, 3.5f), matAsphalt);
+
+        // Tramo 4: Desembarco seguro en la ciudad en ruinas
+        CreateBlock("Bridge_Span_4_Exit", bridgeGroup.transform, new Vector3(0f, -0.6f, 62f), new Vector3(11.0f, 1.2f, 12f), Quaternion.identity, matAsphalt);
+
+        CreateBlock("Bridge_Pillar_1", bridgeGroup.transform, new Vector3(0f, -6f, 21f), new Vector3(5f, 12f, 5f), Quaternion.identity, matRubble);
+        CreateBlock("Bridge_Pillar_2", bridgeGroup.transform, new Vector3(0f, -6f, 49f), new Vector3(5f, 12f, 5f), Quaternion.identity, matRubble);
 
         // --- SECTOR NORTE: CIUDAD EN RUINAS (Z > 68) ---
         CreateBlock("CityGround", outside.transform, new Vector3(0f, -1f, 118f), new Vector3(160f, 2f, 100f), Quaternion.identity, matAsphalt);
@@ -578,6 +584,10 @@ public static class AssembleMechaPrototype
         SerializedObject hudSO = new SerializedObject(hud);
         hudSO.FindProperty("hudFontAsset").objectReferenceValue = fontAsset;
         hudSO.ApplyModifiedProperties();
+
+        // 10. AUTO PLAY TESTER (Simulador y Verificador Automatizado)
+        GameObject testerObj = new GameObject("AutoPlayTester");
+        testerObj.AddComponent<AutoPlayTester>();
 
         EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
         EditorSceneManager.SaveOpenScenes();
