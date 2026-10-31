@@ -13,7 +13,7 @@ public class AutoPlayTester : MonoBehaviour
     public static AutoPlayTester Instance { get; private set; }
 
     [Header("Configuración del Validador")]
-    [SerializeField] private bool runOnStart = true;
+    [SerializeField] private bool runOnStart = false; // Desactivado por defecto para no interferir con la partida manual
     [SerializeField] private float stepDuration = 0.95f;
 
     private int passedTests = 0;
@@ -37,11 +37,24 @@ public class AutoPlayTester : MonoBehaviour
         }
     }
 
+    [ContextMenu("Ejecutar Autotest (Simular Jugador)")]
     public void RunManualTests()
     {
         if (!isTesting)
         {
             StartCoroutine(RunFullTestSuiteRoutine());
+        }
+    }
+
+    public static void TriggerTestSuite()
+    {
+        if (Instance != null)
+        {
+            Instance.RunManualTests();
+        }
+        else
+        {
+            Debug.LogWarning("[AUTOTEST] No se encontró instancia activa de AutoPlayTester en la escena.");
         }
     }
 

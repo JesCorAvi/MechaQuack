@@ -12102,8 +12102,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e0babc23be1214146ab01718ac5a82f3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AutoPlayTester
-  runOnStart: 1
-  stepDuration: 0.85
+  runOnStart: 0
+  stepDuration: 0.95
 --- !u!4 &2053577262
 Transform:
   m_ObjectHideFlags: 0
