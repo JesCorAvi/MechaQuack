@@ -13,7 +13,6 @@ public class AutoPlayTester : MonoBehaviour
     public static AutoPlayTester Instance { get; private set; }
 
     [Header("Configuración del Validador")]
-    [SerializeField] private bool runOnStart = false; // Desactivado por defecto para no interferir con la partida manual
     [SerializeField] private float stepDuration = 0.95f;
 
     private int passedTests = 0;
@@ -31,10 +30,9 @@ public class AutoPlayTester : MonoBehaviour
 
     private void Start()
     {
-        if (runOnStart)
-        {
-            StartCoroutine(RunFullTestSuiteRoutine());
-        }
+        // INACTIVO POR COMPLETO EN START.
+        // El autotest NUNCA debe ejecutarse solo al pulsar Play para no molestar al jugador.
+        // Solo se ejecutará cuando sea llamado explícitamente mediante TriggerTestSuite() o desde el menú contextual.
     }
 
     [ContextMenu("Ejecutar Autotest (Simular Jugador)")]
