@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// Robot enemigo exterior amenazante que avanza hacia el Pato-Mecha.
+/// Robot enemigo exterior amenazante que avanza hacia MechaQuack.
 /// </summary>
 public class EnemyBot : MonoBehaviour
 {

@@ -4,7 +4,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 
 /// <summary>
-/// Controlador del HUD del Pato-Mecha construido 100% con UI Toolkit (UXML y USS).
+/// Controlador del HUD de MechaQuack construido 100% con UI Toolkit (UXML y USS).
 /// Gestiona la barra de vida dinámica, tiempo de recarga del láser, radar circular
 /// en tiempo real con blips de enemigos, puntuación, destello de daño y modal de Game Over.
 /// </summary>

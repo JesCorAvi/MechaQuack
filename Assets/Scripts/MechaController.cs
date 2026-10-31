@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Controlador principal del Pato-Mecha gigante.
+/// Controlador principal del mecha gigante MechaQuack.
 /// Gestiona la locomoción por botones del suelo, las armas (Puño y Láser),
 /// el balanceo e inercia de la cabina, las piernas articuladas y la vida del chasis.
 /// </summary>

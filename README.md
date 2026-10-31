@@ -1,4 +1,4 @@
-# 🦆 Pato-Mecha 3000
+# 🦆 MechaQuack
 
 Prototipo de videojuego 3D cómico desarrollado en **Unity 6 (6000.3.8f1)** con **Universal Render Pipeline (URP)** y **UI Toolkit**.
 

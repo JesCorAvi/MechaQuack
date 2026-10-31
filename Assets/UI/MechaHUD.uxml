@@ -12,7 +12,7 @@
             <!-- PANEL HP Y LÁSER -->
             <ui:VisualElement name="hp-panel" class="hud-panel hp-panel">
                 <ui:VisualElement class="hp-header-row">
-                    <ui:Label text="CHASIS PATO-MECHA" class="hp-title" />
+                    <ui:Label text="CHASIS MECHAQUACK" class="hp-title" />
                     <ui:Label name="hp-text" text="100%" class="hp-value-text" />
                 </ui:VisualElement>
                 
