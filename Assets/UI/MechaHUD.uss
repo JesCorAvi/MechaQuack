@@ -1,0 +1,294 @@
+/* =========================================================================
+   PATO-MECHA 3000 - UI TOOLKIT STYLESHEET (USS)
+   ========================================================================= */
+
+.hud-root {
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    justify-content: space-between;
+    padding: 24px 28px;
+    -unity-font-definition: url("project://database/Assets/UI/MechaFontAsset.asset?fileID=11400000&guid=a6b1e570727c90d418c3bf5943ab80fb&type=2#MechaFontAsset");
+    color: #ffffff;
+}
+
+/* --- OVERLAY DESTELLO DE DAÑO --- */
+.damage-overlay {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(239, 68, 68, 0.45);
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 0.15s;
+}
+
+/* --- ESTILO BASE DE PANELES --- */
+.hud-panel {
+    background-color: rgba(10, 15, 26, 0.88);
+    border-width: 1.5px;
+    border-color: rgba(56, 189, 248, 0.35);
+    border-radius: 8px;
+    padding: 12px 16px;
+}
+
+/* --- BARRA SUPERIOR (HP Y RADAR) --- */
+.top-bar {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
+}
+
+/* Panel HP & Láser */
+.hp-panel {
+    width: 320px;
+}
+
+.hp-header-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.hp-title {
+    font-size: 13px;
+    -unity-font-style: bold;
+    color: #94a3b8;
+    letter-spacing: 1px;
+}
+
+.hp-value-text {
+    font-size: 16px;
+    -unity-font-style: bold;
+    color: #ffffff;
+}
+
+.hp-bar-track {
+    height: 16px;
+    background-color: rgba(15, 23, 42, 0.95);
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.hp-bar-fill {
+    height: 100%;
+    width: 100%;
+    background-color: #10b981;
+    border-radius: 3px;
+    transition-property: width, background-color;
+    transition-duration: 0.1s;
+}
+
+.laser-status-text {
+    font-size: 13px;
+    -unity-font-style: bold;
+    color: #38bdf8;
+    letter-spacing: 0.5px;
+}
+
+/* Panel Radar y Puntuación */
+.radar-panel {
+    flex-direction: row;
+    align-items: center;
+    padding: 10px 16px;
+}
+
+.radar-circle {
+    width: 76px;
+    height: 76px;
+    background-color: rgba(8, 12, 22, 0.95);
+    border-width: 2px;
+    border-color: rgba(56, 189, 248, 0.5);
+    border-radius: 38px;
+    overflow: hidden;
+    margin-right: 18px;
+}
+
+.radar-mecha-dot {
+    position: absolute;
+    left: 35px;
+    top: 35px;
+    width: 6px;
+    height: 6px;
+    background-color: #facc15;
+    border-radius: 3px;
+}
+
+.radar-blip {
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    background-color: #f43f5e;
+    border-radius: 1px;
+}
+
+.score-column {
+    align-items: center;
+    justify-content: center;
+}
+
+.score-title {
+    font-size: 11px;
+    -unity-font-style: bold;
+    color: #94a3b8;
+    margin-bottom: 2px;
+}
+
+.score-value {
+    font-size: 28px;
+    -unity-font-style: bold;
+    color: #facc15;
+}
+
+/* --- BARRA INFERIOR (MANUAL Y ACCIONES) --- */
+.bottom-bar {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-end;
+    width: 100%;
+}
+
+/* Manual de pilotaje */
+.manual-panel {
+    max-width: 440px;
+    background-color: rgba(10, 15, 26, 0.82);
+}
+
+.manual-title {
+    font-size: 12px;
+    -unity-font-style: bold;
+    color: #38bdf8;
+    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+}
+
+.manual-line {
+    font-size: 11px;
+    color: #cbd5e1;
+    margin-bottom: 2px;
+    white-space: normal;
+}
+
+/* Botones rápidos de acción */
+.actions-panel {
+    align-items: flex-end;
+}
+
+.action-btn {
+    min-width: 200px;
+    height: 36px;
+    background-color: rgba(15, 23, 42, 0.9);
+    border-width: 1.5px;
+    border-color: rgba(56, 189, 248, 0.5);
+    border-radius: 6px;
+    margin-top: 6px;
+    padding: 0 14px;
+    font-size: 12px;
+    -unity-font-style: bold;
+    color: #ffffff;
+    -unity-text-align: middle-center;
+    transition-property: background-color, border-color, scale;
+    transition-duration: 0.12s;
+}
+
+.action-btn:hover {
+    background-color: rgba(30, 58, 102, 0.95);
+    border-color: #38bdf8;
+    scale: 1.03;
+}
+
+.action-btn:active {
+    background-color: rgba(14, 116, 144, 1);
+    scale: 0.97;
+}
+
+.btn-quack {
+    border-color: rgba(250, 204, 21, 0.6);
+}
+
+.btn-quack:hover {
+    background-color: rgba(113, 63, 18, 0.9);
+    border-color: #facc15;
+}
+
+/* --- MODAL DE GAME OVER --- */
+.modal-overlay {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(4, 7, 14, 0.94);
+    align-items: center;
+    justify-content: center;
+    display: none; /* Se activa cuando el Mecha es destruido */
+}
+
+.modal-card {
+    width: 380px;
+    padding: 28px 24px;
+    background-color: #0b111e;
+    border-width: 2px;
+    border-color: #f43f5e;
+    border-radius: 12px;
+    align-items: center;
+}
+
+.modal-title {
+    font-size: 24px;
+    -unity-font-style: bold;
+    color: #f43f5e;
+    -unity-text-align: middle-center;
+    margin-bottom: 12px;
+}
+
+.modal-score {
+    font-size: 18px;
+    -unity-font-style: bold;
+    color: #facc15;
+    -unity-text-align: middle-center;
+    margin-bottom: 16px;
+}
+
+.modal-btn-restart {
+    width: 240px;
+    height: 44px;
+    background-color: #f59e0b;
+    border-radius: 8px;
+    border-width: 0;
+    font-size: 15px;
+    -unity-font-style: bold;
+    color: #000000;
+    -unity-text-align: middle-center;
+    margin-bottom: 12px;
+    transition-property: background-color, scale;
+    transition-duration: 0.12s;
+}
+
+.modal-btn-restart:hover {
+    background-color: #fbbf24;
+    scale: 1.04;
+}
+
+.modal-btn-restart:active {
+    background-color: #d97706;
+    scale: 0.96;
+}
+
+.modal-hint {
+    font-size: 12px;
+    color: #94a3b8;
+    -unity-text-align: middle-center;
+}

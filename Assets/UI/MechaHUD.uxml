@@ -1,0 +1,73 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="MechaHUD.uss" />
+
+    <ui:VisualElement name="hud-root" class="hud-root" picking-mode="Ignore">
+        
+        <!-- DESTELLO DE DAÑO -->
+        <ui:VisualElement name="damage-overlay" class="damage-overlay" picking-mode="Ignore" />
+
+        <!-- BARRA SUPERIOR -->
+        <ui:VisualElement class="top-bar">
+            
+            <!-- PANEL HP Y LÁSER -->
+            <ui:VisualElement name="hp-panel" class="hud-panel hp-panel">
+                <ui:VisualElement class="hp-header-row">
+                    <ui:Label text="CHASIS PATO-MECHA" class="hp-title" />
+                    <ui:Label name="hp-text" text="100%" class="hp-value-text" />
+                </ui:VisualElement>
+                
+                <ui:VisualElement class="hp-bar-track">
+                    <ui:VisualElement name="hp-bar-fill" class="hp-bar-fill" />
+                </ui:VisualElement>
+                
+                <ui:Label name="laser-text" text="LÁSER: LISTO" class="laser-status-text" />
+            </ui:VisualElement>
+
+            <!-- PANEL RADAR Y SCORE -->
+            <ui:VisualElement name="radar-panel" class="hud-panel radar-panel">
+                <ui:VisualElement name="radar-circle" class="radar-circle">
+                    <ui:VisualElement class="radar-mecha-dot" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="score-column">
+                    <ui:Label text="BOTS DESTRUIDOS" class="score-title" />
+                    <ui:Label name="score-text" text="000" class="score-value" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+        </ui:VisualElement>
+
+        <!-- BARRA INFERIOR -->
+        <ui:VisualElement class="bottom-bar">
+            
+            <!-- MANUAL DE PILOTAJE -->
+            <ui:VisualElement class="hud-panel manual-panel">
+                <ui:Label text="MANUAL DE PILOTAJE + CÁMARA LIBRE 360º" class="manual-title" />
+                <ui:Label text="• WASD / Flechas: Moverse por la cabina (relativo a cámara)" class="manual-line" />
+                <ui:Label text="• Espacio: Saltar entre botones físicos" class="manual-line" />
+                <ui:Label text="• E / Shift / Clic Izq (Aire): ¡CULAZO! (Activa PUÑO y LÁSER)" class="manual-line" />
+                <ui:Label text="• Q / Clic Der: ¡CUAC! (Graznido cómico)" class="manual-line" />
+                <ui:Label text="• Arrastrar Ratón: Órbita 360º | Rueda: Zoom | C: Alternar Cámara" class="manual-line" />
+            </ui:VisualElement>
+
+            <!-- ACCIONES RÁPIDAS -->
+            <ui:VisualElement class="actions-panel">
+                <ui:Button name="btn-zoom" text="VER MECHA EXTERIOR / CABINA" class="action-btn" />
+                <ui:Button name="btn-cam" text="MODO (C): ÓRBITA LIBRE 360º" class="action-btn" />
+                <ui:Button name="btn-quack" text="¡CUAC! (Q)" class="action-btn btn-quack" />
+            </ui:VisualElement>
+
+        </ui:VisualElement>
+
+        <!-- MODAL DE GAME OVER -->
+        <ui:VisualElement name="game-over-modal" class="modal-overlay">
+            <ui:VisualElement class="modal-card">
+                <ui:Label text="¡MECHA DESTRUIDO!" class="modal-title" />
+                <ui:Label name="final-score-text" text="BOTS ELIMINADOS: 0" class="modal-score" />
+                <ui:Button name="btn-restart" text="VOLVER A LA CABINA" class="modal-btn-restart" />
+                <ui:Label text="Presiona [R], [Espacio] o Clic para reiniciar" class="modal-hint" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+    </ui:VisualElement>
+</ui:UXML>
