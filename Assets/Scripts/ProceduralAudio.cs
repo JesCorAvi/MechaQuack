@@ -18,6 +18,9 @@ public class ProceduralAudio : MonoBehaviour
     private AudioClip clipPunch;
     private AudioClip clipLaser;
     private AudioClip clipExplosion;
+    private AudioClip clipAlarm;
+    private AudioClip clipAcidSizzle;
+    private AudioClip clipHydraulicRecover;
 
     private void Awake()
     {
@@ -44,6 +47,9 @@ public class ProceduralAudio : MonoBehaviour
         clipPunch = GeneratePunchClip();
         clipLaser = GenerateToneSweepClip(1300f, 150f, 0.45f, WaveType.Sawtooth, 0.5f);
         clipExplosion = GenerateExplosionClip();
+        clipAlarm = GenerateToneSweepClip(880f, 440f, 0.28f, WaveType.Sawtooth, 0.55f);
+        clipAcidSizzle = GenerateToneSweepClip(600f, 1200f, 0.25f, WaveType.Noise, 0.5f);
+        clipHydraulicRecover = GenerateToneSweepClip(60f, 320f, 0.35f, WaveType.Sawtooth, 0.8f);
     }
 
     public void PlayQuack() => PlayClip(clipQuack, 0.9f);
@@ -54,6 +60,9 @@ public class ProceduralAudio : MonoBehaviour
     public void PlayPunch() => PlayClip(clipPunch, 0.85f);
     public void PlayLaser() => PlayClip(clipLaser, 0.75f);
     public void PlayExplosion() => PlayClip(clipExplosion, 0.8f);
+    public void PlayAlarm() => PlayClip(clipAlarm, 0.75f);
+    public void PlayAcidSizzle() => PlayClip(clipAcidSizzle, 0.65f);
+    public void PlayHydraulicRecover() => PlayClip(clipHydraulicRecover, 0.9f);
 
     private void PlayClip(AudioClip clip, float volume = 1f)
     {

@@ -16,6 +16,9 @@ public class MechaHUD : MonoBehaviour
     [Header("Configuración Radar")]
     [SerializeField] private float maxRadarRange = 120f;
 
+    [Header("Fuente de la Interfaz")]
+    [SerializeField] private UnityEngine.TextCore.Text.FontAsset hudFontAsset;
+
     private UIDocument uiDocument;
     private VisualElement root;
 
@@ -24,6 +27,7 @@ public class MechaHUD : MonoBehaviour
     private Label hpText;
     private Label laserStatusText;
     private Label scoreText;
+    private Label spawnerStatusText;
 
     private VisualElement radarCircle;
     private readonly List<VisualElement> pooledBlips = new List<VisualElement>();
@@ -32,6 +36,7 @@ public class MechaHUD : MonoBehaviour
     private Button btnCam;
     private Button btnZoom;
     private Button btnQuack;
+    private Button btnSpawner;
 
     private VisualElement gameOverModal;
     private Label finalScoreText;
@@ -59,14 +64,7 @@ public class MechaHUD : MonoBehaviour
         if (root == null) return;
 
         // Asegurar asignación de fuente SDF para renderizado correcto de todos los textos
-        if (uiDocument.panelSettings != null && uiDocument.panelSettings.textSettings != null)
-        {
-            var defaultFont = uiDocument.panelSettings.textSettings.defaultFontAsset;
-            if (defaultFont != null)
-            {
-                root.style.unityFontDefinition = new StyleFontDefinition(FontDefinition.FromSDFFont(defaultFont));
-            }
-        }
+        ApplyFontRecursively(root);
 
         // Destello de daño
         damageOverlay = root.Q<VisualElement>("damage-overlay");
@@ -75,6 +73,7 @@ public class MechaHUD : MonoBehaviour
         hpBarFill = root.Q<VisualElement>("hp-bar-fill");
         hpText = root.Q<Label>("hp-text");
         laserStatusText = root.Q<Label>("laser-text");
+        spawnerStatusText = root.Q<Label>("spawner-status-text");
 
         // Panel Radar y Score
         radarCircle = root.Q<VisualElement>("radar-circle");
@@ -84,10 +83,12 @@ public class MechaHUD : MonoBehaviour
         btnZoom = root.Q<Button>("btn-zoom");
         btnCam = root.Q<Button>("btn-cam");
         btnQuack = root.Q<Button>("btn-quack");
+        btnSpawner = root.Q<Button>("btn-spawner");
 
         if (btnZoom != null) btnZoom.clicked += OnZoomOutClicked;
         if (btnCam != null) btnCam.clicked += OnToggleCameraClicked;
         if (btnQuack != null) btnQuack.clicked += OnQuackClicked;
+        if (btnSpawner != null) btnSpawner.clicked += OnToggleSpawnerClicked;
 
         // Modal de Game Over
         gameOverModal = root.Q<VisualElement>("game-over-modal");
@@ -96,6 +97,40 @@ public class MechaHUD : MonoBehaviour
 
         if (btnRestart != null) btnRestart.clicked += OnRestartClicked;
         if (gameOverModal != null) gameOverModal.style.display = DisplayStyle.None;
+
+        if (EnemySpawner.Instance != null)
+        {
+            UpdateSpawnerStatus(EnemySpawner.Instance.IsSpawningEnabled);
+        }
+    }
+
+    public void ApplyFontRecursively(VisualElement el)
+    {
+        if (el == null) return;
+
+        UnityEngine.TextCore.Text.FontAsset fontAsset = hudFontAsset;
+        if (fontAsset == null && uiDocument != null && uiDocument.panelSettings != null && uiDocument.panelSettings.textSettings != null)
+        {
+            fontAsset = uiDocument.panelSettings.textSettings.defaultFontAsset;
+        }
+
+        if (fontAsset != null)
+        {
+            ApplyFontToTree(el, fontAsset);
+        }
+    }
+
+    private void ApplyFontToTree(VisualElement el, UnityEngine.TextCore.Text.FontAsset fontAsset)
+    {
+        if (el == null) return;
+        if (el is Label || el is Button || el is TextElement)
+        {
+            el.style.unityFontDefinition = new StyleFontDefinition(FontDefinition.FromSDFFont(fontAsset));
+        }
+        for (int i = 0; i < el.childCount; i++)
+        {
+            ApplyFontToTree(el[i], fontAsset);
+        }
     }
 
     private void Update()
@@ -261,6 +296,7 @@ public class MechaHUD : MonoBehaviour
     {
         if (gameOverModal != null)
         {
+            ApplyFontRecursively(gameOverModal);
             gameOverModal.style.display = DisplayStyle.Flex;
             if (finalScoreText != null)
             {
@@ -274,6 +310,49 @@ public class MechaHUD : MonoBehaviour
         if (gameOverModal != null)
         {
             gameOverModal.style.display = DisplayStyle.None;
+        }
+    }
+
+    public void UpdateSpawnerStatus(bool isSpawning)
+    {
+        if (spawnerStatusText != null)
+        {
+            if (isSpawning)
+            {
+                spawnerStatusText.text = "🚨 INVASIÓN ACTIVA";
+                spawnerStatusText.style.color = new StyleColor(new Color(0.95f, 0.25f, 0.37f));
+                spawnerStatusText.style.backgroundColor = new StyleColor(new Color(0.95f, 0.25f, 0.37f, 0.2f));
+                StyleColor bCol = new StyleColor(new Color(0.95f, 0.25f, 0.37f, 0.6f));
+                spawnerStatusText.style.borderTopColor = bCol;
+                spawnerStatusText.style.borderBottomColor = bCol;
+                spawnerStatusText.style.borderLeftColor = bCol;
+                spawnerStatusText.style.borderRightColor = bCol;
+            }
+            else
+            {
+                spawnerStatusText.text = "🛡️ EXPLORACIÓN SEGURA";
+                spawnerStatusText.style.color = new StyleColor(new Color(0.06f, 0.72f, 0.51f));
+                spawnerStatusText.style.backgroundColor = new StyleColor(new Color(0.06f, 0.72f, 0.51f, 0.15f));
+                StyleColor bCol = new StyleColor(new Color(0.06f, 0.72f, 0.51f, 0.4f));
+                spawnerStatusText.style.borderTopColor = bCol;
+                spawnerStatusText.style.borderBottomColor = bCol;
+                spawnerStatusText.style.borderLeftColor = bCol;
+                spawnerStatusText.style.borderRightColor = bCol;
+            }
+        }
+
+        if (btnSpawner != null)
+        {
+            btnSpawner.text = isSpawning ? "🚨 INVASIÓN: ACTIVA (PULSAR PARA DETENER)" : "⚔️ ACTIVAR INVASIÓN ROBOT";
+            btnSpawner.style.color = isSpawning ? new StyleColor(new Color(1f, 0.4f, 0.4f)) : new StyleColor(Color.white);
+        }
+    }
+
+    public void OnToggleSpawnerClicked()
+    {
+        if (EnemySpawner.Instance != null)
+        {
+            EnemySpawner.Instance.ToggleSpawning();
         }
     }
 

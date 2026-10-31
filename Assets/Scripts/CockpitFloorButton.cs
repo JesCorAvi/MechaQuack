@@ -8,8 +8,9 @@ public class CockpitFloorButton : MonoBehaviour
 {
     public enum ButtonType
     {
-        Hold,  // Se activa mientras el pato esté parado encima (FWD, BWD, LEFT, RIGHT)
-        Stomp  // Requiere un pisotón aéreo/culazo con la tecla E para activarse (PUNCH, LASER)
+        Hold,   // Se activa mientras el pato esté parado encima (FWD, BWD, LEFT, RIGHT)
+        Stomp,  // Requiere un pisotón aéreo/culazo con la tecla E para activarse (PUNCH, LASER)
+        Toggle  // Conmuta encendido/apagado al pisar o hacer culazo (SPAWN ENEMIGOS)
     }
 
     [Header("Identificación")]
@@ -107,6 +108,15 @@ public class CockpitFloorButton : MonoBehaviour
                 FloatingText.Spawn(transform.position + Vector3.up * 1.2f, "¡SALTA Y HAZ CULAZO (E)!", Color.white, 0.22f);
             }
         }
+        else if (type == ButtonType.Toggle)
+        {
+            if (stompCooldownTimer <= 0f)
+            {
+                stompCooldownTimer = 1.2f;
+                isPressed = !isPressed;
+                ExecuteToggleAction();
+            }
+        }
     }
 
     /// <summary>
@@ -147,8 +157,24 @@ public class CockpitFloorButton : MonoBehaviour
             ProceduralAudio.Instance?.PlayButtonClick();
             return true;
         }
+        else if (type == ButtonType.Toggle)
+        {
+            stompCooldownTimer = 1.2f;
+            isPressed = !isPressed;
+            ExecuteToggleAction();
+            ProceduralAudio.Instance?.PlayStomp();
+            return true;
+        }
 
         return false;
+    }
+
+    private void ExecuteToggleAction()
+    {
+        if (buttonId == "SPAWN")
+        {
+            EnemySpawner.Instance?.ToggleSpawning();
+        }
     }
 
     /// <summary>

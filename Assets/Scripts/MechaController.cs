@@ -2,17 +2,23 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Controlador principal del mecha gigante MechaQuack.
-/// Gestiona la locomoción por botones del suelo, las armas (Puño y Láser),
-/// el balanceo e inercia de la cabina, las piernas articuladas y la vida del chasis.
+/// Controlador físico principal del mecha gigante MechaQuack.
+/// Gestiona la locomoción con Rigidbody 3D, suspensión en dos patas independientes,
+/// pérdida de equilibrio y vuelcos al salirse de puentes o desniveles, armas (Puño y Láser),
+/// y recuperación hidráulica ("¡PATALETA!").
 /// </summary>
+[RequireComponent(typeof(Rigidbody))]
 public class MechaController : MonoBehaviour
 {
     public static MechaController Instance { get; private set; }
 
-    [Header("Movimiento del Mecha")]
-    [SerializeField] private float moveSpeed = 14f;
-    [SerializeField] private float turnSpeed = 75f;
+    [Header("Físicas y Locomoción")]
+    [SerializeField] private float movePower = 48000f;
+    [SerializeField] private float turnTorque = 36000f;
+    [SerializeField] private float maxLinearVelocity = 16f;
+    [SerializeField] private float suspensionStrength = 82000f;
+    [SerializeField] private float suspensionDamping = 7500f;
+    [SerializeField] private float legRayLength = 6.4f;
 
     [Header("Partes Físicas y Visuales")]
     [SerializeField] private Transform cockpitTransform;
@@ -31,15 +37,24 @@ public class MechaController : MonoBehaviour
     [SerializeField] private float laserCooldownDuration = 2.0f;
 
     // Estado interno
+    private Rigidbody rb;
     private float currentLaserCooldown = 0f;
     private int score = 0;
     private bool isGameOver = false;
+    private bool isOverturned = false;
+    private float overturnPromptTimer = 0f;
 
     private float walkCycle = 0f;
     private float stepTimer = 0f;
     private float punchTimer = 0f;
     private float laserTimer = 0f;
     private float shakeIntensity = 0f;
+
+    private float inputMove = 0f;
+    private float inputTurn = 0f;
+
+    private bool leftGrounded = false;
+    private bool rightGrounded = false;
 
     private Vector3 initialLeftArmPos;
     private Vector3 initialRightArmPos;
@@ -52,13 +67,27 @@ public class MechaController : MonoBehaviour
     public int MaxHp => maxHp;
     public int Score => score;
     public bool IsGameOver => isGameOver;
+    public bool IsOverturned => isOverturned;
+    public bool LeftGrounded => leftGrounded;
+    public bool RightGrounded => rightGrounded;
     public float LaserCooldown => currentLaserCooldown;
     public float ShakeIntensity => shakeIntensity;
 
     private void Awake()
     {
         Instance = this;
+        Application.runInBackground = true;
         currentHp = maxHp;
+
+        rb = GetComponent<Rigidbody>();
+        if (rb == null) rb = gameObject.AddComponent<Rigidbody>();
+
+        rb.mass = 8000f;
+        rb.linearDamping = 1.2f;
+        rb.angularDamping = 2.2f;
+        rb.centerOfMass = new Vector3(0f, 3.2f, 0f); // Centro de masa elevado para inclinación física realista
+        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+        rb.interpolation = RigidbodyInterpolation.Interpolate;
 
         if (cockpitTransform != null) initialCockpitLocalPos = cockpitTransform.localPosition;
         if (leftArmTransform != null) initialLeftArmPos = leftArmTransform.localPosition;
@@ -76,35 +105,34 @@ public class MechaController : MonoBehaviour
         if (isGameOver) return;
 
         UpdateCooldowns();
-        ProcessButtonsLocomotion();
-        AnimateArms();
+        ReadButtonsInput();
+        AnimateLegsAndArms();
         AnimateCockpitSway();
+        CheckOverturnedState();
     }
 
     private void UpdateCooldowns()
     {
         if (currentLaserCooldown > 0f)
-            currentLaserCooldown = MathfsMax(0f, currentLaserCooldown - Time.deltaTime);
+            currentLaserCooldown = Mathf.Max(0f, currentLaserCooldown - Time.deltaTime);
 
         if (punchTimer > 0f)
-            punchTimer = MathfsMax(0f, punchTimer - Time.deltaTime);
+            punchTimer = Mathf.Max(0f, punchTimer - Time.deltaTime);
 
         if (laserTimer > 0f)
-            laserTimer = MathfsMax(0f, laserTimer - Time.deltaTime);
+            laserTimer = Mathf.Max(0f, laserTimer - Time.deltaTime);
 
         if (shakeIntensity > 0f)
-            shakeIntensity = MathfsMax(0f, shakeIntensity - Time.deltaTime * 2.5f);
+            shakeIntensity = Mathf.Max(0f, shakeIntensity - Time.deltaTime * 2.5f);
     }
 
-    private float MathfsMax(float a, float b) => Mathf.Max(a, b);
-
     /// <summary>
-    /// Lee los botones pisados en la cabina y mueve/gira el Mecha en el mundo.
+    /// Lee los botones pisados en la cabina para determinar dirección y giro deseados.
     /// </summary>
-    private void ProcessButtonsLocomotion()
+    private void ReadButtonsInput()
     {
-        float moveDir = 0f;
-        float turnDir = 0f;
+        inputMove = 0f;
+        inputTurn = 0f;
 
         for (int i = 0; i < buttons.Count; i++)
         {
@@ -113,26 +141,182 @@ public class MechaController : MonoBehaviour
 
             switch (btn.buttonId)
             {
-                case "FWD": moveDir += 1.0f; break;
-                case "BWD": moveDir -= 0.7f; break;
-                case "LEFT": turnDir -= 1.0f; break;
-                case "RIGHT": turnDir += 1.0f; break;
+                case "FWD": inputMove += 1.0f; break;
+                case "BWD": inputMove -= 0.7f; break;
+                case "LEFT": inputTurn -= 1.0f; break;
+                case "RIGHT": inputTurn += 1.0f; break;
+            }
+        }
+    }
+
+    private void FixedUpdate()
+    {
+        if (isGameOver) return;
+
+        ApplyLocomotionAndSuspension();
+    }
+
+    /// <summary>
+    /// Simulación de físicas: Proyección de patas independientes, suspensión,
+    /// desequilibrio si una pata queda en el aire, y fuerzas de locomoción.
+    /// </summary>
+    private void ApplyLocomotionAndSuspension()
+    {
+        int groundMask = ~LayerMask.GetMask("Player", "Ignore Raycast");
+
+        // Origen de los rayos de soporte (raíz de cadera de cada pierna)
+        Vector3 leftLegRoot = transform.TransformPoint(new Vector3(-3.1f, 1.8f, 0f));
+        Vector3 rightLegRoot = transform.TransformPoint(new Vector3(3.1f, 1.8f, 0f));
+
+        leftGrounded = CheckFootGrounded(leftLegRoot, out RaycastHit hitL, groundMask);
+        rightGrounded = CheckFootGrounded(rightLegRoot, out RaycastHit hitR, groundMask);
+
+        float tiltAngle = Vector3.Angle(transform.up, Vector3.up);
+
+        // 1. APLICAR SUSPENSIÓN INDEPENDIENTE A CADA PATA
+        if (leftGrounded)
+        {
+            float compression = Mathf.Clamp01((legRayLength - hitL.distance) / 1.8f);
+            float vertVel = Vector3.Dot(rb.GetPointVelocity(leftLegRoot), transform.up);
+            float springForce = (compression * suspensionStrength) - (vertVel * suspensionDamping);
+            rb.AddForceAtPosition(transform.up * Mathf.Max(0f, springForce), leftLegRoot, ForceMode.Force);
+        }
+
+        if (rightGrounded)
+        {
+            float compression = Mathf.Clamp01((legRayLength - hitR.distance) / 1.8f);
+            float vertVel = Vector3.Dot(rb.GetPointVelocity(rightLegRoot), transform.up);
+            float springForce = (compression * suspensionStrength) - (vertVel * suspensionDamping);
+            rb.AddForceAtPosition(transform.up * Mathf.Max(0f, springForce), rightLegRoot, ForceMode.Force);
+        }
+
+        // 2. FÍSICAS DE DESEQUILIBRIO (SI UNA PATA QUEDA FUERA DEL TERRENO/PUENTE)
+        if (leftGrounded && !rightGrounded && tiltAngle < 75f)
+        {
+            // Pata derecha en el vacío: el mecha pierde apoyo y el peso lo hace inclinarse y caer hacia la derecha
+            rb.AddTorque(transform.forward * 28000f, ForceMode.Force);
+            rb.AddForce(transform.right * 14000f, ForceMode.Force); // Deslizamiento hacia el borde
+
+            if (duckInCockpit != null && duckInCockpit.IsGrounded)
+            {
+                duckInCockpit.ApplyExternalNudge(new Vector3(2.4f, 0f, 0f));
+            }
+        }
+        else if (!leftGrounded && rightGrounded && tiltAngle < 75f)
+        {
+            // Pata izquierda en el vacío: el mecha se desestabiliza hacia la izquierda
+            rb.AddTorque(-transform.forward * 28000f, ForceMode.Force);
+            rb.AddForce(-transform.right * 14000f, ForceMode.Force);
+
+            if (duckInCockpit != null && duckInCockpit.IsGrounded)
+            {
+                duckInCockpit.ApplyExternalNudge(new Vector3(-2.4f, 0f, 0f));
             }
         }
 
-        bool isWalking = Mathf.Abs(moveDir) > 0.01f || Mathf.Abs(turnDir) > 0.01f;
-
-        if (Mathf.Abs(turnDir) > 0.01f)
+        // 3. ESTABILIZACIÓN VERTICAL (Solo cuando ambas patas están firmemente apoyadas y no está volcado)
+        if (leftGrounded && rightGrounded && tiltAngle < 38f)
         {
-            transform.Rotate(Vector3.up, turnDir * turnSpeed * Time.deltaTime);
+            Vector3 rotAxis = Vector3.Cross(transform.up, Vector3.up);
+            rb.AddTorque(rotAxis * (tiltAngle * 1400f) - rb.angularVelocity * 450f, ForceMode.Force);
         }
 
-        if (Mathf.Abs(moveDir) > 0.01f)
+        // 4. FUERZAS DE LOCOMOCIÓN (Solo si al menos una pata toca suelo y no está totalmente volcado)
+        if ((leftGrounded || rightGrounded) && tiltAngle < 55f)
         {
-            transform.position += transform.forward * (moveDir * moveSpeed * Time.deltaTime);
-        }
+            if (Mathf.Abs(inputMove) > 0.01f)
+            {
+                Vector3 moveForce = transform.forward * (inputMove * movePower);
+                rb.AddForce(moveForce, ForceMode.Force);
+            }
 
-        // Animación de caminata de las piernas del mecha
+            if (Mathf.Abs(inputTurn) > 0.01f)
+            {
+                Vector3 turn = Vector3.up * (inputTurn * turnTorque);
+                rb.AddTorque(turn, ForceMode.Force);
+            }
+
+            // Limitar velocidad máxima en suelo para control preciso
+            Vector3 horizVel = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+            if (horizVel.magnitude > maxLinearVelocity)
+            {
+                Vector3 clamped = horizVel.normalized * maxLinearVelocity;
+                rb.linearVelocity = new Vector3(clamped.x, rb.linearVelocity.y, clamped.y);
+            }
+        }
+    }
+
+    private bool CheckFootGrounded(Vector3 probeOrigin, out RaycastHit groundHit, int mask)
+    {
+        groundHit = default;
+        var hits = Physics.RaycastAll(probeOrigin, -transform.up, legRayLength, mask);
+        float closestDist = float.MaxValue;
+        bool found = false;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            if (hits[i].collider.transform.IsChildOf(transform)) continue;
+            if (hits[i].distance < closestDist)
+            {
+                closestDist = hits[i].distance;
+                groundHit = hits[i];
+                found = true;
+            }
+        }
+        return found;
+    }
+
+    /// <summary>
+    /// Comprueba si el Mecha ha volcado y gestiona avisos en pantalla.
+    /// </summary>
+    private void CheckOverturnedState()
+    {
+        float tiltAngle = Vector3.Angle(transform.up, Vector3.up);
+        bool wasOverturned = isOverturned;
+        isOverturned = tiltAngle > 60f;
+
+        if (isOverturned)
+        {
+            overturnPromptTimer -= Time.deltaTime;
+            if (overturnPromptTimer <= 0f)
+            {
+                overturnPromptTimer = 2.8f;
+                FloatingText.Spawn(transform.position + Vector3.up * 6f, "¡MECHA VOLCADO! PISOTÓN (E) PARA ENDEREZAR", Color.yellow, 0.45f);
+                ProceduralAudio.Instance?.PlayQuack();
+            }
+        }
+        else if (wasOverturned)
+        {
+            overturnPromptTimer = 0f;
+        }
+    }
+
+    /// <summary>
+    /// Maniobra cómica de emergencia ("¡PATALETA!"): Salto hidráulico que voltea
+    /// el Mecha de vuelta sobre sus pies cuando está tumbado en el suelo.
+    /// </summary>
+    public void RecoverFromTumble()
+    {
+        if (!isOverturned) return;
+
+        ProceduralAudio.Instance?.PlayHydraulicRecover();
+        FloatingText.Spawn(transform.position + Vector3.up * 7f, "¡PATALETA HIDRÁULICA!", Color.yellow, 0.45f);
+
+        // Impulso vertical y reseteo de velocidad angular
+        rb.linearVelocity = new Vector3(rb.linearVelocity.x * 0.2f, 18f, rb.linearVelocity.z * 0.2f);
+        rb.angularVelocity = Vector3.zero;
+
+        // Orientar erguido en el aire
+        transform.rotation = Quaternion.Euler(0f, transform.eulerAngles.y, 0f);
+
+        isOverturned = false;
+        overturnPromptTimer = 0f;
+    }
+
+    private void AnimateLegsAndArms()
+    {
+        bool isWalking = (Mathf.Abs(inputMove) > 0.01f || Mathf.Abs(inputTurn) > 0.01f) && (leftGrounded || rightGrounded) && !isOverturned;
+
         if (isWalking)
         {
             walkCycle += Time.deltaTime * 7.5f;
@@ -143,10 +327,9 @@ public class MechaController : MonoBehaviour
                 stepTimer = 0f;
                 ProceduralAudio.Instance?.PlayMechaStep();
 
-                // Pequeña inercia cómica que empuja al pato con cada zancada
                 if (duckInCockpit != null && duckInCockpit.IsGrounded)
                 {
-                    duckInCockpit.ApplyExternalNudge(new Vector3(Mathf.Sin(walkCycle) * 1.8f, 0f, 0f));
+                    duckInCockpit.ApplyExternalNudge(new Vector3(Mathf.Sin(walkCycle) * 1.6f, 0f, 0f));
                 }
             }
 
@@ -156,15 +339,13 @@ public class MechaController : MonoBehaviour
         }
         else
         {
-            // Retorno suave a reposo de piernas
             if (leftLegTransform != null) leftLegTransform.localRotation = Quaternion.Slerp(leftLegTransform.localRotation, Quaternion.identity, Time.deltaTime * 8f);
             if (rightLegTransform != null) rightLegTransform.localRotation = Quaternion.Slerp(rightLegTransform.localRotation, Quaternion.identity, Time.deltaTime * 8f);
         }
+
+        AnimateArms();
     }
 
-    /// <summary>
-    /// Aplica balanceo e inclinación dinámica a la cabina con sacudidas de impacto.
-    /// </summary>
     private void AnimateCockpitSway()
     {
         if (cockpitTransform == null) return;
@@ -179,9 +360,6 @@ public class MechaController : MonoBehaviour
         cockpitTransform.localRotation = Quaternion.Euler(0f, 0f, tiltZ);
     }
 
-    /// <summary>
-    /// Anima el retroceso y lanzamiento de los brazos del Mecha.
-    /// </summary>
     private void AnimateArms()
     {
         // Brazo izquierdo (Puño)
@@ -205,7 +383,7 @@ public class MechaController : MonoBehaviour
         {
             if (laserTimer > 0f)
             {
-                rightArmTransform.localPosition = initialRightArmPos - new Vector3(0f, 0f, 1.2f); // Retroceso
+                rightArmTransform.localPosition = initialRightArmPos - new Vector3(0f, 0f, 1.2f);
                 if (laserBeamObject != null) laserBeamObject.SetActive(true);
             }
             else
@@ -216,9 +394,6 @@ public class MechaController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Dispara las armas cuando el pato aterriza con un culazo sobre los botones PUNCH o LASER.
-    /// </summary>
     public void TriggerWeaponAction(string weaponId, Vector3 buttonWorldPos)
     {
         if (isGameOver) return;
@@ -231,7 +406,6 @@ public class MechaController : MonoBehaviour
 
             FloatingText.Spawn(buttonWorldPos + Vector3.up * 1.5f, "💥 ¡MEGA PUÑO!", new Color(1f, 0.25f, 0.4f), 0.35f);
 
-            // Destruir enemigos en un cono frontal hasta 42 metros
             int destroyedCount = 0;
             var enemies = EnemySpawner.Instance != null ? EnemySpawner.Instance.ActiveEnemies : null;
             if (enemies != null)
@@ -276,7 +450,6 @@ public class MechaController : MonoBehaviour
 
             FloatingText.Spawn(buttonWorldPos + Vector3.up * 1.5f, "⚡ ¡CAÑÓN LÁSER!", new Color(0.2f, 0.9f, 1f), 0.35f);
 
-            // Destruir enemigos en una línea recta de 145 metros frente al mecha
             var enemies = EnemySpawner.Instance != null ? EnemySpawner.Instance.ActiveEnemies : null;
             if (enemies != null)
             {
@@ -311,14 +484,12 @@ public class MechaController : MonoBehaviour
         currentHp = Mathf.Max(0, currentHp - damage);
         shakeIntensity = 0.8f;
 
-        // Empujar al pato dentro de la cabina por el impacto
         if (duckInCockpit != null)
         {
-            Vector3 randomKnock = new Vector3(Random.Range(-12f, 12f), 8f, Random.Range(-12f, 12f));
+            Vector3 randomKnock = new Vector3(Random.Range(-10f, 10f), 6f, Random.Range(-10f, 10f));
             duckInCockpit.ApplyExternalNudge(randomKnock);
         }
 
-        // Destello rojo de daño en el HUD
         MechaHUD.Instance?.TriggerDamageFlash();
 
         if (currentHp <= 0)
@@ -340,6 +511,7 @@ public class MechaController : MonoBehaviour
     public void RestartGame()
     {
         isGameOver = false;
+        isOverturned = false;
         currentHp = maxHp;
         score = 0;
         currentLaserCooldown = 0f;
@@ -349,7 +521,13 @@ public class MechaController : MonoBehaviour
         walkCycle = 0f;
         stepTimer = 0f;
 
-        transform.position = Vector3.zero;
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+
+        transform.position = new Vector3(0f, 1.2f, 0f);
         transform.rotation = Quaternion.identity;
 
         if (cockpitTransform != null) cockpitTransform.localPosition = initialCockpitLocalPos;
@@ -361,17 +539,13 @@ public class MechaController : MonoBehaviour
         if (laserBeamObject != null) laserBeamObject.SetActive(false);
         if (punchWaveObject != null) punchWaveObject.SetActive(false);
 
-        // Restablecer los botones de la cabina
         for (int i = 0; i < buttons.Count; i++)
         {
             if (buttons[i] != null) buttons[i].ResetButton();
         }
 
         EnemySpawner.Instance?.ClearAllEnemies();
-        EnemySpawner.Instance?.SpawnEnemy();
-        EnemySpawner.Instance?.SpawnEnemy();
 
-        // Limpiar cualquier texto flotante residual
         var floatingTexts = Object.FindObjectsByType<FloatingText>(FindObjectsSortMode.None);
         for (int i = 0; i < floatingTexts.Length; i++)
         {
@@ -384,7 +558,6 @@ public class MechaController : MonoBehaviour
         }
 
         CockpitCameraController.Instance?.ResetCamera();
-
         MechaHUD.Instance?.HideGameOver();
     }
 }

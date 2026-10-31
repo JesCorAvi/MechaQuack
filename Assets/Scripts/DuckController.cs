@@ -150,6 +150,10 @@ public class DuckController : MonoBehaviour
         localVel.x += moveDirLocal.x * acceleration * Time.deltaTime;
         localVel.z += moveDirLocal.z * acceleration * Time.deltaTime;
 
+        Vector2 horiz = Vector2.ClampMagnitude(new Vector2(localVel.x, localVel.z), moveSpeed);
+        localVel.x = horiz.x;
+        localVel.z = horiz.y;
+
         // Rotar hacia la dirección de avance
         if (moveDirLocal.sqrMagnitude > 0.05f)
         {
@@ -267,6 +271,11 @@ public class DuckController : MonoBehaviour
         wingFlapTimer = 0.45f;
         TriggerSquash(0.75f, 1.35f, 0.25f);
         ProceduralAudio.Instance?.PlayJump();
+
+        if (MechaController.Instance != null && MechaController.Instance.IsOverturned)
+        {
+            MechaController.Instance.RecoverFromTumble();
+        }
     }
 
     private void PerformStomp()

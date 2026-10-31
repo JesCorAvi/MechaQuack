@@ -20,7 +20,10 @@
                     <ui:VisualElement name="hp-bar-fill" class="hp-bar-fill" />
                 </ui:VisualElement>
                 
-                <ui:Label name="laser-text" text="LÁSER: LISTO" class="laser-status-text" />
+                <ui:VisualElement class="status-row">
+                    <ui:Label name="laser-text" text="LÁSER: LISTO" class="laser-status-text" />
+                    <ui:Label name="spawner-status-text" text="🛡️ EXPLORACIÓN SEGURA" class="spawner-status-badge" />
+                </ui:VisualElement>
             </ui:VisualElement>
 
             <!-- PANEL RADAR Y SCORE -->
@@ -52,6 +55,7 @@
 
             <!-- ACCIONES RÁPIDAS -->
             <ui:VisualElement class="actions-panel">
+                <ui:Button name="btn-spawner" text="🚨 OLEADA ROBOT: INACTIVA" class="action-btn btn-spawner" />
                 <ui:Button name="btn-zoom" text="VER MECHA EXTERIOR / CABINA" class="action-btn" />
                 <ui:Button name="btn-cam" text="MODO (C): ÓRBITA LIBRE 360º" class="action-btn" />
                 <ui:Button name="btn-quack" text="¡CUAC! (Q)" class="action-btn btn-quack" />

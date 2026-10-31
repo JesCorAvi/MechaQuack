@@ -14,6 +14,7 @@ public class EnemySpawner : MonoBehaviour
     [SerializeField] private float maxSpawnDistance = 115f;
     [SerializeField] private int maxEnemies = 18;
     [SerializeField] private float baseSpawnInterval = 2.5f;
+    [SerializeField] private bool isSpawningEnabled = false; // Por defecto en modo exploración hasta activar el botón
 
     private float spawnTimer = 1.0f;
     private Material enemyRedMat;
@@ -23,6 +24,7 @@ public class EnemySpawner : MonoBehaviour
     private readonly List<EnemyBot> activeEnemies = new List<EnemyBot>();
 
     public IReadOnlyList<EnemyBot> ActiveEnemies => activeEnemies;
+    public bool IsSpawningEnabled => isSpawningEnabled;
 
     private void Awake()
     {
@@ -35,15 +37,15 @@ public class EnemySpawner : MonoBehaviour
         Shader urpLit = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
 
         enemyRedMat = new Material(urpLit);
-        enemyRedMat.color = new Color(0.85f, 0.15f, 0.15f, 1f);
+        enemyRedMat.color = new Color(0.85f, 0.15f, 0.15f);
         if (enemyRedMat.HasProperty("_BaseColor")) enemyRedMat.SetColor("_BaseColor", enemyRedMat.color);
 
         enemyDarkMat = new Material(urpLit);
-        enemyDarkMat.color = new Color(0.12f, 0.16f, 0.22f, 1f);
+        enemyDarkMat.color = new Color(0.12f, 0.14f, 0.18f);
         if (enemyDarkMat.HasProperty("_BaseColor")) enemyDarkMat.SetColor("_BaseColor", enemyDarkMat.color);
 
         enemyEyeMat = new Material(urpLit);
-        enemyEyeMat.color = new Color(1.0f, 0.95f, 0.35f, 1f);
+        enemyEyeMat.color = new Color(1.0f, 0.8f, 0.1f);
         if (enemyEyeMat.HasProperty("_BaseColor")) enemyEyeMat.SetColor("_BaseColor", enemyEyeMat.color);
         if (enemyEyeMat.HasProperty("_EmissionColor"))
         {
@@ -52,12 +54,49 @@ public class EnemySpawner : MonoBehaviour
         }
     }
 
+    private void Start()
+    {
+        MechaHUD.Instance?.UpdateSpawnerStatus(isSpawningEnabled);
+    }
+
+    /// <summary>
+    /// Alterna el estado de invasión enemiga. Activado por el botón físico de cabina o el HUD.
+    /// </summary>
+    public bool ToggleSpawning()
+    {
+        isSpawningEnabled = !isSpawningEnabled;
+
+        if (isSpawningEnabled)
+        {
+            ProceduralAudio.Instance?.PlayAlarm();
+            SpawnEnemy();
+            SpawnEnemy();
+            spawnTimer = 2.0f;
+
+            if (MechaController.Instance != null)
+            {
+                FloatingText.Spawn(MechaController.Instance.transform.position + Vector3.up * 8f, "¡ALERTA! INVASIÓN ROBOT ACTIVADA", Color.red, 0.42f);
+            }
+        }
+        else
+        {
+            ProceduralAudio.Instance?.PlayButtonClick();
+            if (MechaController.Instance != null)
+            {
+                FloatingText.Spawn(MechaController.Instance.transform.position + Vector3.up * 8f, "EXPLORACIÓN: INVASIÓN PAUSADA", Color.cyan, 0.42f);
+            }
+        }
+
+        MechaHUD.Instance?.UpdateSpawnerStatus(isSpawningEnabled);
+        return isSpawningEnabled;
+    }
+
     private void Update()
     {
         // Limpiar lista de nulos
         activeEnemies.RemoveAll(e => e == null);
 
-        if (MechaController.Instance == null || MechaController.Instance.IsGameOver)
+        if (MechaController.Instance == null || MechaController.Instance.IsGameOver || !isSpawningEnabled)
             return;
 
         spawnTimer -= Time.deltaTime;
@@ -84,6 +123,12 @@ public class EnemySpawner : MonoBehaviour
             0f,
             mechaPos.z - Mathf.Cos(spawnAngle) * dist
         );
+
+        // Proyectar altura al terreno
+        if (Physics.Raycast(new Vector3(spawnPos.x, 80f, spawnPos.z), Vector3.down, out RaycastHit groundHit, 150f))
+        {
+            spawnPos.y = groundHit.point.y;
+        }
 
         GameObject botObj = new GameObject("EnemyBot_" + Time.frameCount);
         botObj.transform.position = spawnPos;

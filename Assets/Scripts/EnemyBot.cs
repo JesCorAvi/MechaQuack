@@ -49,6 +49,14 @@ public class EnemyBot : MonoBehaviour
             Vector3 moveDir = dir.normalized;
             transform.position += moveDir * (speed * Time.deltaTime);
             transform.rotation = Quaternion.LookRotation(moveDir, Vector3.up);
+
+            // Ajustar altura al desnivel del terreno
+            if (Physics.Raycast(transform.position + Vector3.up * 6f, Vector3.down, out RaycastHit groundHit, 16f))
+            {
+                Vector3 p = transform.position;
+                p.y = Mathf.Lerp(p.y, groundHit.point.y, Time.deltaTime * 10f);
+                transform.position = p;
+            }
         }
 
         // Animación de caminata robótica (pequeño rebote)

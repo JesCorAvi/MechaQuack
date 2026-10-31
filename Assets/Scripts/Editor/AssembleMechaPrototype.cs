@@ -60,40 +60,120 @@ public static class AssembleMechaPrototype
         Material matMechaRed = CreateMat("Assets/Materials/M_MechaRed.mat", new Color(0.88f, 0.11f, 0.28f), 0.4f, 0.5f);
         Material matMechaBlue = CreateMat("Assets/Materials/M_MechaBlue.mat", new Color(0.14f, 0.39f, 0.92f), 0.4f, 0.5f);
         Material matBeamCyan = CreateMat("Assets/Materials/M_LaserBeam.mat", new Color(0.22f, 0.74f, 0.97f, 0.85f), 0.1f, 0.9f, true);
+        Material matAcid = CreateMat("Assets/Materials/M_ToxicAcid.mat", new Color(0.18f, 0.92f, 0.18f, 0.92f), 0.1f, 0.9f, true);
+        Material matWastelandRock = CreateMat("Assets/Materials/M_WastelandRock.mat", new Color(0.36f, 0.26f, 0.22f), 0.1f, 0.2f);
+        Material matAsphalt = CreateMat("Assets/Materials/M_Asphalt.mat", new Color(0.13f, 0.16f, 0.22f), 0.2f, 0.4f);
+        Material matRubble = CreateMat("Assets/Materials/M_Rubble.mat", new Color(0.48f, 0.45f, 0.42f), 0.1f, 0.25f);
+        Material matHazard = CreateMat("Assets/Materials/M_HazardStripe.mat", new Color(0.95f, 0.72f, 0.05f), 0.2f, 0.7f, true);
 
         // 2. SISTEMA DE AUDIO PROCEDURAL
         GameObject audioObj = new GameObject("ProceduralAudio");
         audioObj.AddComponent<ProceduralAudio>();
 
-        // 3. MUNDO EXTERIOR (Suelo gigante y edificios lejanos)
+        // 3. MUNDO POST-APOCALÍPTICO (Zona urbana en ruinas, fosa ácida, puente roto y colinas escarpadas)
         GameObject outside = new GameObject("OutsideCityView");
 
-        GameObject worldFloor = GameObject.CreatePrimitive(PrimitiveType.Plane);
-        worldFloor.name = "World_Floor";
-        worldFloor.transform.parent = outside.transform;
-        worldFloor.transform.position = Vector3.zero;
-        worldFloor.transform.localScale = new Vector3(50f, 1f, 50f);
-        if (matBtnBase != null) worldFloor.GetComponent<MeshRenderer>().material = matBtnBase;
-
-        for (int i = 0; i < 40; i++)
+        GameObject CreateBlock(string bName, Transform bParent, Vector3 bPos, Vector3 bScale, Quaternion bRot, Material bMat)
         {
-            float angle = i * (Mathf.PI * 2f / 40f);
-            float dist = Random.Range(55f, 150f);
-            float bx = Mathf.Cos(angle) * dist;
-            float bz = Mathf.Sin(angle) * dist;
-            float h = Random.Range(18f, 55f);
-
-            GameObject building = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            building.name = "CityBuilding_" + i;
-            building.transform.parent = outside.transform;
-            building.transform.position = new Vector3(bx, h * 0.5f, bz);
-            building.transform.localScale = new Vector3(Random.Range(8f, 16f), h, Random.Range(8f, 16f));
-            if (matWall != null) building.GetComponent<MeshRenderer>().material = matWall;
+            GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            go.name = bName;
+            go.transform.parent = bParent;
+            go.transform.position = bPos;
+            go.transform.rotation = bRot;
+            go.transform.localScale = bScale;
+            if (bMat != null) go.GetComponent<MeshRenderer>().material = bMat;
+            return go;
         }
 
-        // 4. EL PATO-MECHA GIGANTE (Mecha Root)
+        // --- PLATAFORMA DE SALIDA (Punto de partida del Mecha) ---
+        CreateBlock("StartPlateau", outside.transform, new Vector3(0f, -1f, 0f), new Vector3(36f, 2f, 28f), Quaternion.identity, matAsphalt);
+        CreateBlock("StartCurb_South", outside.transform, new Vector3(0f, 0.2f, -13.8f), new Vector3(36f, 0.4f, 0.4f), Quaternion.identity, matHazard);
+        CreateBlock("StartCurb_East", outside.transform, new Vector3(17.8f, 0.2f, 0f), new Vector3(0.4f, 0.4f, 28f), Quaternion.identity, matHazard);
+
+        // --- LA GRAN FOSA DE ÁCIDO TÓXICO ---
+        GameObject acidObj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        acidObj.name = "ToxicAcidRiver";
+        acidObj.transform.parent = outside.transform;
+        acidObj.transform.position = new Vector3(0f, -11.6f, 41f);
+        acidObj.transform.localScale = new Vector3(260f, 1.2f, 54f);
+        if (matAcid != null) acidObj.GetComponent<MeshRenderer>().material = matAcid;
+        var acidCollider = acidObj.GetComponent<BoxCollider>();
+        if (acidCollider != null) acidCollider.isTrigger = true;
+        acidObj.AddComponent<AcidHazard>();
+
+        CreateBlock("AcidBasinBed", outside.transform, new Vector3(0f, -14.2f, 41f), new Vector3(260f, 4f, 54f), Quaternion.identity, matWastelandRock);
+        CreateBlock("CanyonWall_South", outside.transform, new Vector3(0f, -6f, 14f), new Vector3(260f, 12f, 2f), Quaternion.identity, matWastelandRock);
+        CreateBlock("CanyonWall_North", outside.transform, new Vector3(0f, -6f, 68f), new Vector3(260f, 12f, 2f), Quaternion.identity, matWastelandRock);
+
+        // --- PUENTE QUEBRADO (Desafío físico sobre el abismo) ---
+        GameObject bridgeGroup = new GameObject("Broken_Bridge");
+        bridgeGroup.transform.parent = outside.transform;
+
+        // Tramo 1: Entrada estable
+        CreateBlock("Bridge_Span_1", bridgeGroup.transform, new Vector3(0f, -0.6f, 21f), new Vector3(7.6f, 1.2f, 14f), Quaternion.identity, matAsphalt);
+        // Tramo 2: Estrechamiento peligroso (colapso lateral derecho)
+        CreateBlock("Bridge_Span_2_Narrow", bridgeGroup.transform, new Vector3(-1.4f, -0.6f, 35f), new Vector3(4.8f, 1.2f, 14f), Quaternion.identity, matAsphalt);
+        CreateBlock("Bridge_Fallen_Chunk", bridgeGroup.transform, new Vector3(2.5f, -9.5f, 35f), new Vector3(3.2f, 1.2f, 12f), Quaternion.Euler(30f, 15f, -20f), matRubble);
+        // Tramo 3: Losa inclinada (balanceo dinámico)
+        CreateBlock("Bridge_Span_3_Tilted", bridgeGroup.transform, new Vector3(0f, -0.4f, 49f), new Vector3(7.6f, 1.2f, 14f), Quaternion.Euler(0f, 0f, 7.5f), matAsphalt);
+        // Tramo 4: Desembarco en la ciudad en ruinas
+        CreateBlock("Bridge_Span_4_Exit", bridgeGroup.transform, new Vector3(0f, -0.6f, 62f), new Vector3(7.6f, 1.2f, 12f), Quaternion.identity, matAsphalt);
+
+        CreateBlock("Bridge_Pillar_1", bridgeGroup.transform, new Vector3(0f, -6f, 21f), new Vector3(4f, 12f, 4f), Quaternion.identity, matRubble);
+        CreateBlock("Bridge_Pillar_2", bridgeGroup.transform, new Vector3(0f, -6f, 49f), new Vector3(4f, 12f, 4f), Quaternion.identity, matRubble);
+
+        // --- SECTOR NORTE: CIUDAD EN RUINAS (Z > 68) ---
+        CreateBlock("CityGround", outside.transform, new Vector3(0f, -1f, 118f), new Vector3(160f, 2f, 100f), Quaternion.identity, matAsphalt);
+        CreateBlock("Highway_Ramp", outside.transform, new Vector3(18f, 5.5f, 92f), new Vector3(10f, 1.2f, 42f), Quaternion.Euler(14f, 0f, 0f), matAsphalt);
+
+        Vector3[] ruinPositions = new Vector3[] {
+            new Vector3(-35f, 28f, 95f), new Vector3(-18f, 22f, 125f), new Vector3(38f, 32f, 105f),
+            new Vector3(55f, 20f, 85f), new Vector3(-55f, 18f, 85f), new Vector3(25f, 35f, 135f),
+            new Vector3(-40f, 25f, 145f), new Vector3(0f, 24f, 155f), new Vector3(60f, 22f, 140f)
+        };
+        Vector3[] ruinScales = new Vector3[] {
+            new Vector3(14f, 56f, 14f), new Vector3(16f, 44f, 16f), new Vector3(18f, 64f, 18f),
+            new Vector3(12f, 40f, 12f), new Vector3(15f, 36f, 15f), new Vector3(20f, 70f, 20f),
+            new Vector3(16f, 50f, 16f), new Vector3(14f, 48f, 14f), new Vector3(16f, 44f, 16f)
+        };
+        Quaternion[] ruinRotations = new Quaternion[] {
+            Quaternion.Euler(15f, 12f, 8f), Quaternion.Euler(-18f, 45f, -10f), Quaternion.Euler(12f, -25f, -14f),
+            Quaternion.Euler(0f, 30f, 0f), Quaternion.Euler(22f, 0f, -12f), Quaternion.Euler(-14f, 20f, 10f),
+            Quaternion.Euler(8f, -40f, 0f), Quaternion.Euler(16f, 15f, -15f), Quaternion.Euler(-10f, -10f, 18f)
+        };
+
+        for (int i = 0; i < ruinPositions.Length; i++)
+        {
+            CreateBlock("RuinSkyscraper_" + i, outside.transform, ruinPositions[i], ruinScales[i], ruinRotations[i], matWall);
+        }
+
+        for (int i = 0; i < 12; i++)
+        {
+            float rx = Random.Range(-45f, 45f);
+            float rz = Random.Range(78f, 140f);
+            CreateBlock("RubblePile_" + i, outside.transform, new Vector3(rx, 1.5f, rz), new Vector3(Random.Range(4f, 8f), Random.Range(2f, 4f), Random.Range(4f, 8f)), Quaternion.Euler(Random.Range(-15f, 15f), Random.Range(0f, 180f), Random.Range(-15f, 15f)), matRubble);
+        }
+
+        // --- SECTOR SUR Y OESTE: COLINAS Y DESIERTOS ESCARPADOS (Z < 14, X < -18) ---
+        CreateBlock("WastelandPlateau_Tier1", outside.transform, new Vector3(-44f, 1f, -15f), new Vector3(32f, 4f, 30f), Quaternion.identity, matWastelandRock);
+        CreateBlock("SlopeRamp_Tier1", outside.transform, new Vector3(-27f, 1f, -15f), new Vector3(12f, 1.8f, 16f), Quaternion.Euler(0f, 0f, -18f), matWastelandRock);
+
+        CreateBlock("WastelandPlateau_Tier2", outside.transform, new Vector3(-76f, 4.25f, -32f), new Vector3(28f, 8.5f, 26f), Quaternion.identity, matWastelandRock);
+        CreateBlock("SteepSlope_Tier2", outside.transform, new Vector3(-59f, 3.2f, -24f), new Vector3(10f, 2f, 14f), Quaternion.Euler(22f, 0f, -25f), matWastelandRock);
+
+        CreateBlock("HazardCliff_Tier3", outside.transform, new Vector3(-96f, 6.5f, 0f), new Vector3(30f, 15f, 36f), Quaternion.identity, matWastelandRock);
+        CreateBlock("RockSpire_1", outside.transform, new Vector3(-88f, 12f, 22f), new Vector3(8f, 28f, 8f), Quaternion.Euler(8f, 15f, -6f), matWastelandRock);
+        CreateBlock("RockSpire_2", outside.transform, new Vector3(-45f, 9f, -40f), new Vector3(7f, 22f, 7f), Quaternion.Euler(-12f, 30f, 10f), matWastelandRock);
+
+        CreateBlock("FarWastelandHorizon", outside.transform, new Vector3(0f, -12.5f, 0f), new Vector3(450f, 1f, 450f), Quaternion.identity, matWastelandRock);
+
+        // 4. EL PATO-MECHA GIGANTE (Mecha Root con Físicas)
         GameObject mechaRoot = new GameObject("Mecha_Root");
         MechaController mechaCtrl = mechaRoot.AddComponent<MechaController>();
+
+        BoxCollider mechaCollider = mechaRoot.AddComponent<BoxCollider>();
+        mechaCollider.size = new Vector3(7.2f, 5.0f, 6.0f);
+        mechaCollider.center = new Vector3(0f, 4.5f, 0f);
 
         // Cadera / Pelvis
         GameObject pelvis = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -116,6 +196,7 @@ public static class AssembleMechaPrototype
             thigh.transform.localPosition = new Vector3(0f, -1.2f, 0f);
             thigh.transform.localScale = new Vector3(2.1f, 2.8f, 2.4f);
             if (matWall != null) thigh.GetComponent<MeshRenderer>().material = matWall;
+            Object.DestroyImmediate(thigh.GetComponent<Collider>());
 
             GameObject knee = GameObject.CreatePrimitive(PrimitiveType.Cube);
             knee.name = "Knee";
@@ -123,6 +204,7 @@ public static class AssembleMechaPrototype
             knee.transform.localPosition = new Vector3(0f, -2.5f, 0f);
             knee.transform.localScale = new Vector3(2.4f, 1.1f, 2.7f);
             if (matDuckYellow != null) knee.GetComponent<MeshRenderer>().material = matDuckYellow;
+            Object.DestroyImmediate(knee.GetComponent<Collider>());
 
             GameObject shin = GameObject.CreatePrimitive(PrimitiveType.Cube);
             shin.name = "Shin";
@@ -130,6 +212,7 @@ public static class AssembleMechaPrototype
             shin.transform.localPosition = new Vector3(0f, -3.5f, 0f);
             shin.transform.localScale = new Vector3(1.9f, 2.2f, 2.2f);
             if (matBtnBase != null) shin.GetComponent<MeshRenderer>().material = matBtnBase;
+            Object.DestroyImmediate(shin.GetComponent<Collider>());
 
             GameObject foot = GameObject.CreatePrimitive(PrimitiveType.Cube);
             foot.name = "Foot";
@@ -137,6 +220,7 @@ public static class AssembleMechaPrototype
             foot.transform.localPosition = new Vector3(0f, -4.1f, 0.6f);
             foot.transform.localScale = new Vector3(2.8f, 0.9f, 4.2f);
             if (matWall != null) foot.GetComponent<MeshRenderer>().material = matWall;
+            Object.DestroyImmediate(foot.GetComponent<Collider>());
 
             return legRoot;
         }
@@ -328,6 +412,7 @@ public static class AssembleMechaPrototype
         CreateFloorButton("RIGHT", "GIRO DER ►", new Vector3(1.7f, 0f, 0.2f), 1.0f, matBtnCyan, CockpitFloorButton.ButtonType.Hold);
         CreateFloorButton("PUNCH", "💥 PUÑO\n(CULAZO)", new Vector3(-3.7f, 0f, 0.5f), 1.35f, matBtnRose, CockpitFloorButton.ButtonType.Stomp);
         CreateFloorButton("LASER", "⚡ LÁSER\n(CULAZO)", new Vector3(3.7f, 0f, 0.5f), 1.35f, matBtnBlue, CockpitFloorButton.ButtonType.Stomp);
+        CreateFloorButton("SPAWN", "🚨 ROBOTS\n[ACTIVAR]", new Vector3(0f, 0f, -2.85f), 0.95f, matBtnRose, CockpitFloorButton.ButtonType.Toggle);
 
         // 6. CREAR EL PATO DENTRO DE LA CABINA
         GameObject duck = new GameObject("Duck");
@@ -489,10 +574,10 @@ public static class AssembleMechaPrototype
         uiDoc.visualTreeAsset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/UI/MechaHUD.uxml");
         MechaHUD hud = hudObj.AddComponent<MechaHUD>();
 
-        // Spawn inicial
-        spawner.SpawnEnemy();
-        spawner.SpawnEnemy();
-        spawner.SpawnEnemy();
+        var fontAsset = AssetDatabase.LoadAssetAtPath<UnityEngine.TextCore.Text.FontAsset>("Assets/UI/MechaFontAsset.asset");
+        SerializedObject hudSO = new SerializedObject(hud);
+        hudSO.FindProperty("hudFontAsset").objectReferenceValue = fontAsset;
+        hudSO.ApplyModifiedProperties();
 
         EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
         EditorSceneManager.SaveOpenScenes();
