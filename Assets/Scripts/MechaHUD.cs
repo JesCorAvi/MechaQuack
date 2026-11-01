@@ -25,7 +25,7 @@ public class MechaHUD : MonoBehaviour
     // Elementos de la interfaz
     private VisualElement hpBarFill;
     private Label hpText;
-    private Label laserStatusText;
+    private Label missileStatusText;
     private Label scoreText;
     private Label spawnerStatusText;
 
@@ -69,10 +69,10 @@ public class MechaHUD : MonoBehaviour
         // Destello de daño
         damageOverlay = root.Q<VisualElement>("damage-overlay");
 
-        // Panel HP y Láser
+        // Panel HP y Armas
         hpBarFill = root.Q<VisualElement>("hp-bar-fill");
         hpText = root.Q<Label>("hp-text");
-        laserStatusText = root.Q<Label>("laser-text");
+        missileStatusText = root.Q<Label>("missile-text") ?? root.Q<Label>("laser-text");
         spawnerStatusText = root.Q<Label>("spawner-status-text");
 
         // Panel Radar y Score
@@ -205,18 +205,18 @@ public class MechaHUD : MonoBehaviour
             scoreText.text = MechaController.Instance.Score.ToString("D3");
         }
 
-        if (laserStatusText != null)
+        if (missileStatusText != null)
         {
-            float cd = MechaController.Instance.LaserCooldown;
+            float cd = MechaController.Instance.MissileCooldown;
             if (cd > 0f)
             {
-                laserStatusText.text = $"LÁSER: {cd:F1}s";
-                laserStatusText.style.color = new StyleColor(new Color(0.96f, 0.62f, 0.04f));
+                missileStatusText.text = $"MISILES: {cd:F1}s";
+                missileStatusText.style.color = new StyleColor(new Color(0.96f, 0.62f, 0.04f));
             }
             else
             {
-                laserStatusText.text = "LÁSER: LISTO";
-                laserStatusText.style.color = new StyleColor(new Color(0.22f, 0.74f, 0.97f));
+                missileStatusText.text = "MISILES: [4/4] LISTOS";
+                missileStatusText.style.color = new StyleColor(new Color(0.22f, 0.74f, 0.97f));
             }
         }
     }

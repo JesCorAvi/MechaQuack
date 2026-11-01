@@ -86,11 +86,18 @@ public class EnemyBot : MonoBehaviour
     }
 
     /// <summary>
-    /// Destrucción causada por armas del Mecha (Puño o Láser).
+    /// Destrucción causada por armas del Mecha (Gatling, Misiles, Puño o Láser).
     /// </summary>
     public void DestroyByWeapon(string weaponType)
     {
-        Color debrisColor = weaponType == "LASER" ? new Color(0.2f, 0.8f, 1f) : new Color(1f, 0.3f, 0.4f);
+        Color debrisColor;
+        switch (weaponType)
+        {
+            case "GATLING": debrisColor = new Color(1.0f, 0.75f, 0.2f); break;
+            case "MISSILES": debrisColor = new Color(1.0f, 0.35f, 0.12f); break;
+            case "LASER": debrisColor = new Color(0.2f, 0.8f, 1f); break;
+            default: debrisColor = new Color(1f, 0.3f, 0.4f); break;
+        }
         VoxelExplosion.Spawn(transform.position + Vector3.up * 2f, debrisColor, 20, 0.55f, 14f);
         ProceduralAudio.Instance?.PlayExplosion();
 

@@ -21,6 +21,8 @@ public class ProceduralAudio : MonoBehaviour
     private AudioClip clipAlarm;
     private AudioClip clipAcidSizzle;
     private AudioClip clipHydraulicRecover;
+    private AudioClip clipGatling;
+    private AudioClip clipMissileLaunch;
 
     private void Awake()
     {
@@ -50,6 +52,8 @@ public class ProceduralAudio : MonoBehaviour
         clipAlarm = GenerateToneSweepClip(880f, 440f, 0.28f, WaveType.Sawtooth, 0.55f);
         clipAcidSizzle = GenerateToneSweepClip(600f, 1200f, 0.25f, WaveType.Noise, 0.5f);
         clipHydraulicRecover = GenerateToneSweepClip(60f, 320f, 0.35f, WaveType.Sawtooth, 0.8f);
+        clipGatling = GenerateToneSweepClip(360f, 65f, 0.08f, WaveType.Sawtooth, 0.65f);
+        clipMissileLaunch = GenerateToneSweepClip(140f, 620f, 0.28f, WaveType.Noise, 0.75f);
     }
 
     public void PlayQuack() => PlayClip(clipQuack, 0.9f);
@@ -59,6 +63,8 @@ public class ProceduralAudio : MonoBehaviour
     public void PlayMechaStep() => PlayClip(clipMechaStep, 0.45f);
     public void PlayPunch() => PlayClip(clipPunch, 0.85f);
     public void PlayLaser() => PlayClip(clipLaser, 0.75f);
+    public void PlayGatlingFire() => PlayClip(clipGatling, 0.65f);
+    public void PlayMissileLaunch() => PlayClip(clipMissileLaunch, 0.85f);
     public void PlayExplosion() => PlayClip(clipExplosion, 0.8f);
     public void PlayAlarm() => PlayClip(clipAlarm, 0.75f);
     public void PlayAcidSizzle() => PlayClip(clipAcidSizzle, 0.65f);
@@ -68,6 +74,8 @@ public class ProceduralAudio : MonoBehaviour
     {
         if (clip != null && audioSource != null)
         {
+            // Variación sutil de tono (SFX variation según audio-design) para evitar fatiga auditiva
+            audioSource.pitch = 1.0f + Random.Range(-0.05f, 0.05f);
             audioSource.PlayOneShot(clip, volume);
         }
     }

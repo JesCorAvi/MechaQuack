@@ -25,6 +25,12 @@ public class DuckController : MonoBehaviour
     [SerializeField] private float stompSpeed = 28f;
     [SerializeField] private float gravity = 34f;
 
+    [Header("Inclinación de Cabina (Tolerancia y Deslizamiento)")]
+    [Tooltip("Ángulo de inclinación en grados por debajo del cual el pato no resbala (tolerancia / agarre de patas de goma)")]
+    [SerializeField] private float tiltToleranceAngle = 12f;
+    [Tooltip("Aceleración máxima de deslizamiento por pendiente (siempre inferior a la aceleración de 42 m/s² del pato para poder contraatacar)")]
+    [SerializeField] private float maxTiltSlideAccel = 18f;
+
     [Header("Animación Cómica")]
     [SerializeField] private Transform visualTransform;
     [SerializeField] private Transform leftWingTransform;
@@ -140,8 +146,11 @@ public class DuckController : MonoBehaviour
                 camRight = parentCockpit.InverseTransformDirection(camRight);
             }
 
-            camFwd.y = 0f; camFwd.Normalize();
-            camRight.y = 0f; camRight.Normalize();
+            camFwd.y = 0f;
+            if (camFwd.sqrMagnitude > 0.001f) camFwd.Normalize(); else camFwd = Vector3.forward;
+
+            camRight.y = 0f;
+            if (camRight.sqrMagnitude > 0.001f) camRight.Normalize(); else camRight = Vector3.right;
 
             moveDirLocal = (camFwd * inputDir.y + camRight * inputDir.x).normalized;
         }
@@ -197,6 +206,25 @@ public class DuckController : MonoBehaviour
 
     private void UpdatePhysics(float dt)
     {
+        // 1. Efecto físico de pendiente con tolerancia (el pato no resbala en inclinaciones leves)
+        Transform parentCockpit = transform.parent;
+        Vector3 localDown = parentCockpit != null ? parentCockpit.InverseTransformDirection(Vector3.down) : Vector3.down;
+        Vector2 slopeHorizontal = new Vector2(localDown.x, localDown.z);
+        float sinTilt = Mathf.Clamp01(slopeHorizontal.magnitude);
+        float tiltAngleDeg = Mathf.Asin(sinTilt) * Mathf.Rad2Deg;
+
+        // Solo deslizar si supera la tolerancia de inclinación y está en el suelo
+        if (tiltAngleDeg > tiltToleranceAngle && isGrounded)
+        {
+            float excessAngle = tiltAngleDeg - tiltToleranceAngle;
+            float tiltFactor = Mathf.Clamp01(excessAngle / 28f); // Escala progresiva
+            Vector2 slopeDir = slopeHorizontal.normalized;
+            Vector2 slideAccel = slopeDir * (tiltFactor * maxTiltSlideAccel);
+
+            localVel.x += slideAccel.x * dt;
+            localVel.z += slideAccel.y * dt;
+        }
+
         // Fricción resbaladiza
         localVel.x *= Mathf.Pow(friction, dt * 60f);
         localVel.z *= Mathf.Pow(friction, dt * 60f);
@@ -216,10 +244,10 @@ public class DuckController : MonoBehaviour
         localPos.z += localVel.z * dt;
 
         // Límites de las paredes de la cabina
-        if (localPos.x < -cockpitHalfX) { localPos.x = -cockpitHalfX; localVel.x *= -0.4f; }
-        if (localPos.x >  cockpitHalfX) { localPos.x =  cockpitHalfX; localVel.x *= -0.4f; }
-        if (localPos.z < -cockpitHalfZ) { localPos.z = -cockpitHalfZ; localVel.z *= -0.4f; }
-        if (localPos.z >  cockpitHalfZ) { localPos.z =  cockpitHalfZ; localVel.z *= -0.4f; }
+        if (localPos.x < -cockpitHalfX) { localPos.x = -cockpitHalfX; localVel.x *= -0.3f; }
+        if (localPos.x >  cockpitHalfX) { localPos.x =  cockpitHalfX; localVel.x *= -0.3f; }
+        if (localPos.z < -cockpitHalfZ) { localPos.z = -cockpitHalfZ; localVel.z *= -0.3f; }
+        if (localPos.z >  cockpitHalfZ) { localPos.z =  cockpitHalfZ; localVel.z *= -0.3f; }
 
         // Suelo de la cabina (y = 0.5f relativo al piso)
         if (localPos.y <= 0.5f)
@@ -316,7 +344,7 @@ public class DuckController : MonoBehaviour
         if (hitBtn != null)
         {
             hitBtn.OnDuckStomp(this);
-            if (MechaController.Instance != null && (hitBtn.buttonId == "PUNCH" || hitBtn.buttonId == "LASER"))
+            if (MechaController.Instance != null && (hitBtn.buttonId == "GATLING" || hitBtn.buttonId == "MISSILES" || hitBtn.buttonId == "PUNCH" || hitBtn.buttonId == "LASER"))
             {
                 MechaController.Instance.TriggerWeaponAction(hitBtn.buttonId, hitBtn.transform.position);
             }
@@ -359,6 +387,9 @@ public class DuckController : MonoBehaviour
     public void ApplyExternalNudge(Vector3 velocityImpulse)
     {
         localVel += velocityImpulse;
+        Vector2 clamped = Vector2.ClampMagnitude(new Vector2(localVel.x, localVel.z), moveSpeed * 1.6f);
+        localVel.x = clamped.x;
+        localVel.z = clamped.y;
         if (velocityImpulse.y > 1f) isGrounded = false;
     }
 

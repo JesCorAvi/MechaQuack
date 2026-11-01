@@ -16,9 +16,10 @@ public class MechaController : MonoBehaviour
     [SerializeField] private float movePower = 48000f;
     [SerializeField] private float turnTorque = 36000f;
     [SerializeField] private float maxLinearVelocity = 16f;
-    [SerializeField] private float suspensionStrength = 82000f;
-    [SerializeField] private float suspensionDamping = 7500f;
-    [SerializeField] private float legRayLength = 6.4f;
+    [SerializeField] private float suspensionStrength = 95000f;
+    [SerializeField] private float suspensionDamping = 14000f;
+    [SerializeField] private float targetRideHeight = 1.8f;
+    [SerializeField] private float legRayLength = 3.8f;
 
     [Header("Partes Físicas y Visuales")]
     [SerializeField] private Transform cockpitTransform;
@@ -26,15 +27,24 @@ public class MechaController : MonoBehaviour
     [SerializeField] private Transform rightLegTransform;
     [SerializeField] private Transform leftArmTransform;
     [SerializeField] private Transform rightArmTransform;
-    [SerializeField] private GameObject laserBeamObject;
-    [SerializeField] private GameObject punchWaveObject;
+
+    [Header("Armas: Ametralladora (Gatling)")]
+    [SerializeField] private Transform gatlingRotorTransform;
+    [SerializeField] private Transform gatlingMuzzleTransform;
+    [SerializeField] private Light gatlingMuzzleLight;
+    [SerializeField] private float gatlingRoundsPerSecond = 12f;
+
+    [Header("Armas: Lanzamisiles (Missile Pod)")]
+    [SerializeField] private Transform missilePodTransform;
+    [SerializeField] private Transform[] missileLaunchTubes;
+    [SerializeField] private float missileCooldownDuration = 3.5f;
 
     [Header("Chasis y Salud")]
     [SerializeField] private int maxHp = 100;
     [SerializeField] private int currentHp = 100;
 
     [Header("Cooldowns y Tiempos")]
-    [SerializeField] private float laserCooldownDuration = 2.0f;
+    [SerializeField] private float laserCooldownDuration = 3.5f;
 
     // Estado interno
     private Rigidbody rb;
@@ -51,6 +61,13 @@ public class MechaController : MonoBehaviour
     private float laserTimer = 0f;
     private float shakeIntensity = 0f;
 
+    private bool isGatlingFiring = false;
+    private bool isGatlingHolding = false;
+    private float gatlingFireCooldown = 0f;
+    private float gatlingRotorSpeed = 0f;
+    private float gatlingRecoilZ = 0f;
+    private float missileRecoilZ = 0f;
+
     private float inputMove = 0f;
     private float inputTurn = 0f;
 
@@ -63,6 +80,7 @@ public class MechaController : MonoBehaviour
 
     private readonly List<CockpitFloorButton> buttons = new List<CockpitFloorButton>();
     private DuckController duckInCockpit;
+    private readonly RaycastHit[] groundRayHits = new RaycastHit[16];
 
     public int CurrentHp => currentHp;
     public int MaxHp => maxHp;
@@ -71,10 +89,13 @@ public class MechaController : MonoBehaviour
     public bool IsOverturned => isOverturned;
     public bool LeftGrounded => leftGrounded;
     public bool RightGrounded => rightGrounded;
+    public bool IsGatlingFiring => isGatlingFiring || punchTimer > 0f;
     public float LaserCooldown => currentLaserCooldown;
+    public float MissileCooldown => currentLaserCooldown;
     public float ShakeIntensity => shakeIntensity;
-    public GameObject PunchWaveObject => punchWaveObject;
-    public GameObject LaserBeamObject => laserBeamObject;
+    public void TriggerFootstepShake(float intensity) => shakeIntensity = Mathf.Max(shakeIntensity, intensity);
+    public GameObject PunchWaveObject => null;
+    public GameObject LaserBeamObject => null;
 
     private void Awake()
     {
@@ -92,12 +113,12 @@ public class MechaController : MonoBehaviour
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         rb.interpolation = RigidbodyInterpolation.Interpolate;
 
+        if (missileCooldownDuration <= 0f) missileCooldownDuration = laserCooldownDuration;
+        else laserCooldownDuration = missileCooldownDuration;
+
         if (cockpitTransform != null) initialCockpitLocalPos = cockpitTransform.localPosition;
         if (leftArmTransform != null) initialLeftArmPos = leftArmTransform.localPosition;
         if (rightArmTransform != null) initialRightArmPos = rightArmTransform.localPosition;
-
-        if (laserBeamObject != null) laserBeamObject.SetActive(false);
-        if (punchWaveObject != null) punchWaveObject.SetActive(false);
 
         duckInCockpit = FindFirstObjectByType<DuckController>();
         buttons.AddRange(GetComponentsInChildren<CockpitFloorButton>());
@@ -109,6 +130,7 @@ public class MechaController : MonoBehaviour
 
         UpdateCooldowns();
         ReadButtonsInput();
+        UpdateGatlingMachineGun();
         AnimateLegsAndArms();
         AnimateCockpitSway();
         CheckOverturnedState();
@@ -130,12 +152,13 @@ public class MechaController : MonoBehaviour
     }
 
     /// <summary>
-    /// Lee los botones pisados en la cabina para determinar dirección y giro deseados.
+    /// Lee los botones pisados en la cabina para determinar dirección, giro y disparo continuo de ametralladora.
     /// </summary>
     private void ReadButtonsInput()
     {
         inputMove = 0f;
         inputTurn = 0f;
+        isGatlingHolding = false;
 
         for (int i = 0; i < buttons.Count; i++)
         {
@@ -148,8 +171,86 @@ public class MechaController : MonoBehaviour
                 case "BWD": inputMove -= 0.7f; break;
                 case "LEFT": inputTurn -= 1.0f; break;
                 case "RIGHT": inputTurn += 1.0f; break;
+                case "GATLING":
+                case "PUNCH":
+                    if (btn.type == CockpitFloorButton.ButtonType.Hold)
+                    {
+                        isGatlingHolding = true;
+                    }
+                    break;
             }
         }
+    }
+
+    private void UpdateGatlingMachineGun()
+    {
+        if (isGatlingHolding && !isGameOver)
+        {
+            gatlingRotorSpeed = Mathf.Lerp(gatlingRotorSpeed, 1400f, Time.deltaTime * 8f);
+            gatlingFireCooldown -= Time.deltaTime;
+            if (gatlingFireCooldown <= 0f)
+            {
+                gatlingFireCooldown = 1f / Mathf.Max(1f, gatlingRoundsPerSecond);
+                FireSingleGatlingShot();
+            }
+        }
+        else if (!isGatlingFiring)
+        {
+            gatlingRotorSpeed = Mathf.Lerp(gatlingRotorSpeed, 0f, Time.deltaTime * 3.5f);
+        }
+
+        if (gatlingRotorTransform != null && Mathf.Abs(gatlingRotorSpeed) > 0.5f)
+        {
+            gatlingRotorTransform.Rotate(Vector3.forward, gatlingRotorSpeed * Time.deltaTime, Space.Self);
+        }
+
+        // Recuperación de retroceso dinámico
+        gatlingRecoilZ = Mathf.Lerp(gatlingRecoilZ, 0f, Time.deltaTime * 12f);
+        missileRecoilZ = Mathf.Lerp(missileRecoilZ, 0f, Time.deltaTime * 8f);
+    }
+
+    public void FireSingleGatlingShot()
+    {
+        if (isGameOver) return;
+
+        Vector3 muzzlePos;
+        if (gatlingMuzzleTransform != null)
+        {
+            muzzlePos = gatlingMuzzleTransform.position;
+        }
+        else if (leftArmTransform != null)
+        {
+            muzzlePos = leftArmTransform.position + leftArmTransform.forward * 4.5f;
+        }
+        else
+        {
+            muzzlePos = transform.position + transform.forward * 4f - transform.right * 3.5f + Vector3.up * 2f;
+        }
+
+        Vector3 aimDir = transform.forward;
+        // Ligera dispersión balística de ametralladora pesada
+        Vector2 spread = Random.insideUnitCircle * 0.024f;
+        aimDir = (aimDir + transform.right * spread.x + transform.up * spread.y).normalized;
+
+        GatlingTracer.Spawn(muzzlePos, aimDir);
+        ProceduralAudio.Instance?.PlayGatlingFire();
+        WindshieldHUDCrosshair.Instance?.TriggerRecoil(0.08f);
+
+        if (gatlingMuzzleLight != null)
+        {
+            StopCoroutine(nameof(MuzzleLightFlashRoutine));
+            StartCoroutine(MuzzleLightFlashRoutine());
+        }
+
+        gatlingRecoilZ = Mathf.Clamp(gatlingRecoilZ + 0.35f, 0f, 1.2f);
+        shakeIntensity = Mathf.Max(shakeIntensity, 0.12f);
+    }
+
+    private System.Collections.IEnumerator MuzzleLightFlashRoutine()
+    {
+        if (gatlingMuzzleLight != null) gatlingMuzzleLight.enabled = true;
+        yield return new WaitForSeconds(0.04f);
+        if (gatlingMuzzleLight != null) gatlingMuzzleLight.enabled = false;
     }
 
     private void FixedUpdate()
@@ -178,45 +279,66 @@ public class MechaController : MonoBehaviour
 
         float tiltAngle = Vector3.Angle(transform.up, Vector3.up);
 
-        // 1. APLICAR SUSPENSIÓN INDEPENDIENTE A CADA PATA
-        if (leftGrounded)
+        // Equilibrio gravitacional exacto por pata (peso = 8000kg * 9.81 / 2 = 39240N)
+        float baseEquilibriumForce = (rb.mass * 9.81f) * 0.5f;
+
+        // Integrar la cota de la pata si está apoyada en un escalón/roca para elevar el cuerpo
+        float effectiveDistL = hitL.distance;
+        if (leftLegTransform != null)
         {
-            float compression = Mathf.Clamp01((legRayLength - hitL.distance) / 1.8f);
+            var pLegL = leftLegTransform.GetComponent<ProceduralLeg>();
+            if (pLegL != null && pLegL.IsGrounded)
+            {
+                float footGroundY = pLegL.CurrentFootPosition.y - pLegL.AnkleToSoleOffset;
+                float footDist = leftLegRoot.y - footGroundY;
+                if (footDist < effectiveDistL) effectiveDistL = footDist;
+            }
+        }
+
+        float effectiveDistR = hitR.distance;
+        if (rightLegTransform != null)
+        {
+            var pLegR = rightLegTransform.GetComponent<ProceduralLeg>();
+            if (pLegR != null && pLegR.IsGrounded)
+            {
+                float footGroundY = pLegR.CurrentFootPosition.y - pLegR.AnkleToSoleOffset;
+                float footDist = rightLegRoot.y - footGroundY;
+                if (footDist < effectiveDistR) effectiveDistR = footDist;
+            }
+        }
+
+        // 1. APLICAR SUSPENSIÓN CALIBRADA (Mantiene el mecha a la cota exacta para que los pies pisen el suelo)
+        if (leftGrounded && effectiveDistL < legRayLength)
+        {
+            float compression = targetRideHeight - effectiveDistL;
             float vertVel = Vector3.Dot(rb.GetPointVelocity(leftLegRoot), transform.up);
-            float springForce = (compression * suspensionStrength) - (vertVel * suspensionDamping);
+            float springForce = baseEquilibriumForce + (compression * suspensionStrength) - (vertVel * suspensionDamping);
             rb.AddForceAtPosition(transform.up * Mathf.Max(0f, springForce), leftLegRoot, ForceMode.Force);
         }
 
-        if (rightGrounded)
+        if (rightGrounded && effectiveDistR < legRayLength)
         {
-            float compression = Mathf.Clamp01((legRayLength - hitR.distance) / 1.8f);
+            float compression = targetRideHeight - effectiveDistR;
             float vertVel = Vector3.Dot(rb.GetPointVelocity(rightLegRoot), transform.up);
-            float springForce = (compression * suspensionStrength) - (vertVel * suspensionDamping);
+            float springForce = baseEquilibriumForce + (compression * suspensionStrength) - (vertVel * suspensionDamping);
             rb.AddForceAtPosition(transform.up * Mathf.Max(0f, springForce), rightLegRoot, ForceMode.Force);
         }
 
-        // 2. FÍSICAS DE DESEQUILIBRIO (SI UNA PATA QUEDA FUERA DEL TERRENO/PUENTE)
-        if (leftGrounded && !rightGrounded && tiltAngle < 75f)
-        {
-            // Pata derecha en el vacío: el mecha pierde apoyo y el peso lo hace inclinarse y caer hacia la derecha
-            rb.AddTorque(transform.forward * 28000f, ForceMode.Force);
-            rb.AddForce(transform.right * 14000f, ForceMode.Force); // Deslizamiento hacia el borde
+        // 2. FÍSICAS DE DESEQUILIBRIO (Solo si una pata está en el abismo/vacío, no durante pasos de caminata)
+        bool legSteppingL = leftLegTransform != null && leftLegTransform.GetComponent<ProceduralLeg>() != null && leftLegTransform.GetComponent<ProceduralLeg>().IsStepping;
+        bool legSteppingR = rightLegTransform != null && rightLegTransform.GetComponent<ProceduralLeg>() != null && rightLegTransform.GetComponent<ProceduralLeg>().IsStepping;
 
-            if (duckInCockpit != null && duckInCockpit.IsGrounded)
-            {
-                duckInCockpit.ApplyExternalNudge(new Vector3(2.4f, 0f, 0f));
-            }
+        if (leftGrounded && !rightGrounded && !legSteppingR && tiltAngle < 75f)
+        {
+            // Pata derecha en el vacío: el mecha pierde apoyo y el peso lo hace inclinarse hacia la derecha
+            rb.AddTorque(transform.forward * 18000f, ForceMode.Force);
+            rb.AddForce(transform.right * 9000f, ForceMode.Force);
         }
-        else if (!leftGrounded && rightGrounded && tiltAngle < 75f)
+        else if (!leftGrounded && rightGrounded && !legSteppingL && tiltAngle < 75f)
         {
             // Pata izquierda en el vacío: el mecha se desestabiliza hacia la izquierda
-            rb.AddTorque(-transform.forward * 28000f, ForceMode.Force);
-            rb.AddForce(-transform.right * 14000f, ForceMode.Force);
-
-            if (duckInCockpit != null && duckInCockpit.IsGrounded)
-            {
-                duckInCockpit.ApplyExternalNudge(new Vector3(-2.4f, 0f, 0f));
-            }
+            rb.AddTorque(-transform.forward * 18000f, ForceMode.Force);
+            rb.AddForce(-transform.right * 9000f, ForceMode.Force);
         }
 
         // 3. ESTABILIZACIÓN VERTICAL (Solo cuando ambas patas están firmemente apoyadas y no está volcado)
@@ -246,7 +368,7 @@ public class MechaController : MonoBehaviour
             if (horizVel.magnitude > maxLinearVelocity)
             {
                 Vector3 clamped = horizVel.normalized * maxLinearVelocity;
-                rb.linearVelocity = new Vector3(clamped.x, rb.linearVelocity.y, clamped.y);
+                rb.linearVelocity = new Vector3(clamped.x, rb.linearVelocity.y, clamped.z);
             }
         }
     }
@@ -254,17 +376,19 @@ public class MechaController : MonoBehaviour
     private bool CheckFootGrounded(Vector3 probeOrigin, out RaycastHit groundHit, int mask)
     {
         groundHit = default;
-        var hits = Physics.RaycastAll(probeOrigin, -transform.up, legRayLength, mask);
+        int hitCount = Physics.RaycastNonAlloc(probeOrigin, -transform.up, groundRayHits, legRayLength, mask, QueryTriggerInteraction.Ignore);
         float closestDist = float.MaxValue;
         bool found = false;
 
-        for (int i = 0; i < hits.Length; i++)
+        for (int i = 0; i < hitCount; i++)
         {
-            if (hits[i].collider.transform.IsChildOf(transform)) continue;
-            if (hits[i].distance < closestDist)
+            var hit = groundRayHits[i];
+            if (hit.collider == null) continue;
+            if (hit.collider.transform.IsChildOf(transform)) continue;
+            if (hit.distance < closestDist)
             {
-                closestDist = hits[i].distance;
-                groundHit = hits[i];
+                closestDist = hit.distance;
+                groundHit = hit;
                 found = true;
             }
         }
@@ -337,32 +461,36 @@ public class MechaController : MonoBehaviour
 
     private void AnimateLegsAndArms()
     {
-        bool isWalking = (Mathf.Abs(inputMove) > 0.01f || Mathf.Abs(inputTurn) > 0.01f) && (leftGrounded || rightGrounded) && !isOverturned;
-
-        if (isWalking)
+        bool hasProceduralLegs = (leftLegTransform != null && leftLegTransform.GetComponent<ProceduralLeg>() != null);
+        if (!hasProceduralLegs)
         {
-            walkCycle += Time.deltaTime * 7.5f;
-            stepTimer += Time.deltaTime;
+            bool isWalking = (Mathf.Abs(inputMove) > 0.01f || Mathf.Abs(inputTurn) > 0.01f) && (leftGrounded || rightGrounded) && !isOverturned;
 
-            if (stepTimer >= 0.42f)
+            if (isWalking)
             {
-                stepTimer = 0f;
-                ProceduralAudio.Instance?.PlayMechaStep();
+                walkCycle += Time.deltaTime * 7.5f;
+                stepTimer += Time.deltaTime;
 
-                if (duckInCockpit != null && duckInCockpit.IsGrounded)
+                if (stepTimer >= 0.42f)
                 {
-                    duckInCockpit.ApplyExternalNudge(new Vector3(Mathf.Sin(walkCycle) * 1.6f, 0f, 0f));
-                }
-            }
+                    stepTimer = 0f;
+                    ProceduralAudio.Instance?.PlayMechaStep();
 
-            float swing = Mathf.Sin(walkCycle) * 26f;
-            if (leftLegTransform != null) leftLegTransform.localRotation = Quaternion.Euler(swing, 0f, 0f);
-            if (rightLegTransform != null) rightLegTransform.localRotation = Quaternion.Euler(-swing, 0f, 0f);
-        }
-        else
-        {
-            if (leftLegTransform != null) leftLegTransform.localRotation = Quaternion.Slerp(leftLegTransform.localRotation, Quaternion.identity, Time.deltaTime * 8f);
-            if (rightLegTransform != null) rightLegTransform.localRotation = Quaternion.Slerp(rightLegTransform.localRotation, Quaternion.identity, Time.deltaTime * 8f);
+                    if (duckInCockpit != null && duckInCockpit.IsGrounded)
+                    {
+                        duckInCockpit.ApplyExternalNudge(new Vector3(Mathf.Sin(walkCycle) * 1.6f, 0f, 0f));
+                    }
+                }
+
+                float swing = Mathf.Sin(walkCycle) * 26f;
+                if (leftLegTransform != null) leftLegTransform.localRotation = Quaternion.Euler(swing, 0f, 0f);
+                if (rightLegTransform != null) rightLegTransform.localRotation = Quaternion.Euler(-swing, 0f, 0f);
+            }
+            else
+            {
+                if (leftLegTransform != null) leftLegTransform.localRotation = Quaternion.Slerp(leftLegTransform.localRotation, Quaternion.identity, Time.deltaTime * 8f);
+                if (rightLegTransform != null) rightLegTransform.localRotation = Quaternion.Slerp(rightLegTransform.localRotation, Quaternion.identity, Time.deltaTime * 8f);
+            }
         }
 
         AnimateArms();
@@ -372,9 +500,31 @@ public class MechaController : MonoBehaviour
     {
         if (cockpitTransform == null) return;
 
+        if (GetComponent<MechBodyStabilizer>() != null)
+        {
+            if (shakeIntensity > 0.01f)
+            {
+                // Vibración armónica basada en trauma cuadrático (game-feel suave y contundente, sin ruido blanco estático)
+                float trauma = Mathf.Clamp01(shakeIntensity);
+                float shakeMag = trauma * trauma * 0.22f;
+                float t = Time.time * 34f;
+                float stabShakeX = Mathf.Sin(t * 1.7f) * shakeMag;
+                float stabShakeY = Mathf.Cos(t * 2.3f) * shakeMag;
+                cockpitTransform.localPosition = initialCockpitLocalPos + new Vector3(stabShakeX, stabShakeY, 0f);
+            }
+            else
+            {
+                cockpitTransform.localPosition = initialCockpitLocalPos;
+            }
+            return;
+        }
+
         float bobY = Mathf.Abs(Mathf.Sin(walkCycle)) * 0.18f;
-        float shakeX = Random.Range(-1f, 1f) * shakeIntensity * 0.3f;
-        float shakeY = Random.Range(-1f, 1f) * shakeIntensity * 0.3f;
+        float traumaLeg = Mathf.Clamp01(shakeIntensity);
+        float shakeMagLeg = traumaLeg * traumaLeg * 0.32f;
+        float tLeg = Time.time * 34f;
+        float shakeX = Mathf.Sin(tLeg * 1.7f) * shakeMagLeg;
+        float shakeY = Mathf.Cos(tLeg * 2.3f) * shakeMagLeg;
 
         cockpitTransform.localPosition = initialCockpitLocalPos + new Vector3(shakeX, bobY + shakeY, 0f);
 
@@ -384,35 +534,16 @@ public class MechaController : MonoBehaviour
 
     private void AnimateArms()
     {
-        // Brazo izquierdo (Puño)
+        // Brazo izquierdo (Ametralladora Gatling)
         if (leftArmTransform != null)
         {
-            if (punchTimer > 0f)
-            {
-                float progress = Mathf.Sin((punchTimer / 0.45f) * Mathf.PI);
-                leftArmTransform.localPosition = initialLeftArmPos + new Vector3(0f, 0f, progress * 12f);
-                if (punchWaveObject != null) punchWaveObject.SetActive(true);
-            }
-            else
-            {
-                leftArmTransform.localPosition = initialLeftArmPos;
-                if (punchWaveObject != null) punchWaveObject.SetActive(false);
-            }
+            leftArmTransform.localPosition = initialLeftArmPos - new Vector3(0f, 0f, gatlingRecoilZ);
         }
 
-        // Brazo derecho (Cañón Láser)
+        // Brazo derecho (Pod Lanzamisiles)
         if (rightArmTransform != null)
         {
-            if (laserTimer > 0f)
-            {
-                rightArmTransform.localPosition = initialRightArmPos - new Vector3(0f, 0f, 1.2f);
-                if (laserBeamObject != null) laserBeamObject.SetActive(true);
-            }
-            else
-            {
-                rightArmTransform.localPosition = initialRightArmPos;
-                if (laserBeamObject != null) laserBeamObject.SetActive(false);
-            }
+            rightArmTransform.localPosition = initialRightArmPos - new Vector3(0f, 0f, missileRecoilZ);
         }
     }
 
@@ -420,80 +551,101 @@ public class MechaController : MonoBehaviour
     {
         if (isGameOver) return;
 
-        if (weaponId == "PUNCH")
+        if (weaponId == "GATLING" || weaponId == "PUNCH")
         {
-            punchTimer = 0.45f;
-            shakeIntensity = 0.5f;
-            ProceduralAudio.Instance?.PlayPunch();
-            Debug.Log("[GAME] ¡PUÑETAZO activado! Onda expansiva proyectada");
-
-            FloatingText.Spawn(buttonWorldPos + Vector3.up * 1.5f, "💥 ¡MEGA PUÑO!", new Color(1f, 0.25f, 0.4f), 0.35f);
-
-            int destroyedCount = 0;
-            var enemies = EnemySpawner.Instance != null ? EnemySpawner.Instance.ActiveEnemies : null;
-            if (enemies != null)
-            {
-                for (int i = enemies.Count - 1; i >= 0; i--)
-                {
-                    var e = enemies[i];
-                    if (e == null) continue;
-
-                    Vector3 toEnemy = e.transform.position - transform.position;
-                    toEnemy.y = 0f;
-                    float dist = toEnemy.magnitude;
-                    float dot = Vector3.Dot(transform.forward, toEnemy.normalized);
-
-                    if (dist < 42f && dot > 0.25f)
-                    {
-                        e.DestroyByWeapon("PUNCH");
-                        destroyedCount++;
-                    }
-                }
-            }
-
-            if (destroyedCount > 0)
-            {
-                FloatingText.Spawn(transform.position + transform.forward * 4f + Vector3.up * 7f,
-                    $"¡{destroyedCount} BOTS APLASTADOS!", Color.yellow, 0.4f);
-            }
+            StopCoroutine(nameof(GatlingBurstRoutine));
+            StartCoroutine(GatlingBurstRoutine(buttonWorldPos));
         }
-        else if (weaponId == "LASER")
+        else if (weaponId == "MISSILES" || weaponId == "LASER")
         {
             if (currentLaserCooldown > 0f)
             {
                 FloatingText.Spawn(buttonWorldPos + Vector3.up * 1.5f,
-                    $"⏳ RECARGANDO ({currentLaserCooldown:F1}s)", new Color(0.3f, 0.8f, 1f), 0.3f);
+                    $"⏳ RECARGANDO MISILES ({currentLaserCooldown:F1}s)", new Color(0.3f, 0.8f, 1f), 0.3f);
                 return;
             }
 
+            currentLaserCooldown = missileCooldownDuration;
             laserTimer = 0.45f;
-            currentLaserCooldown = laserCooldownDuration;
-            shakeIntensity = 0.4f;
-            ProceduralAudio.Instance?.PlayLaser();
-            Debug.Log($"[GAME] ¡LÁSER disparado! Cooldown iniciado: {currentLaserCooldown:F1}s");
-
-            FloatingText.Spawn(buttonWorldPos + Vector3.up * 1.5f, "⚡ ¡CAÑÓN LÁSER!", new Color(0.2f, 0.9f, 1f), 0.35f);
-
-            var enemies = EnemySpawner.Instance != null ? EnemySpawner.Instance.ActiveEnemies : null;
-            if (enemies != null)
-            {
-                for (int i = enemies.Count - 1; i >= 0; i--)
-                {
-                    var e = enemies[i];
-                    if (e == null) continue;
-
-                    Vector3 toEnemy = e.transform.position - transform.position;
-                    toEnemy.y = 0f;
-                    float forwardProj = Vector3.Dot(toEnemy, transform.forward);
-                    float perpDist = Vector3.Cross(transform.forward, toEnemy).magnitude;
-
-                    if (forwardProj > 0f && forwardProj < 145f && perpDist < 9.5f)
-                    {
-                        e.DestroyByWeapon("LASER");
-                    }
-                }
-            }
+            StopCoroutine(nameof(MissileSalvoRoutine));
+            StartCoroutine(MissileSalvoRoutine(buttonWorldPos));
         }
+    }
+
+    private System.Collections.IEnumerator GatlingBurstRoutine(Vector3 buttonPos)
+    {
+        isGatlingFiring = true;
+        punchTimer = 0.5f;
+        gatlingRotorSpeed = 1600f;
+        shakeIntensity = 0.35f;
+
+        FloatingText.Spawn(buttonPos + Vector3.up * 1.5f, "💥 ¡RÁFAGA GATLING!", new Color(1f, 0.65f, 0.2f), 0.35f);
+
+        int burstRounds = 10;
+        float delay = 0.045f;
+
+        for (int i = 0; i < burstRounds; i++)
+        {
+            FireSingleGatlingShot();
+            yield return new WaitForSeconds(delay);
+        }
+
+        isGatlingFiring = false;
+    }
+
+    private System.Collections.IEnumerator MissileSalvoRoutine(Vector3 buttonPos)
+    {
+        FloatingText.Spawn(buttonPos + Vector3.up * 1.5f, "🚀 ¡SALVA DE MISILES!", new Color(0.2f, 0.9f, 1f), 0.35f);
+
+        Transform lockedTarget = WindshieldHUDCrosshair.Instance != null ? WindshieldHUDCrosshair.Instance.CurrentLockedTarget : null;
+
+        int numMissiles = (missileLaunchTubes != null && missileLaunchTubes.Length > 0) ? missileLaunchTubes.Length : 4;
+        for (int i = 0; i < numMissiles; i++)
+        {
+            Vector3 spawnPos;
+            Quaternion spawnRot = (missilePodTransform != null) ? missilePodTransform.rotation : transform.rotation;
+
+            if (missileLaunchTubes != null && i < missileLaunchTubes.Length && missileLaunchTubes[i] != null)
+            {
+                spawnPos = missileLaunchTubes[i].position;
+                spawnRot = missileLaunchTubes[i].rotation;
+            }
+            else if (rightArmTransform != null)
+            {
+                Vector3 offset = new Vector3((i % 2 == 0 ? -0.5f : 0.5f), (i < 2 ? 0.5f : -0.5f), 3.2f);
+                spawnPos = rightArmTransform.TransformPoint(offset);
+            }
+            else
+            {
+                spawnPos = transform.position + transform.forward * 4f + transform.right * 4f + Vector3.up * 3f;
+            }
+
+            MissileProjectile.Spawn(spawnPos, spawnRot, lockedTarget);
+            ProceduralAudio.Instance?.PlayMissileLaunch();
+            WindshieldHUDCrosshair.Instance?.TriggerRecoil(0.25f);
+
+            missileRecoilZ = Mathf.Clamp(missileRecoilZ + 0.45f, 0f, 1.5f);
+            shakeIntensity = Mathf.Max(shakeIntensity, 0.35f);
+
+            yield return new WaitForSeconds(0.085f);
+        }
+    }
+
+    /// <summary>
+    /// Microcongelación de fotogramas (Hit-Stop) según la técnica de game-feel
+    /// para maximizar el impacto físico visceral de las armas pesadas.
+    /// </summary>
+    public void TriggerHitStop(float duration = 0.045f, float slow = 0.05f)
+    {
+        StopCoroutine(nameof(HitStopRoutine));
+        StartCoroutine(HitStopRoutine(duration, slow));
+    }
+
+    private System.Collections.IEnumerator HitStopRoutine(float duration, float slow)
+    {
+        Time.timeScale = slow;
+        yield return new WaitForSecondsRealtime(duration);
+        Time.timeScale = 1f;
     }
 
     public void AddScore(int points)
@@ -543,6 +695,11 @@ public class MechaController : MonoBehaviour
         currentLaserCooldown = 0f;
         punchTimer = 0f;
         laserTimer = 0f;
+        isGatlingFiring = false;
+        isGatlingHolding = false;
+        gatlingRotorSpeed = 0f;
+        gatlingRecoilZ = 0f;
+        missileRecoilZ = 0f;
         shakeIntensity = 0f;
         walkCycle = 0f;
         stepTimer = 0f;
@@ -563,9 +720,6 @@ public class MechaController : MonoBehaviour
         if (leftLegTransform != null) leftLegTransform.localRotation = Quaternion.identity;
         if (rightLegTransform != null) rightLegTransform.localRotation = Quaternion.identity;
 
-        if (laserBeamObject != null) laserBeamObject.SetActive(false);
-        if (punchWaveObject != null) punchWaveObject.SetActive(false);
-
         for (int i = 0; i < buttons.Count; i++)
         {
             if (buttons[i] != null) buttons[i].ResetButton();
@@ -581,7 +735,7 @@ public class MechaController : MonoBehaviour
 
         if (duckInCockpit != null)
         {
-            duckInCockpit.ResetPosition(new Vector3(0f, 0.6f, -0.2f));
+            duckInCockpit.ResetPosition(new Vector3(0f, 0.6f, 0.35f));
         }
 
         CockpitCameraController.Instance?.ResetCamera();

@@ -122,8 +122,8 @@ public class CockpitCameraController : MonoBehaviour
             }
         }
 
-        // Suavizado dinámico del zoom
-        currentDistance = Mathf.Lerp(currentDistance, targetDistance, Time.deltaTime * zoomSmoothing);
+        // Suavizado dinámico del zoom independiente de los FPS
+        currentDistance = Mathf.Lerp(currentDistance, targetDistance, 1f - Mathf.Exp(-zoomSmoothing * Time.deltaTime));
     }
 
     /// <summary>
@@ -183,7 +183,27 @@ public class CockpitCameraController : MonoBehaviour
         Vector3 worldCamPos = cockpitTr != null ? cockpitTr.TransformPoint(camLocalPos) : camLocalPos;
         Vector3 worldLookTarget = cockpitTr != null ? cockpitTr.TransformPoint(lookTargetLocal) : lookTargetLocal;
 
-        transform.position = Vector3.Lerp(transform.position, worldCamPos, Time.deltaTime * 24f);
+        // Anti-recorte de cámara (Camera Collision Push-In según camera-systems)
+        // Evita que al alejar la cámara se incruste dentro de rocas, pilares o rascacielos
+        Vector3 camToTarget = worldCamPos - worldLookTarget;
+        float desiredDist = camToTarget.magnitude;
+        if (desiredDist > 0.05f)
+        {
+            Vector3 camDir = camToTarget / desiredDist;
+            int groundMask = ~LayerMask.GetMask("Player", "Ignore Raycast");
+            if (Physics.SphereCast(worldLookTarget, 0.28f, camDir, out RaycastHit camHit, desiredDist, groundMask, QueryTriggerInteraction.Ignore))
+            {
+                if (mechaRoot == null || !camHit.collider.transform.IsChildOf(mechaRoot))
+                {
+                    float safeDist = Mathf.Max(minDistance, camHit.distance - 0.15f);
+                    worldCamPos = worldLookTarget + camDir * safeDist;
+                }
+            }
+        }
+
+        // Suavizado exponencial independiente de la tasa de refresco (Pattern 2 de camera-systems)
+        float smoothT = 1f - Mathf.Exp(-24f * Time.deltaTime);
+        transform.position = Vector3.Lerp(transform.position, worldCamPos, smoothT);
         transform.LookAt(worldLookTarget);
     }
 

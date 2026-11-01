@@ -252,52 +252,51 @@ public class AutoPlayTester : MonoBehaviour
         yield return new WaitForSeconds(0.4f);
 
         // =====================================================================
-        // TEST 5: ARMA PUÑETAZO CON CULAZO AÉREO (BOTÓN PUNCH)
+        // TEST 5: ARMA PRIMARIA (AMETRALLADORA GATLING / PUÑO)
         // =====================================================================
         totalTests++;
-        var btnPunch = GetButton("PUNCH");
+        var btnPunch = GetButton("GATLING") ?? GetButton("PUNCH");
         if (btnPunch != null)
         {
             duck.ForceTriggerStompAt(new Vector3(-3.7f, 0.5f, 0.5f));
             btnPunch.OnDuckStomp(duck);
-            mecha.TriggerWeaponAction("PUNCH", btnPunch.transform.position);
+            mecha.TriggerWeaponAction(btnPunch.buttonId, btnPunch.transform.position);
 
             yield return new WaitForSeconds(0.15f);
             duck.TeleportToLocal(new Vector3(0f, 0.45f, 0f));
 
-            bool waveActive = mecha.PunchWaveObject != null && mecha.PunchWaveObject.activeSelf;
-            if (waveActive || mecha.ShakeIntensity > 0.1f)
+            bool waveActive = mecha.IsGatlingFiring;
+            if (waveActive || mecha.ShakeIntensity > 0.05f)
             {
                 passedTests++;
-                Debug.Log($"[TEST] OK: Arma Mega Puño activada por culazo (Onda expansiva: {waveActive}, Shake: {mecha.ShakeIntensity:F2})");
+                Debug.Log($"[TEST] OK: Arma primaria ({btnPunch.buttonId}) activada por culazo (Firing: {waveActive}, Shake: {mecha.ShakeIntensity:F2})");
             }
             else
             {
-                Debug.LogWarning("[TEST] FAIL: Mega Puño no disparó onda o sacudida");
+                Debug.LogWarning($"[TEST] FAIL: Arma {btnPunch.buttonId} no disparó onda o sacudida");
             }
         }
         else
         {
-            Debug.LogWarning("[TEST] FAIL: Botón PUNCH no encontrado");
+            Debug.LogWarning("[TEST] FAIL: Botón GATLING/PUNCH no encontrado");
         }
 
         yield return new WaitForSeconds(0.4f);
 
         // =====================================================================
-        // TEST 6: CAÑÓN LÁSER Y SISTEMA DE COOLDOWN (BOTÓN LASER)
+        // TEST 6: ARMA SECUNDARIA Y COOLDOWN (LANZAMISILES / LÁSER)
         // =====================================================================
         totalTests++;
-        var btnLaser = GetButton("LASER");
+        var btnLaser = GetButton("MISSILES") ?? GetButton("LASER");
         if (btnLaser != null)
         {
             duck.ForceTriggerStompAt(new Vector3(3.7f, 0.5f, 0.5f));
             btnLaser.OnDuckStomp(duck);
-            mecha.TriggerWeaponAction("LASER", btnLaser.transform.position);
+            mecha.TriggerWeaponAction(btnLaser.buttonId, btnLaser.transform.position);
 
             yield return new WaitForSeconds(0.12f);
 
             float initialCd = mecha.LaserCooldown;
-            bool beamActive = mecha.LaserBeamObject != null && mecha.LaserBeamObject.activeSelf;
 
             yield return new WaitForSeconds(0.45f);
             duck.TeleportToLocal(new Vector3(0f, 0.45f, 0f));
@@ -306,16 +305,16 @@ public class AutoPlayTester : MonoBehaviour
             if (initialCd > 1.2f && afterCd < initialCd)
             {
                 passedTests++;
-                Debug.Log($"[TEST] OK: Cañón Láser y cooldown verificados (Rayo: {beamActive}, Cooldown: {initialCd:F1}s -> {afterCd:F1}s)");
+                Debug.Log($"[TEST] OK: Arma secundaria ({btnLaser.buttonId}) y cooldown verificados (Cooldown: {initialCd:F1}s -> {afterCd:F1}s)");
             }
             else
             {
-                Debug.LogWarning($"[TEST] FAIL: Comportamiento erróneo del Láser (Inicial: {initialCd:F1}s, Después: {afterCd:F1}s)");
+                Debug.LogWarning($"[TEST] FAIL: Comportamiento erróneo del cooldown de {btnLaser.buttonId} (Inicial: {initialCd:F1}s, Después: {afterCd:F1}s)");
             }
         }
         else
         {
-            Debug.LogWarning("[TEST] FAIL: Botón LASER no encontrado");
+            Debug.LogWarning("[TEST] FAIL: Botón MISSILES/LASER no encontrado");
         }
 
         yield return new WaitForSeconds(0.3f);

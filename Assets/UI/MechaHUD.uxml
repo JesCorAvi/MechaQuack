@@ -21,7 +21,7 @@
                 </ui:VisualElement>
                 
                 <ui:VisualElement class="status-row">
-                    <ui:Label name="laser-text" text="LÁSER: LISTO" class="laser-status-text" />
+                    <ui:Label name="laser-text" text="MISILES: [4/4] LISTOS" class="laser-status-text" />
                     <ui:Label name="spawner-status-text" text="🛡️ EXPLORACIÓN SEGURA" class="spawner-status-badge" />
                 </ui:VisualElement>
             </ui:VisualElement>
@@ -48,7 +48,7 @@
                 <ui:Label text="MANUAL DE PILOTAJE + CÁMARA LIBRE 360º" class="manual-title" />
                 <ui:Label text="• WASD / Flechas: Moverse por la cabina (relativo a cámara)" class="manual-line" />
                 <ui:Label text="• Espacio: Saltar entre botones físicos" class="manual-line" />
-                <ui:Label text="• E / Shift / Clic Izq (Aire): ¡CULAZO! (Activa PUÑO y LÁSER)" class="manual-line" />
+                <ui:Label text="• E / Shift / Clic Izq (Aire): ¡CULAZO! (Dispara GATLING y MISILES)" class="manual-line" />
                 <ui:Label text="• Q / Clic Der: ¡CUAC! (Graznido cómico)" class="manual-line" />
                 <ui:Label text="• Arrastrar Ratón: Órbita 360º | Rueda: Zoom | C: Alternar Cámara" class="manual-line" />
             </ui:VisualElement>
