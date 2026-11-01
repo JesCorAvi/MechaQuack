@@ -17,12 +17,12 @@ public class CockpitCameraController : MonoBehaviour
     [SerializeField] private Transform mechaRoot;
 
     [Header("Configuración Órbita Libre (Modo 0)")]
-    [SerializeField] private float currentDistance = 4.8f;
-    [SerializeField] private float targetDistance = 4.8f;
-    [SerializeField] private float minDistance = 2.2f;
-    [SerializeField] private float maxDistance = 42.0f; // Permite ver todo el Mecha exterior
+    [SerializeField] private float currentDistance = 7.5f;
+    [SerializeField] private float targetDistance = 7.5f;
+    [SerializeField] private float minDistance = 2.8f;
+    [SerializeField] private float maxDistance = 160.0f; // Permite ver todo el Mecha exterior colosal
     [SerializeField] private float mouseSensitivity = 2.4f;
-    [SerializeField] private float zoomStep = 3.2f;
+    [SerializeField] private float zoomStep = 4.5f;
     [SerializeField] private float zoomSmoothing = 14f;
 
     [Header("Modo Actual")]
@@ -57,8 +57,8 @@ public class CockpitCameraController : MonoBehaviour
 
         yaw = 0f;
         pitch = 24f;
-        currentDistance = 4.8f;
-        targetDistance = 4.8f;
+        currentDistance = 7.5f;
+        targetDistance = 7.5f;
     }
 
     private void Update()

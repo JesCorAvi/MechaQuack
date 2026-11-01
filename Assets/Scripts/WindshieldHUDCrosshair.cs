@@ -20,8 +20,8 @@ public class WindshieldHUDCrosshair : MonoBehaviour
     [SerializeField] private Color firingColor = new Color(1.0f, 0.75f, 0.15f, 0.95f);  // Ámbar disparo
 
     [Header("Configuración de Escaneo")]
-    [SerializeField] private float scanRange = 120f;
-    [SerializeField] private float reticleRadius = 0.45f;
+    [SerializeField] private float scanRange = 260f;
+    [SerializeField] private float reticleRadius = 0.55f;
 
     // Elementos visuales
     private Transform reticleCenterRoot;

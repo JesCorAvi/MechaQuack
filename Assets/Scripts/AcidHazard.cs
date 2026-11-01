@@ -28,7 +28,7 @@ public class AcidHazard : MonoBehaviour
 
                 ProceduralAudio.Instance?.PlayAcidSizzle();
 
-                Vector3 textPos = mecha.transform.position + Vector3.up * 8f;
+                Vector3 textPos = mecha.transform.position + Vector3.up * 16f;
                 FloatingText.Spawn(textPos, "¡PELIGRO: RÍO ÁCIDO CORROSIVO!", new Color(0.2f, 1f, 0.4f), 0.38f);
             }
         }

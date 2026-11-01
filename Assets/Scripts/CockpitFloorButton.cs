@@ -18,6 +18,7 @@ public class CockpitFloorButton : MonoBehaviour
     public string label = "▲ AVANZAR";
     public ButtonType type = ButtonType.Hold;
     public Color buttonColor = Color.green;
+    public float detectionRadius = 1.6f;
 
     [Header("Mecánicas Visuales")]
     [SerializeField] private Transform capTransform;
@@ -111,12 +112,12 @@ public class CockpitFloorButton : MonoBehaviour
         }
         else if (type == ButtonType.Toggle)
         {
-            if (stompCooldownTimer <= 0f)
+            // Para botones tipo Toggle, el accionamiento se realiza mediante pisotón/culazo firme (OnDuckStomp)
+            // para evitar conmutaciones accidentales al simplemente caminar por el pasillo central.
+            if (hintCooldownTimer <= 0f)
             {
-                stompCooldownTimer = 1.2f;
-                isPressed = !isPressed;
-                Debug.Log($"[GAME] Botón {buttonId} conmutado a: {isPressed}");
-                ExecuteToggleAction();
+                hintCooldownTimer = 1.8f;
+                FloatingText.Spawn(transform.position + Vector3.up * 1.2f, "¡CULAZO (E) PARA ACTIVAR/PAUSAR!", Color.cyan, 0.22f);
             }
         }
     }
@@ -164,12 +165,16 @@ public class CockpitFloorButton : MonoBehaviour
         }
         else if (type == ButtonType.Toggle)
         {
-            stompCooldownTimer = 1.2f;
-            isPressed = !isPressed;
-            ExecuteToggleAction();
-            ProceduralAudio.Instance?.PlayStomp();
-            Debug.Log($"[GAME] Botón conmutador {buttonId} activado con culazo (Estado: {isPressed})");
-            return true;
+            if (stompCooldownTimer <= 0f)
+            {
+                stompCooldownTimer = 0.35f;
+                isPressed = !isPressed;
+                ExecuteToggleAction();
+                ProceduralAudio.Instance?.PlayStomp();
+                Debug.Log($"[GAME] Botón conmutador {buttonId} activado con culazo (Estado: {isPressed})");
+                return true;
+            }
+            return false;
         }
 
         return false;

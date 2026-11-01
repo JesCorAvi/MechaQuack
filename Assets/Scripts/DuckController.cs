@@ -11,19 +11,19 @@ public class DuckController : MonoBehaviour
     public static DuckController Instance { get; private set; }
 
     [Header("Límites de la Cabina")]
-    [SerializeField] private float cockpitHalfX = 4.8f;
-    [SerializeField] private float cockpitHalfZ = 3.5f;
+    [SerializeField] private float cockpitHalfX = 10.2f;
+    [SerializeField] private float cockpitHalfZ = 7.8f;
 
     [Header("Movimiento")]
-    [SerializeField] private float moveSpeed = 8.5f;
-    [SerializeField] private float acceleration = 42f;
+    [SerializeField] private float moveSpeed = 14.0f;
+    [SerializeField] private float acceleration = 60f;
     [SerializeField] private float friction = 0.88f; // Resbaladizo cómico
     [SerializeField] private float rotationSpeed = 16f;
 
     [Header("Salto y Culazo")]
-    [SerializeField] private float jumpForce = 13.5f;
-    [SerializeField] private float stompSpeed = 28f;
-    [SerializeField] private float gravity = 34f;
+    [SerializeField] private float jumpForce = 15.5f;
+    [SerializeField] private float stompSpeed = 32f;
+    [SerializeField] private float gravity = 36f;
 
     [Header("Inclinación de Cabina (Tolerancia y Deslizamiento)")]
     [Tooltip("Ángulo de inclinación en grados por debajo del cual el pato no resbala (tolerancia / agarre de patas de goma)")]
@@ -276,11 +276,11 @@ public class DuckController : MonoBehaviour
             if (btn == null) continue;
 
             float dist = Vector2.Distance(new Vector2(localPos.x, localPos.z), new Vector2(btn.transform.localPosition.x, btn.transform.localPosition.z));
-            float activationRadius = 1.25f;
+            float activationRadius = btn.detectionRadius > 0.1f ? btn.detectionRadius : 1.6f;
 
             if (dist <= activationRadius)
             {
-                if (isGrounded)
+                if (isGrounded && !isStomping)
                 {
                     btn.OnDuckStanding(this);
                 }
@@ -310,6 +310,7 @@ public class DuckController : MonoBehaviour
     public void PerformStomp()
     {
         isStomping = true;
+        isGrounded = false;
         localVel.y = -stompSpeed;
         localVel.x *= 0.2f;
         localVel.z *= 0.2f;
@@ -333,7 +334,8 @@ public class DuckController : MonoBehaviour
             {
                 var btn = buttons[i];
                 float dist = Vector2.Distance(new Vector2(localPos.x, localPos.z), new Vector2(btn.transform.localPosition.x, btn.transform.localPosition.z));
-                if (dist <= 1.5f)
+                float stompRadius = btn.detectionRadius > 0.1f ? btn.detectionRadius * 1.25f : 2.2f;
+                if (dist <= stompRadius)
                 {
                     hitBtn = btn;
                     break;
@@ -376,6 +378,7 @@ public class DuckController : MonoBehaviour
         localPos = targetLocalPos;
         localVel = Vector3.zero;
         transform.localPosition = localPos;
+        isGrounded = targetLocalPos.y <= 0.55f;
     }
 
     public void ForceTriggerStompAt(Vector3 targetLocalPos)

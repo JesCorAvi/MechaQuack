@@ -10,11 +10,12 @@ public class EnemySpawner : MonoBehaviour
     public static EnemySpawner Instance { get; private set; }
 
     [Header("Configuración de Oleadas")]
-    [SerializeField] private float minSpawnDistance = 85f;
-    [SerializeField] private float maxSpawnDistance = 115f;
+    [SerializeField] private float minSpawnDistance = 150f;
+    [SerializeField] private float maxSpawnDistance = 240f;
     [SerializeField] private int maxEnemies = 18;
     [SerializeField] private float baseSpawnInterval = 2.5f;
     [SerializeField] private bool isSpawningEnabled = false; // Por defecto en modo exploración hasta activar el botón
+    [SerializeField] private GameObject enemyPrefab;
 
     private float spawnTimer = 1.0f;
     private Material enemyRedMat;
@@ -132,46 +133,57 @@ public class EnemySpawner : MonoBehaviour
             spawnPos.y = groundHit.point.y;
         }
 
-        GameObject botObj = new GameObject("EnemyBot_" + Time.frameCount);
-        botObj.transform.position = spawnPos;
+        GameObject botObj;
+        if (enemyPrefab != null)
+        {
+            botObj = Instantiate(enemyPrefab, spawnPos, Quaternion.identity);
+            botObj.name = "EnemyBot_" + Time.frameCount;
+        }
+        else
+        {
+            botObj = new GameObject("EnemyBot_" + Time.frameCount);
+            botObj.transform.position = spawnPos;
+
+            // Torso
+            GameObject torso = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            torso.name = "Torso";
+            torso.transform.parent = botObj.transform;
+            torso.transform.localPosition = new Vector3(0f, 6.0f, 0f);
+            torso.transform.localScale = new Vector3(8.0f, 9.5f, 8.0f);
+            if (enemyRedMat != null) torso.GetComponent<MeshRenderer>().material = enemyRedMat;
+            Destroy(torso.GetComponent<Collider>());
+
+            // Visor brillante
+            GameObject visor = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            visor.name = "Visor";
+            visor.transform.parent = torso.transform;
+            visor.transform.localPosition = new Vector3(0f, 0.2f, 0.5f);
+            visor.transform.localScale = new Vector3(0.8f, 0.2f, 0.15f);
+            if (enemyEyeMat != null) visor.GetComponent<MeshRenderer>().material = enemyEyeMat;
+            Destroy(visor.GetComponent<Collider>());
+
+            // Piernas
+            GameObject legL = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            legL.name = "Leg_L";
+            legL.transform.parent = botObj.transform;
+            legL.transform.localPosition = new Vector3(-2.4f, 1.9f, 0f);
+            legL.transform.localScale = new Vector3(2.5f, 3.8f, 3.2f);
+            if (enemyDarkMat != null) legL.GetComponent<MeshRenderer>().material = enemyDarkMat;
+            Destroy(legL.GetComponent<Collider>());
+
+            GameObject legR = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            legR.name = "Leg_R";
+            legR.transform.parent = botObj.transform;
+            legR.transform.localPosition = new Vector3(2.4f, 1.9f, 0f);
+            legR.transform.localScale = new Vector3(2.5f, 3.8f, 3.2f);
+            if (enemyDarkMat != null) legR.GetComponent<MeshRenderer>().material = enemyDarkMat;
+            Destroy(legR.GetComponent<Collider>());
+        }
+
         Debug.Log($"[GAME] Robot enemigo generado en ({spawnPos.x:F1}, {spawnPos.y:F1}, {spawnPos.z:F1})");
 
-        // Torso
-        GameObject torso = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        torso.name = "Torso";
-        torso.transform.parent = botObj.transform;
-        torso.transform.localPosition = new Vector3(0f, 3.5f, 0f);
-        torso.transform.localScale = new Vector3(4.5f, 5.5f, 4.5f);
-        if (enemyRedMat != null) torso.GetComponent<MeshRenderer>().material = enemyRedMat;
-        Destroy(torso.GetComponent<Collider>());
-
-        // Visor brillante
-        GameObject visor = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        visor.name = "Visor";
-        visor.transform.parent = torso.transform;
-        visor.transform.localPosition = new Vector3(0f, 0.2f, 0.5f);
-        visor.transform.localScale = new Vector3(0.8f, 0.2f, 0.15f);
-        if (enemyEyeMat != null) visor.GetComponent<MeshRenderer>().material = enemyEyeMat;
-        Destroy(visor.GetComponent<Collider>());
-
-        // Piernas
-        GameObject legL = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        legL.name = "Leg_L";
-        legL.transform.parent = botObj.transform;
-        legL.transform.localPosition = new Vector3(-1.3f, 1.1f, 0f);
-        legL.transform.localScale = new Vector3(1.4f, 2.2f, 1.8f);
-        if (enemyDarkMat != null) legL.GetComponent<MeshRenderer>().material = enemyDarkMat;
-        Destroy(legL.GetComponent<Collider>());
-
-        GameObject legR = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        legR.name = "Leg_R";
-        legR.transform.parent = botObj.transform;
-        legR.transform.localPosition = new Vector3(1.3f, 1.1f, 0f);
-        legR.transform.localScale = new Vector3(1.4f, 2.2f, 1.8f);
-        if (enemyDarkMat != null) legR.GetComponent<MeshRenderer>().material = enemyDarkMat;
-        Destroy(legR.GetComponent<Collider>());
-
-        EnemyBot bot = botObj.AddComponent<EnemyBot>();
+        EnemyBot bot = botObj.GetComponent<EnemyBot>();
+        if (bot == null) bot = botObj.AddComponent<EnemyBot>();
         float botSpeed = Random.Range(7.5f, 11.0f);
         bot.Initialize(MechaController.Instance, botSpeed);
 

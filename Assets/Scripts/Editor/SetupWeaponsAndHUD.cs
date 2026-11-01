@@ -64,7 +64,7 @@ public static class SetupWeaponsAndHUD
 
         GameObject hudObj = new GameObject("Windshield_HUD");
         hudObj.transform.parent = cockpit;
-        hudObj.transform.localPosition = new Vector3(0f, 2.4f, 3.82f);
+        hudObj.transform.localPosition = new Vector3(0f, 4.8f, 8.1f);
         hudObj.transform.localRotation = Quaternion.identity;
         hudObj.transform.localScale = Vector3.one;
         hudObj.AddComponent<WindshieldHUDCrosshair>();

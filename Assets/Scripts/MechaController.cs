@@ -13,13 +13,13 @@ public class MechaController : MonoBehaviour
     public static MechaController Instance { get; private set; }
 
     [Header("Físicas y Locomoción")]
-    [SerializeField] private float movePower = 48000f;
-    [SerializeField] private float turnTorque = 36000f;
-    [SerializeField] private float maxLinearVelocity = 16f;
-    [SerializeField] private float suspensionStrength = 95000f;
-    [SerializeField] private float suspensionDamping = 14000f;
-    [SerializeField] private float targetRideHeight = 1.8f;
-    [SerializeField] private float legRayLength = 3.8f;
+    [SerializeField] private float movePower = 1200000f;
+    [SerializeField] private float turnTorque = 900000f;
+    [SerializeField] private float maxLinearVelocity = 22f;
+    [SerializeField] private float suspensionStrength = 1800000f;
+    [SerializeField] private float suspensionDamping = 220000f;
+    [SerializeField] private float targetRideHeight = 21.2f;
+    [SerializeField] private float legRayLength = 30.0f;
 
     [Header("Partes Físicas y Visuales")]
     [SerializeField] private Transform cockpitTransform;
@@ -106,10 +106,10 @@ public class MechaController : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         if (rb == null) rb = gameObject.AddComponent<Rigidbody>();
 
-        rb.mass = 8000f;
+        rb.mass = 44000f;
         rb.linearDamping = 1.2f;
         rb.angularDamping = 2.2f;
-        rb.centerOfMass = new Vector3(0f, 3.2f, 0f); // Centro de masa elevado para inclinación física realista
+        rb.centerOfMass = new Vector3(0f, 6.4f, 0f); // Centro de masa elevado para inclinación física realista
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         rb.interpolation = RigidbodyInterpolation.Interpolate;
 
@@ -270,16 +270,16 @@ public class MechaController : MonoBehaviour
 
         int groundMask = ~LayerMask.GetMask("Player", "Ignore Raycast");
 
-        // Origen de los rayos de soporte (raíz de cadera de cada pierna)
-        Vector3 leftLegRoot = transform.TransformPoint(new Vector3(-3.1f, 1.8f, 0f));
-        Vector3 rightLegRoot = transform.TransformPoint(new Vector3(3.1f, 1.8f, 0f));
+        // Origen de los rayos de soporte (raíz de cadera dinámica según posición de las piernas)
+        Vector3 leftLegRoot = leftLegTransform != null ? leftLegTransform.position : transform.TransformPoint(new Vector3(-8.4f, 21.2f, 0f));
+        Vector3 rightLegRoot = rightLegTransform != null ? rightLegTransform.position : transform.TransformPoint(new Vector3(8.4f, 21.2f, 0f));
 
         leftGrounded = CheckFootGrounded(leftLegRoot, out RaycastHit hitL, groundMask);
         rightGrounded = CheckFootGrounded(rightLegRoot, out RaycastHit hitR, groundMask);
 
         float tiltAngle = Vector3.Angle(transform.up, Vector3.up);
 
-        // Equilibrio gravitacional exacto por pata (peso = 8000kg * 9.81 / 2 = 39240N)
+        // Equilibrio gravitacional exacto por pata (peso = 44000kg * 9.81 / 2 = 215820N)
         float baseEquilibriumForce = (rb.mass * 9.81f) * 0.5f;
 
         // Integrar la cota de la pata si está apoyada en un escalón/roca para elevar el cuerpo
@@ -331,21 +331,21 @@ public class MechaController : MonoBehaviour
         if (leftGrounded && !rightGrounded && !legSteppingR && tiltAngle < 75f)
         {
             // Pata derecha en el vacío: el mecha pierde apoyo y el peso lo hace inclinarse hacia la derecha
-            rb.AddTorque(transform.forward * 18000f, ForceMode.Force);
-            rb.AddForce(transform.right * 9000f, ForceMode.Force);
+            rb.AddTorque(transform.forward * 45000f, ForceMode.Force);
+            rb.AddForce(transform.right * 22000f, ForceMode.Force);
         }
         else if (!leftGrounded && rightGrounded && !legSteppingL && tiltAngle < 75f)
         {
             // Pata izquierda en el vacío: el mecha se desestabiliza hacia la izquierda
-            rb.AddTorque(-transform.forward * 18000f, ForceMode.Force);
-            rb.AddForce(-transform.right * 9000f, ForceMode.Force);
+            rb.AddTorque(-transform.forward * 45000f, ForceMode.Force);
+            rb.AddForce(-transform.right * 22000f, ForceMode.Force);
         }
 
         // 3. ESTABILIZACIÓN VERTICAL (Solo cuando ambas patas están firmemente apoyadas y no está volcado)
         if (leftGrounded && rightGrounded && tiltAngle < 38f)
         {
             Vector3 rotAxis = Vector3.Cross(transform.up, Vector3.up);
-            rb.AddTorque(rotAxis * (tiltAngle * 1400f) - rb.angularVelocity * 450f, ForceMode.Force);
+            rb.AddTorque(rotAxis * (tiltAngle * 3500f) - rb.angularVelocity * 1100f, ForceMode.Force);
         }
 
         // 4. FUERZAS DE LOCOMOCIÓN (Solo si al menos una pata toca suelo y no está totalmente volcado)
@@ -446,7 +446,7 @@ public class MechaController : MonoBehaviour
         Debug.Log("[GAME] ¡PATALETA HIDRÁULICA ejecutada! Mecha reincorporado");
 
         // Impulso vertical y reseteo de velocidad angular
-        rb.linearVelocity = new Vector3(rb.linearVelocity.x * 0.2f, 18f, rb.linearVelocity.z * 0.2f);
+        rb.linearVelocity = new Vector3(rb.linearVelocity.x * 0.2f, 28f, rb.linearVelocity.z * 0.2f);
         rb.angularVelocity = Vector3.zero;
 
         // Orientar erguido en el aire tanto en transform como en Rigidbody

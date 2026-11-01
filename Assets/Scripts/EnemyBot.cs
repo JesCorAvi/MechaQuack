@@ -7,7 +7,7 @@ public class EnemyBot : MonoBehaviour
 {
     [Header("Parámetros")]
     public float speed = 8.5f;
-    public float attackDistance = 8.5f;
+    public float attackDistance = 16.0f;
     public int damageToMecha = 14;
 
     private Transform mechaTransform;

@@ -16,7 +16,7 @@ public class MechBodyStabilizer : MonoBehaviour
 
     [Header("Altura y Suspensión")]
     [Tooltip("Altura objetivo del cuerpo sobre el plano medio de los pies")]
-    [SerializeField] private float baseRideHeight = 3.95f;
+    [SerializeField] private float baseRideHeight = 11.8f;
     [Tooltip("Tiempo de suavizado para ajuste vertical de altura (SmoothDamp)")]
     [SerializeField] private float heightSmoothTime = 0.18f;
 

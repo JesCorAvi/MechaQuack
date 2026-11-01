@@ -46,6 +46,11 @@ public class AutoPlayTester : MonoBehaviour
 
     public static void TriggerTestSuite()
     {
+        if (Instance == null)
+        {
+            Instance = Object.FindFirstObjectByType<AutoPlayTester>();
+        }
+
         if (Instance != null)
         {
             Instance.RunManualTests();
@@ -104,7 +109,7 @@ public class AutoPlayTester : MonoBehaviour
                 rb.angularVelocity = Vector3.zero;
             }
             float initZ = mecha.transform.position.z;
-            duck.TeleportToLocal(new Vector3(0f, 0.45f, 1.8f));
+            duck.TeleportToLocal(btnFwd.transform.localPosition + new Vector3(0f, 0.45f, 0f));
             btnFwd.OnDuckStanding(duck);
 
             yield return new WaitForSeconds(stepDuration);
@@ -143,7 +148,7 @@ public class AutoPlayTester : MonoBehaviour
                 rb.angularVelocity = Vector3.zero;
             }
             float initZ = mecha.transform.position.z;
-            duck.TeleportToLocal(new Vector3(0f, 0.45f, -1.4f));
+            duck.TeleportToLocal(btnBwd.transform.localPosition + new Vector3(0f, 0.45f, 0f));
             btnBwd.OnDuckStanding(duck);
 
             yield return new WaitForSeconds(stepDuration);
@@ -184,7 +189,7 @@ public class AutoPlayTester : MonoBehaviour
             yield return new WaitForFixedUpdate();
 
             float initYaw = mecha.transform.eulerAngles.y;
-            duck.TeleportToLocal(new Vector3(-1.7f, 0.45f, 0.2f));
+            duck.TeleportToLocal(btnLeft.transform.localPosition + new Vector3(0f, 0.45f, 0f));
             btnLeft.OnDuckStanding(duck);
 
             yield return new WaitForSeconds(stepDuration);
@@ -225,7 +230,7 @@ public class AutoPlayTester : MonoBehaviour
             yield return new WaitForFixedUpdate();
 
             float initYaw = mecha.transform.eulerAngles.y;
-            duck.TeleportToLocal(new Vector3(1.7f, 0.45f, 0.2f));
+            duck.TeleportToLocal(btnRight.transform.localPosition + new Vector3(0f, 0.45f, 0f));
             btnRight.OnDuckStanding(duck);
 
             yield return new WaitForSeconds(stepDuration);
@@ -258,7 +263,7 @@ public class AutoPlayTester : MonoBehaviour
         var btnPunch = GetButton("GATLING") ?? GetButton("PUNCH");
         if (btnPunch != null)
         {
-            duck.ForceTriggerStompAt(new Vector3(-3.7f, 0.5f, 0.5f));
+            duck.ForceTriggerStompAt(btnPunch.transform.localPosition);
             btnPunch.OnDuckStomp(duck);
             mecha.TriggerWeaponAction(btnPunch.buttonId, btnPunch.transform.position);
 
@@ -290,7 +295,7 @@ public class AutoPlayTester : MonoBehaviour
         var btnLaser = GetButton("MISSILES") ?? GetButton("LASER");
         if (btnLaser != null)
         {
-            duck.ForceTriggerStompAt(new Vector3(3.7f, 0.5f, 0.5f));
+            duck.ForceTriggerStompAt(btnLaser.transform.localPosition);
             btnLaser.OnDuckStomp(duck);
             mecha.TriggerWeaponAction(btnLaser.buttonId, btnLaser.transform.position);
 
@@ -327,20 +332,17 @@ public class AutoPlayTester : MonoBehaviour
         if (btnSpawn != null && spawner != null)
         {
             // Activar invasión
-            duck.ForceTriggerStompAt(new Vector3(0f, 0.5f, -2.85f));
-            btnSpawn.OnDuckStomp(duck);
-
-            yield return new WaitForSeconds(0.25f);
+            duck.ForceTriggerStompAt(btnSpawn.transform.localPosition);
+            yield return new WaitForSeconds(0.45f);
 
             bool enabledMode = spawner.IsSpawningEnabled;
             int count = spawner.ActiveEnemies.Count;
 
             // Desactivar invasión para restaurar paz
-            duck.ForceTriggerStompAt(new Vector3(0f, 0.5f, -2.85f));
-            btnSpawn.OnDuckStomp(duck);
-
-            yield return new WaitForSeconds(0.25f);
+            duck.ForceTriggerStompAt(btnSpawn.transform.localPosition);
+            yield return new WaitForSeconds(0.45f);
             duck.TeleportToLocal(new Vector3(0f, 0.45f, 0f));
+            yield return new WaitForSeconds(0.1f);
             bool disabledMode = !spawner.IsSpawningEnabled;
 
             if (enabledMode && count >= 1 && disabledMode)
