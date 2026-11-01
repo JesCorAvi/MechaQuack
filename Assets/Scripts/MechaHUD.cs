@@ -11,7 +11,16 @@ using UnityEngine.UIElements;
 [RequireComponent(typeof(UIDocument))]
 public class MechaHUD : MonoBehaviour
 {
-    public static MechaHUD Instance { get; private set; }
+    private static MechaHUD _instance;
+    public static MechaHUD Instance
+    {
+        get
+        {
+            if (_instance == null) _instance = Object.FindFirstObjectByType<MechaHUD>();
+            return _instance;
+        }
+        private set => _instance = value;
+    }
 
     [Header("Configuración Radar")]
     [SerializeField] private float maxRadarRange = 120f;
@@ -359,6 +368,7 @@ public class MechaHUD : MonoBehaviour
     public void OnRestartClicked()
     {
         ProceduralAudio.Instance?.PlayButtonClick();
+        HideGameOver();
         MechaController.Instance?.RestartGame();
     }
 

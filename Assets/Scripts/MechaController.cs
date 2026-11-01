@@ -10,7 +10,16 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody))]
 public class MechaController : MonoBehaviour
 {
-    public static MechaController Instance { get; private set; }
+    private static MechaController _instance;
+    public static MechaController Instance
+    {
+        get
+        {
+            if (_instance == null) _instance = Object.FindFirstObjectByType<MechaController>();
+            return _instance;
+        }
+        private set => _instance = value;
+    }
 
     [Header("Físicas y Locomoción")]
     [SerializeField] private float movePower = 1200000f;
@@ -19,7 +28,11 @@ public class MechaController : MonoBehaviour
     [SerializeField] private float suspensionStrength = 1800000f;
     [SerializeField] private float suspensionDamping = 220000f;
     [SerializeField] private float targetRideHeight = 21.2f;
-    [SerializeField] private float legRayLength = 30.0f;
+    [SerializeField] private float legRayLength = 28.0f;
+    [Tooltip("Aceleración gravitacional extra hacia abajo durante caída libre para evitar flotar como globo")]
+    [SerializeField] private float extraFallGravity = 17.5f;
+    [Tooltip("Alcance máximo vertical desde la cadera para considerar pie en suelo")]
+    [SerializeField] private float maxGroundedReach = 28.0f;
 
     [Header("Partes Físicas y Visuales")]
     [SerializeField] private Transform cockpitTransform;
@@ -38,6 +51,14 @@ public class MechaController : MonoBehaviour
     [SerializeField] private Transform missilePodTransform;
     [SerializeField] private Transform[] missileLaunchTubes;
     [SerializeField] private float missileCooldownDuration = 3.5f;
+
+    [Header("Sistema de Puntería de Artillería (Gunner Aiming)")]
+    [Tooltip("Ángulo de azimut horizontal de puntería (-48° a +48°) controlado desde la estación de artillería")]
+    [SerializeField] private float gunnerAimYaw = 0f;
+    [Tooltip("Ángulo de elevación vertical de puntería (-20° a +36°) controlado desde la estación de artillería")]
+    [SerializeField] private float gunnerAimPitch = 0f;
+    [SerializeField] private Transform gatlingGimbalTransform;
+    [SerializeField] private Transform missilePodGimbalTransform;
 
     [Header("Chasis y Salud")]
     [SerializeField] private int maxHp = 100;
@@ -73,10 +94,22 @@ public class MechaController : MonoBehaviour
 
     private bool leftGrounded = false;
     private bool rightGrounded = false;
+    private bool isAirborne = false;
+    private bool wasAirborne = false;
+    private float airborneDuration = 0f;
+    private float airborneGraceTimer = 0f;
+    private float peakFallVelocity = 0f;
+    private float lastVerticalVelocity = 0f;
+    private float landingSquash = 0f;
+    private float landingSquashVelocity = 0f;
 
     private Vector3 initialLeftArmPos;
     private Vector3 initialRightArmPos;
     private Vector3 initialCockpitLocalPos;
+    private Quaternion initialLeftArmRot = Quaternion.identity;
+    private Quaternion initialRightArmRot = Quaternion.identity;
+    private Quaternion initialGatlingGimbalRot = Quaternion.identity;
+    private Quaternion initialMissileGimbalRot = Quaternion.identity;
 
     private readonly List<CockpitFloorButton> buttons = new List<CockpitFloorButton>();
     private DuckController duckInCockpit;
@@ -89,13 +122,54 @@ public class MechaController : MonoBehaviour
     public bool IsOverturned => isOverturned;
     public bool LeftGrounded => leftGrounded;
     public bool RightGrounded => rightGrounded;
+    public bool IsAirborne => isAirborne;
+    public float LandingSquash => landingSquash;
+    public float IsAirborneDuration => airborneDuration;
     public bool IsGatlingFiring => isGatlingFiring || punchTimer > 0f;
     public float LaserCooldown => currentLaserCooldown;
     public float MissileCooldown => currentLaserCooldown;
     public float ShakeIntensity => shakeIntensity;
+    public float GunnerAimYaw => gunnerAimYaw;
+    public float GunnerAimPitch => gunnerAimPitch;
     public void TriggerFootstepShake(float intensity) => shakeIntensity = Mathf.Max(shakeIntensity, intensity);
     public GameObject PunchWaveObject => null;
     public GameObject LaserBeamObject => null;
+
+    public void AdjustGunnerAim(float deltaYaw, float deltaPitch)
+    {
+        gunnerAimYaw = Mathf.Clamp(gunnerAimYaw + deltaYaw, -48f, 48f);
+        gunnerAimPitch = Mathf.Clamp(gunnerAimPitch + deltaPitch, -20f, 36f);
+    }
+
+    public void SetGunnerAim(float yaw, float pitch)
+    {
+        gunnerAimYaw = Mathf.Clamp(yaw, -48f, 48f);
+        gunnerAimPitch = Mathf.Clamp(pitch, -20f, 36f);
+    }
+
+    public void ResetGunnerAim()
+    {
+        gunnerAimYaw = 0f;
+        gunnerAimPitch = 0f;
+    }
+
+    public Vector3 GetGunnerAimDirection()
+    {
+        Quaternion aimOffset = Quaternion.Euler(-gunnerAimPitch, gunnerAimYaw, 0f);
+        return (transform.rotation * aimOffset * Vector3.forward).normalized;
+    }
+
+    public Vector3 GetGunnerAimTargetPoint(float range = 240f)
+    {
+        Vector3 origin = (cockpitTransform != null) ? cockpitTransform.position + Vector3.up * 4.4f : transform.position + Vector3.up * 28f;
+        Vector3 dir = GetGunnerAimDirection();
+        int mask = ~LayerMask.GetMask("Player", "Ignore Raycast");
+        if (Physics.Raycast(origin, dir, out RaycastHit hit, range, mask, QueryTriggerInteraction.Ignore))
+        {
+            return hit.point;
+        }
+        return origin + dir * range;
+    }
 
     private void Awake()
     {
@@ -117,8 +191,22 @@ public class MechaController : MonoBehaviour
         else laserCooldownDuration = missileCooldownDuration;
 
         if (cockpitTransform != null) initialCockpitLocalPos = cockpitTransform.localPosition;
-        if (leftArmTransform != null) initialLeftArmPos = leftArmTransform.localPosition;
-        if (rightArmTransform != null) initialRightArmPos = rightArmTransform.localPosition;
+        if (leftArmTransform != null)
+        {
+            initialLeftArmPos = leftArmTransform.localPosition;
+            initialLeftArmRot = leftArmTransform.localRotation;
+        }
+        if (rightArmTransform != null)
+        {
+            initialRightArmPos = rightArmTransform.localPosition;
+            initialRightArmRot = rightArmTransform.localRotation;
+        }
+
+        if (gatlingGimbalTransform == null) gatlingGimbalTransform = leftArmTransform;
+        if (missilePodGimbalTransform == null) missilePodGimbalTransform = missilePodTransform;
+
+        if (gatlingGimbalTransform != null) initialGatlingGimbalRot = gatlingGimbalTransform.localRotation;
+        if (missilePodGimbalTransform != null) initialMissileGimbalRot = missilePodGimbalTransform.localRotation;
 
         duckInCockpit = FindFirstObjectByType<DuckController>();
         buttons.AddRange(GetComponentsInChildren<CockpitFloorButton>());
@@ -149,6 +237,9 @@ public class MechaController : MonoBehaviour
 
         if (shakeIntensity > 0f)
             shakeIntensity = Mathf.Max(0f, shakeIntensity - Time.deltaTime * 2.5f);
+
+        if (landingSquash > 0.001f)
+            landingSquash = Mathf.SmoothDamp(landingSquash, 0f, ref landingSquashVelocity, 0.28f);
     }
 
     /// <summary>
@@ -159,6 +250,11 @@ public class MechaController : MonoBehaviour
         inputMove = 0f;
         inputTurn = 0f;
         isGatlingHolding = false;
+
+        if (buttons.Count == 0)
+        {
+            buttons.AddRange(GetComponentsInChildren<CockpitFloorButton>());
+        }
 
         for (int i = 0; i < buttons.Count; i++)
         {
@@ -227,9 +323,9 @@ public class MechaController : MonoBehaviour
             muzzlePos = transform.position + transform.forward * 4f - transform.right * 3.5f + Vector3.up * 2f;
         }
 
-        Vector3 aimDir = transform.forward;
+        Vector3 aimDir = GetGunnerAimDirection();
         // Ligera dispersión balística de ametralladora pesada
-        Vector2 spread = Random.insideUnitCircle * 0.024f;
+        Vector2 spread = Random.insideUnitCircle * 0.020f;
         aimDir = (aimDir + transform.right * spread.x + transform.up * spread.y).normalized;
 
         GatlingTracer.Spawn(muzzlePos, aimDir);
@@ -274,38 +370,92 @@ public class MechaController : MonoBehaviour
         Vector3 leftLegRoot = leftLegTransform != null ? leftLegTransform.position : transform.TransformPoint(new Vector3(-8.4f, 21.2f, 0f));
         Vector3 rightLegRoot = rightLegTransform != null ? rightLegTransform.position : transform.TransformPoint(new Vector3(8.4f, 21.2f, 0f));
 
-        leftGrounded = CheckFootGrounded(leftLegRoot, out RaycastHit hitL, groundMask);
-        rightGrounded = CheckFootGrounded(rightLegRoot, out RaycastHit hitR, groundMask);
+        lastVerticalVelocity = rb.linearVelocity.y;
+
+        bool hitGroundL = CheckFootGrounded(leftLegRoot, out RaycastHit hitL, groundMask);
+        bool hitGroundR = CheckFootGrounded(rightLegRoot, out RaycastHit hitR, groundMask);
+
+        var pLegL = leftLegTransform != null ? leftLegTransform.GetComponent<ProceduralLeg>() : null;
+        var pLegR = rightLegTransform != null ? rightLegTransform.GetComponent<ProceduralLeg>() : null;
+
+        // Calcular cota efectiva y estado grounded para cada pierna
+        float distL = hitGroundL ? hitL.distance : float.MaxValue;
+        bool footPlantL = (pLegL != null && pLegL.IsGrounded);
+        if (footPlantL)
+        {
+            float footDist = leftLegRoot.y - (pLegL.CurrentFootPosition.y - pLegL.AnkleToSoleOffset);
+            if (footDist > 0f && (footDist < distL || !hitGroundL)) distL = footDist;
+        }
+        leftGrounded = (hitGroundL && hitL.distance <= legRayLength) || (footPlantL && distL <= legRayLength);
+        float effectiveDistL = Mathf.Min(distL, legRayLength);
+
+        float distR = hitGroundR ? hitR.distance : float.MaxValue;
+        bool footPlantR = (pLegR != null && pLegR.IsGrounded);
+        if (footPlantR)
+        {
+            float footDist = rightLegRoot.y - (pLegR.CurrentFootPosition.y - pLegR.AnkleToSoleOffset);
+            if (footDist > 0f && (footDist < distR || !hitGroundR)) distR = footDist;
+        }
+        rightGrounded = (hitGroundR && hitR.distance <= legRayLength) || (footPlantR && distR <= legRayLength);
+        float effectiveDistR = Mathf.Min(distR, legRayLength);
+
+        // Determinación robusta de caída libre (Airborne):
+        // Solo entra en estado aéreo si ninguna pata ni cadera tiene contacto con el suelo
+        // y lleva velocidad de caída o transcurre un breve periodo de gracia (evita falsos positivos al caminar).
+        bool noGroundContact = (!leftGrounded && !rightGrounded) && (!footPlantL && !footPlantR);
+        if (noGroundContact)
+        {
+            airborneGraceTimer += Time.fixedDeltaTime;
+        }
+        else
+        {
+            airborneGraceTimer = 0f;
+        }
+
+        isAirborne = noGroundContact && (airborneGraceTimer > 0.08f || rb.linearVelocity.y < -2.2f);
+
+        // --- GESTIÓN DE CAÍDA LIBRE PESADA Y ATERRIZAJE (Robot Torpe) ---
+        if (isAirborne)
+        {
+            wasAirborne = true;
+            airborneDuration += Time.fixedDeltaTime;
+            float currentFallSpeed = -rb.linearVelocity.y;
+            if (currentFallSpeed > peakFallVelocity) peakFallVelocity = currentFallSpeed;
+
+            // En el aire: casi cero amortiguación aerodinámica para que caiga rápido y con peso (no flote)
+            rb.linearDamping = 0.05f;
+
+            // Gravedad extra de máquina colosal pesada de 44 toneladas
+            rb.AddForce(Vector3.down * (rb.mass * extraFallGravity), ForceMode.Force);
+
+            // Oscilación y balanceo torpe en el aire
+            if (airborneDuration > 0.12f)
+            {
+                float airFlailTorque = Mathf.Sin(airborneDuration * 9.5f) * 32000f;
+                rb.AddTorque(transform.forward * airFlailTorque, ForceMode.Force);
+            }
+        }
+        else
+        {
+            rb.linearDamping = 1.0f;
+
+            if (wasAirborne)
+            {
+                wasAirborne = false;
+                float impactSpeed = Mathf.Max(peakFallVelocity, Mathf.Abs(lastVerticalVelocity));
+                peakFallVelocity = 0f;
+                if (airborneDuration > 0.18f && impactSpeed > 5.5f)
+                {
+                    HandleLandingImpact(impactSpeed, airborneDuration);
+                }
+                airborneDuration = 0f;
+            }
+        }
 
         float tiltAngle = Vector3.Angle(transform.up, Vector3.up);
 
         // Equilibrio gravitacional exacto por pata (peso = 44000kg * 9.81 / 2 = 215820N)
         float baseEquilibriumForce = (rb.mass * 9.81f) * 0.5f;
-
-        // Integrar la cota de la pata si está apoyada en un escalón/roca para elevar el cuerpo
-        float effectiveDistL = hitL.distance;
-        if (leftLegTransform != null)
-        {
-            var pLegL = leftLegTransform.GetComponent<ProceduralLeg>();
-            if (pLegL != null && pLegL.IsGrounded)
-            {
-                float footGroundY = pLegL.CurrentFootPosition.y - pLegL.AnkleToSoleOffset;
-                float footDist = leftLegRoot.y - footGroundY;
-                if (footDist < effectiveDistL) effectiveDistL = footDist;
-            }
-        }
-
-        float effectiveDistR = hitR.distance;
-        if (rightLegTransform != null)
-        {
-            var pLegR = rightLegTransform.GetComponent<ProceduralLeg>();
-            if (pLegR != null && pLegR.IsGrounded)
-            {
-                float footGroundY = pLegR.CurrentFootPosition.y - pLegR.AnkleToSoleOffset;
-                float footDist = rightLegRoot.y - footGroundY;
-                if (footDist < effectiveDistR) effectiveDistR = footDist;
-            }
-        }
 
         // 1. APLICAR SUSPENSIÓN CALIBRADA (Mantiene el mecha a la cota exacta para que los pies pisen el suelo)
         if (leftGrounded && effectiveDistL < legRayLength)
@@ -325,8 +475,8 @@ public class MechaController : MonoBehaviour
         }
 
         // 2. FÍSICAS DE DESEQUILIBRIO (Solo si una pata está en el abismo/vacío, no durante pasos de caminata)
-        bool legSteppingL = leftLegTransform != null && leftLegTransform.GetComponent<ProceduralLeg>() != null && leftLegTransform.GetComponent<ProceduralLeg>().IsStepping;
-        bool legSteppingR = rightLegTransform != null && rightLegTransform.GetComponent<ProceduralLeg>() != null && rightLegTransform.GetComponent<ProceduralLeg>().IsStepping;
+        bool legSteppingL = pLegL != null && pLegL.IsStepping;
+        bool legSteppingR = pLegR != null && pLegR.IsStepping;
 
         if (leftGrounded && !rightGrounded && !legSteppingR && tiltAngle < 75f)
         {
@@ -376,7 +526,7 @@ public class MechaController : MonoBehaviour
     private bool CheckFootGrounded(Vector3 probeOrigin, out RaycastHit groundHit, int mask)
     {
         groundHit = default;
-        int hitCount = Physics.RaycastNonAlloc(probeOrigin, -transform.up, groundRayHits, legRayLength, mask, QueryTriggerInteraction.Ignore);
+        int hitCount = Physics.RaycastNonAlloc(probeOrigin, -transform.up, groundRayHits, maxGroundedReach, mask, QueryTriggerInteraction.Ignore);
         float closestDist = float.MaxValue;
         bool found = false;
 
@@ -385,7 +535,8 @@ public class MechaController : MonoBehaviour
             var hit = groundRayHits[i];
             if (hit.collider == null) continue;
             if (hit.collider.transform.IsChildOf(transform)) continue;
-            if (hit.distance < closestDist)
+            // Solo considerar suelo si está dentro del alcance real de la pierna
+            if (hit.distance < closestDist && hit.distance <= maxGroundedReach)
             {
                 closestDist = hit.distance;
                 groundHit = hit;
@@ -393,6 +544,78 @@ public class MechaController : MonoBehaviour
             }
         }
         return found;
+    }
+
+    /// <summary>
+    /// Gestiona el impacto físico, squash de suspensión, sacudida de pantalla,
+    /// nubes de polvo y reacción cómica del pato al aterrizar tras una caída.
+    /// </summary>
+    private void HandleLandingImpact(float impactSpeed, float airTime)
+    {
+        if (impactSpeed < 3.0f && airTime < 0.2f) return;
+
+        Debug.Log($"[GAME] ¡ATERRIZAJE MECHA! Velocidad vertical: {impactSpeed:F1} m/s, Tiempo en aire: {airTime:F2}s");
+
+        // 1. Squash mecánico de suspensión (las rodillas ceden y el chasis baja)
+        landingSquash = Mathf.Clamp(impactSpeed * 0.14f, 0.4f, 2.8f);
+
+        // 2. Shake de pantalla basado en trauma cuadrático según game-feel
+        float trauma = Mathf.Clamp01(impactSpeed / 20.0f);
+        shakeIntensity = Mathf.Max(shakeIntensity, trauma * 1.35f);
+
+        // 3. Audio de impacto contundente
+        if (impactSpeed > 9.0f)
+        {
+            ProceduralAudio.Instance?.PlayCrashLand();
+            ProceduralAudio.Instance?.PlayQuack();
+        }
+        else
+        {
+            ProceduralAudio.Instance?.PlayMechaStep();
+        }
+
+        // 4. Hit-Stop en impactos masivos (congelación de fotogramas breve)
+        if (impactSpeed > 14.0f)
+        {
+            TriggerHitStop(0.065f, 0.04f);
+        }
+
+        // 5. Partículas / escombros voxel en los pies
+        Vector3 leftFootPos = (leftLegTransform != null) ? leftLegTransform.position + Vector3.down * 19.5f : transform.position - transform.right * 8.4f;
+        Vector3 rightFootPos = (rightLegTransform != null) ? rightLegTransform.position + Vector3.down * 19.5f : transform.position + transform.right * 8.4f;
+
+        VoxelExplosion.Spawn(leftFootPos, new Color(0.72f, 0.68f, 0.58f), Mathf.RoundToInt(Mathf.Clamp(impactSpeed * 2.2f, 15f, 40f)), 0.6f, 18f);
+        VoxelExplosion.Spawn(rightFootPos, new Color(0.72f, 0.68f, 0.58f), Mathf.RoundToInt(Mathf.Clamp(impactSpeed * 2.2f, 15f, 40f)), 0.6f, 18f);
+
+        // 6. Inercia del pato dentro de la cabina (sale despedido hacia arriba)
+        if (duckInCockpit != null)
+        {
+            float duckLaunchY = Mathf.Clamp(impactSpeed * 0.75f, 4.5f, 18f);
+            Vector3 duckJolt = new Vector3(Random.Range(-4f, 4f), duckLaunchY, Random.Range(-4f, 4f));
+            duckInCockpit.ApplyExternalNudge(duckJolt);
+        }
+
+        // 7. Textos flotantes cómicos según la magnitud de la caída
+        Vector3 textPos = transform.position + Vector3.up * 7f;
+        if (impactSpeed > 18.0f)
+        {
+            FloatingText.Spawn(textPos, "💥 ¡¡CATAPLUM!! ¡ATERRIZAJE FORZOSO! 🦆", Color.red, 0.55f);
+        }
+        else if (impactSpeed > 9.0f)
+        {
+            FloatingText.Spawn(textPos, "💥 ¡CHOFFF! ¡44 TONELADAS!", new Color(1f, 0.65f, 0.1f), 0.45f);
+        }
+        else if (impactSpeed > 4.5f)
+        {
+            FloatingText.Spawn(textPos, "¡BOING! (PIES DE PLOMO)", Color.yellow, 0.35f);
+        }
+
+        // 8. Tropezón / riesgo de vuelco si el aterrizaje es muy inclinado desde gran altura
+        float tilt = Vector3.Angle(transform.up, Vector3.up);
+        if (impactSpeed > 24.0f && tilt > 24.0f)
+        {
+            rb.AddTorque(transform.forward * 45000f + transform.right * 70000f, ForceMode.Impulse);
+        }
     }
 
     /// <summary>
@@ -500,6 +723,8 @@ public class MechaController : MonoBehaviour
     {
         if (cockpitTransform == null) return;
 
+        Vector3 squashOffset = new Vector3(0f, -landingSquash * 0.85f, 0f);
+
         if (GetComponent<MechBodyStabilizer>() != null)
         {
             if (shakeIntensity > 0.01f)
@@ -510,11 +735,11 @@ public class MechaController : MonoBehaviour
                 float t = Time.time * 34f;
                 float stabShakeX = Mathf.Sin(t * 1.7f) * shakeMag;
                 float stabShakeY = Mathf.Cos(t * 2.3f) * shakeMag;
-                cockpitTransform.localPosition = initialCockpitLocalPos + new Vector3(stabShakeX, stabShakeY, 0f);
+                cockpitTransform.localPosition = initialCockpitLocalPos + squashOffset + new Vector3(stabShakeX, stabShakeY, 0f);
             }
             else
             {
-                cockpitTransform.localPosition = initialCockpitLocalPos;
+                cockpitTransform.localPosition = initialCockpitLocalPos + squashOffset;
             }
             return;
         }
@@ -526,7 +751,7 @@ public class MechaController : MonoBehaviour
         float shakeX = Mathf.Sin(tLeg * 1.7f) * shakeMagLeg;
         float shakeY = Mathf.Cos(tLeg * 2.3f) * shakeMagLeg;
 
-        cockpitTransform.localPosition = initialCockpitLocalPos + new Vector3(shakeX, bobY + shakeY, 0f);
+        cockpitTransform.localPosition = initialCockpitLocalPos + squashOffset + new Vector3(shakeX, bobY + shakeY, 0f);
 
         float tiltZ = Mathf.Sin(walkCycle) * 1.8f;
         cockpitTransform.localRotation = Quaternion.Euler(0f, 0f, tiltZ);
@@ -534,16 +759,39 @@ public class MechaController : MonoBehaviour
 
     private void AnimateArms()
     {
+        Quaternion aimRotOffset = Quaternion.Euler(-gunnerAimPitch, gunnerAimYaw, 0f);
+
+        // Si está en caída libre, los brazos bracean/aletean cómicamente para mantener el equilibrio
+        if (isAirborne)
+        {
+            float airArmFlail = Mathf.Sin(Time.time * 9.5f) * 16f;
+            aimRotOffset *= Quaternion.Euler(airArmFlail, 0f, airArmFlail * 0.4f);
+        }
+
         // Brazo izquierdo (Ametralladora Gatling)
         if (leftArmTransform != null)
         {
             leftArmTransform.localPosition = initialLeftArmPos - new Vector3(0f, 0f, gatlingRecoilZ);
+            if (gatlingGimbalTransform == leftArmTransform)
+            {
+                leftArmTransform.localRotation = Quaternion.Slerp(leftArmTransform.localRotation, initialLeftArmRot * aimRotOffset, Time.deltaTime * 12f);
+            }
+        }
+
+        if (gatlingGimbalTransform != null && gatlingGimbalTransform != leftArmTransform)
+        {
+            gatlingGimbalTransform.localRotation = Quaternion.Slerp(gatlingGimbalTransform.localRotation, initialGatlingGimbalRot * aimRotOffset, Time.deltaTime * 12f);
         }
 
         // Brazo derecho (Pod Lanzamisiles)
         if (rightArmTransform != null)
         {
             rightArmTransform.localPosition = initialRightArmPos - new Vector3(0f, 0f, missileRecoilZ);
+        }
+
+        if (missilePodGimbalTransform != null)
+        {
+            missilePodGimbalTransform.localRotation = Quaternion.Slerp(missilePodGimbalTransform.localRotation, initialMissileGimbalRot * aimRotOffset, Time.deltaTime * 12f);
         }
     }
 
@@ -598,17 +846,36 @@ public class MechaController : MonoBehaviour
         FloatingText.Spawn(buttonPos + Vector3.up * 1.5f, "🚀 ¡SALVA DE MISILES!", new Color(0.2f, 0.9f, 1f), 0.35f);
 
         Transform lockedTarget = WindshieldHUDCrosshair.Instance != null ? WindshieldHUDCrosshair.Instance.CurrentLockedTarget : null;
+        Vector3 aimDir = GetGunnerAimDirection();
+        Vector3 aimTargetPoint = (lockedTarget != null)
+            ? (lockedTarget.position + Vector3.up * 1.5f)
+            : GetGunnerAimTargetPoint(280f);
+
+        // Abanico táctico de dispersión para las 4 toberas de la salva
+        Vector2[] spreads = new Vector2[]
+        {
+            new Vector2(-0.045f,  0.035f),
+            new Vector2( 0.045f,  0.035f),
+            new Vector2(-0.045f, -0.030f),
+            new Vector2( 0.045f, -0.030f)
+        };
 
         int numMissiles = (missileLaunchTubes != null && missileLaunchTubes.Length > 0) ? missileLaunchTubes.Length : 4;
         for (int i = 0; i < numMissiles; i++)
         {
-            Vector3 spawnPos;
-            Quaternion spawnRot = (missilePodTransform != null) ? missilePodTransform.rotation : transform.rotation;
+            Vector2 spread = spreads[i % spreads.Length];
+            Vector3 launchDir = (aimDir + transform.right * spread.x + transform.up * spread.y).normalized;
+            Quaternion spawnRot = Quaternion.LookRotation(launchDir, transform.up);
 
+            Vector3 spawnPos;
             if (missileLaunchTubes != null && i < missileLaunchTubes.Length && missileLaunchTubes[i] != null)
             {
-                spawnPos = missileLaunchTubes[i].position;
-                spawnRot = missileLaunchTubes[i].rotation;
+                spawnPos = missileLaunchTubes[i].position + launchDir * 1.8f;
+            }
+            else if (missilePodTransform != null)
+            {
+                Vector3 offset = new Vector3((i % 2 == 0 ? -0.8f : 0.8f), (i < 2 ? 0.8f : -0.8f), 3.2f);
+                spawnPos = missilePodTransform.TransformPoint(offset);
             }
             else if (rightArmTransform != null)
             {
@@ -620,7 +887,7 @@ public class MechaController : MonoBehaviour
                 spawnPos = transform.position + transform.forward * 4f + transform.right * 4f + Vector3.up * 3f;
             }
 
-            MissileProjectile.Spawn(spawnPos, spawnRot, lockedTarget);
+            MissileProjectile.Spawn(spawnPos, spawnRot, lockedTarget, aimTargetPoint);
             ProceduralAudio.Instance?.PlayMissileLaunch();
             WindshieldHUDCrosshair.Instance?.TriggerRecoil(0.25f);
 
@@ -703,6 +970,14 @@ public class MechaController : MonoBehaviour
         shakeIntensity = 0f;
         walkCycle = 0f;
         stepTimer = 0f;
+        isAirborne = false;
+        wasAirborne = false;
+        airborneDuration = 0f;
+        airborneGraceTimer = 0f;
+        peakFallVelocity = 0f;
+        lastVerticalVelocity = 0f;
+        landingSquash = 0f;
+        landingSquashVelocity = 0f;
         Debug.Log("[GAME] Partida reiniciada. Mecha restaurado en plataforma inicial");
 
         if (rb != null)

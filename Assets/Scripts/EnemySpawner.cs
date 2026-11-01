@@ -7,7 +7,16 @@ using UnityEngine;
 /// </summary>
 public class EnemySpawner : MonoBehaviour
 {
-    public static EnemySpawner Instance { get; private set; }
+    private static EnemySpawner _instance;
+    public static EnemySpawner Instance
+    {
+        get
+        {
+            if (_instance == null) _instance = Object.FindFirstObjectByType<EnemySpawner>();
+            return _instance;
+        }
+        private set => _instance = value;
+    }
 
     [Header("Configuración de Oleadas")]
     [SerializeField] private float minSpawnDistance = 150f;

@@ -6,7 +6,16 @@ using UnityEngine;
 /// </summary>
 public class ProceduralAudio : MonoBehaviour
 {
-    public static ProceduralAudio Instance { get; private set; }
+    private static ProceduralAudio _instance;
+    public static ProceduralAudio Instance
+    {
+        get
+        {
+            if (_instance == null) _instance = Object.FindFirstObjectByType<ProceduralAudio>();
+            return _instance;
+        }
+        private set => _instance = value;
+    }
 
     private AudioSource audioSource;
 
@@ -23,6 +32,9 @@ public class ProceduralAudio : MonoBehaviour
     private AudioClip clipHydraulicRecover;
     private AudioClip clipGatling;
     private AudioClip clipMissileLaunch;
+    private AudioClip clipAimServo;
+    private AudioClip clipTargetLock;
+    private AudioClip clipCrashLand;
 
     private void Awake()
     {
@@ -54,6 +66,9 @@ public class ProceduralAudio : MonoBehaviour
         clipHydraulicRecover = GenerateToneSweepClip(60f, 320f, 0.35f, WaveType.Sawtooth, 0.8f);
         clipGatling = GenerateToneSweepClip(360f, 65f, 0.08f, WaveType.Sawtooth, 0.65f);
         clipMissileLaunch = GenerateToneSweepClip(140f, 620f, 0.28f, WaveType.Noise, 0.75f);
+        clipAimServo = GenerateToneSweepClip(420f, 340f, 0.05f, WaveType.Triangle, 0.25f);
+        clipTargetLock = GenerateToneSweepClip(780f, 1560f, 0.16f, WaveType.Sine, 0.55f);
+        clipCrashLand = GenerateToneSweepClip(140f, 32f, 0.42f, WaveType.Sawtooth, 0.95f);
     }
 
     public void PlayQuack() => PlayClip(clipQuack, 0.9f);
@@ -65,6 +80,9 @@ public class ProceduralAudio : MonoBehaviour
     public void PlayLaser() => PlayClip(clipLaser, 0.75f);
     public void PlayGatlingFire() => PlayClip(clipGatling, 0.65f);
     public void PlayMissileLaunch() => PlayClip(clipMissileLaunch, 0.85f);
+    public void PlayAimServoTick() => PlayClip(clipAimServo, 0.35f);
+    public void PlayTargetLock() => PlayClip(clipTargetLock, 0.75f);
+    public void PlayCrashLand() => PlayClip(clipCrashLand, 0.95f);
     public void PlayExplosion() => PlayClip(clipExplosion, 0.8f);
     public void PlayAlarm() => PlayClip(clipAlarm, 0.75f);
     public void PlayAcidSizzle() => PlayClip(clipAcidSizzle, 0.65f);

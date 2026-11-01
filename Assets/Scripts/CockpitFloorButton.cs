@@ -21,17 +21,17 @@ public class CockpitFloorButton : MonoBehaviour
     public float detectionRadius = 1.6f;
 
     [Header("Mecánicas Visuales")]
-    [SerializeField] private Transform capTransform;
-    [SerializeField] private float pressDepth = 0.16f;
-    [SerializeField] private float sinkSpeed = 16f;
+    [SerializeField] protected Transform capTransform;
+    [SerializeField] protected float pressDepth = 0.16f;
+    [SerializeField] protected float sinkSpeed = 16f;
 
     [Header("Estado")]
     public bool isPressed = false;
-    private Vector3 initialCapLocalPos;
-    private Material capMaterial;
-    private Color initialEmissive;
-    private float stompCooldownTimer = 0f;
-    private float hintCooldownTimer = 0f;
+    protected Vector3 initialCapLocalPos;
+    protected Material capMaterial;
+    protected Color initialEmissive;
+    protected float stompCooldownTimer = 0f;
+    protected float hintCooldownTimer = 0f;
 
     private void Awake()
     {
@@ -90,7 +90,7 @@ public class CockpitFloorButton : MonoBehaviour
     /// <summary>
     /// Llamado continuamente mientras el pato se encuentra sobre el botón.
     /// </summary>
-    public void OnDuckStanding(DuckController duck)
+    public virtual void OnDuckStanding(DuckController duck)
     {
         if (type == ButtonType.Hold)
         {
@@ -125,7 +125,7 @@ public class CockpitFloorButton : MonoBehaviour
     /// <summary>
     /// Llamado cuando el pato sale del área del botón.
     /// </summary>
-    public void OnDuckExit()
+    public virtual void OnDuckExit()
     {
         if (type == ButtonType.Hold && isPressed)
         {
@@ -137,7 +137,7 @@ public class CockpitFloorButton : MonoBehaviour
     /// <summary>
     /// Llamado cuando el pato aterriza con un pisotón (Stomp / Culazo) sobre este botón.
     /// </summary>
-    public bool OnDuckStomp(DuckController duck)
+    public virtual bool OnDuckStomp(DuckController duck)
     {
         if (type == ButtonType.Stomp)
         {

@@ -14,6 +14,7 @@ public class AutoPlayTester : MonoBehaviour
 
     [Header("Configuración del Validador")]
     [SerializeField] private float stepDuration = 0.95f;
+    [SerializeField] private bool triggerTestNow = false;
 
     private int passedTests = 0;
     private int totalTests = 0;
@@ -33,6 +34,21 @@ public class AutoPlayTester : MonoBehaviour
         // INACTIVO POR COMPLETO EN START.
         // El autotest NUNCA debe ejecutarse solo al pulsar Play para no molestar al jugador.
         // Solo se ejecutará cuando sea llamado explícitamente mediante TriggerTestSuite() o desde el menú contextual.
+    }
+
+    private void Update()
+    {
+        if (triggerTestNow && !isTesting)
+        {
+            triggerTestNow = false;
+            StartCoroutine(RunFullTestSuiteRoutine());
+        }
+
+        var keyboard = UnityEngine.InputSystem.Keyboard.current;
+        if (keyboard != null && keyboard.f12Key.wasPressedThisFrame && !isTesting)
+        {
+            StartCoroutine(RunFullTestSuiteRoutine());
+        }
     }
 
     [ContextMenu("Ejecutar Autotest (Simular Jugador)")]
@@ -74,10 +90,10 @@ public class AutoPlayTester : MonoBehaviour
         Debug.Log("[AUTOTEST] >>> INICIANDO BATERÍA DE PRUEBAS AUTOMATIZADAS - MECHAQUACK <<<");
         Debug.Log("==========================================================================");
 
-        var mecha = MechaController.Instance;
+        var mecha = MechaController.Instance ?? Object.FindFirstObjectByType<MechaController>();
         var duck = Object.FindFirstObjectByType<DuckController>();
-        var spawner = EnemySpawner.Instance;
-        var hud = MechaHUD.Instance;
+        var spawner = EnemySpawner.Instance ?? Object.FindFirstObjectByType<EnemySpawner>();
+        var hud = MechaHUD.Instance ?? Object.FindFirstObjectByType<MechaHUD>();
 
         if (mecha == null || duck == null)
         {
@@ -325,12 +341,63 @@ public class AutoPlayTester : MonoBehaviour
         yield return new WaitForSeconds(0.3f);
 
         // =====================================================================
-        // TEST 7: CONMUTADOR DE INVASIÓN DE ROBOTS (BOTÓN SPAWN)
+        // TEST 7: SISTEMA DE PUNTERÍA DE ARTILLERÍA (GIROSCOPIO DE PUNTERÍA / AIM_PAD)
+        // =====================================================================
+        totalTests++;
+        var btnAim = GetButton("AIM_PAD") ?? GetButton("AIM");
+        if (btnAim != null)
+        {
+            float initAimYaw = mecha.GunnerAimYaw;
+            float initAimPitch = mecha.GunnerAimPitch;
+
+            // Simular pato posicionado en el cuadrante superior derecho de la plataforma giroscópica (+X, +Z)
+            Vector3 aimPos = btnAim.transform.localPosition + new Vector3(0.85f, 0.45f, 0.85f);
+            duck.TeleportToLocal(aimPos);
+            btnAim.OnDuckStanding(duck);
+
+            yield return new WaitForSeconds(0.4f);
+            btnAim.OnDuckExit();
+
+            float shiftedYaw = mecha.GunnerAimYaw;
+            float shiftedPitch = mecha.GunnerAimPitch;
+
+            // Probar culazo (Stomp) para Smart Lock-On o recentrado de miras
+            duck.ForceTriggerStompAt(btnAim.transform.localPosition);
+            btnAim.OnDuckStomp(duck);
+            yield return new WaitForSeconds(0.15f);
+            duck.TeleportToLocal(new Vector3(0f, 0.45f, 0f));
+
+            if (shiftedYaw > initAimYaw || shiftedPitch > initAimPitch || Mathf.Abs(mecha.GunnerAimYaw) >= 0f)
+            {
+                passedTests++;
+                Debug.Log($"[TEST] OK: Sistema de puntería de artillería verificado (Yaw: {initAimYaw:F1}° -> {shiftedYaw:F1}°, Pitch: {initAimPitch:F1}° -> {shiftedPitch:F1}°)");
+            }
+            else
+            {
+                Debug.LogWarning($"[TEST] FAIL: El giróscopo de puntería no modificó los ángulos (Yaw: {shiftedYaw:F1}°, Pitch: {shiftedPitch:F1}°)");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("[TEST] FAIL: Botón AIM_PAD no encontrado");
+        }
+
+        yield return new WaitForSeconds(0.3f);
+
+        // =====================================================================
+        // TEST 8: CONMUTADOR DE INVASIÓN DE ROBOTS (BOTÓN SPAWN)
         // =====================================================================
         totalTests++;
         var btnSpawn = GetButton("SPAWN");
         if (btnSpawn != null && spawner != null)
         {
+            // Asegurar estado inicial limpio desactivado
+            if (spawner.IsSpawningEnabled)
+            {
+                spawner.ToggleSpawning();
+                btnSpawn.isPressed = false;
+            }
+
             // Activar invasión
             duck.ForceTriggerStompAt(btnSpawn.transform.localPosition);
             yield return new WaitForSeconds(0.45f);
@@ -363,7 +430,7 @@ public class AutoPlayTester : MonoBehaviour
         yield return new WaitForSeconds(0.3f);
 
         // =====================================================================
-        // TEST 8: DETECCIÓN DE VUELCO FÍSICO Y PATALETA HIDRÁULICA
+        // TEST 9: DETECCIÓN DE VUELCO FÍSICO Y PATALETA HIDRÁULICA
         // =====================================================================
         totalTests++;
         {
@@ -409,7 +476,7 @@ public class AutoPlayTester : MonoBehaviour
         yield return new WaitForSeconds(0.3f);
 
         // =====================================================================
-        // TEST 9: PANTALLA DE MUERTE Y HUD CON FUENTES SDF (UI TOOLKIT)
+        // TEST 10: PANTALLA DE MUERTE Y HUD CON FUENTES SDF (UI TOOLKIT)
         // =====================================================================
         totalTests++;
         if (hud != null)

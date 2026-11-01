@@ -104,14 +104,28 @@ public class MechBodyStabilizer : MonoBehaviour
         targetPitch = 0f;
         targetRoll = 0f;
 
+        bool mechaAirborne = (MechaController.Instance != null && MechaController.Instance.IsAirborne);
+        if (mechaAirborne)
+        {
+            // En caída libre: el torso se inclina hacia adelante contra el viento de la caída
+            Vector3 vel = mechaRigidbody != null ? mechaRigidbody.linearVelocity : Vector3.zero;
+            targetPitch = Mathf.Clamp(vel.y * 0.45f, -14f, 8f);
+            targetRoll = 0f;
+            return;
+        }
+
+        // Squash mecánico de suspensión tras el aterrizaje
+        float landingSquash = (MechaController.Instance != null) ? MechaController.Instance.LandingSquash : 0f;
+        targetHeight = baseRideHeight - landingSquash;
+
         if (locomotionController.GetSupportPlane(out Vector3 footCenter, out Vector3 avgNormal, out float heightDelta))
         {
-            // 1. Altura base relativa al plano medio de los pies
-            targetHeight = baseRideHeight;
+            // 1. Altura base relativa al plano medio de los pies (con squash de impacto)
+            targetHeight = baseRideHeight - landingSquash;
 
             // 2. Roll (inclinación lateral por diferencia de altura entre pies)
-            // Ancho aproximado entre patas = 6.2m
-            float rollRad = Mathf.Atan2(heightDelta, 6.2f);
+            // Ancho real entre caderas = 16.8m (±8.4m)
+            float rollRad = Mathf.Atan2(heightDelta, 16.8f);
             float terrainRoll = Mathf.Clamp(rollRad * Mathf.Rad2Deg, -maxTerrainTilt, maxTerrainTilt);
 
             // 3. Pitch (inclinación longitudinal según la normal del terreno)

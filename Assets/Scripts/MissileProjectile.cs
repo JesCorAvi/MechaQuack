@@ -8,21 +8,23 @@ using UnityEngine;
 public class MissileProjectile : MonoBehaviour
 {
     [Header("Parámetros de Vuelo")]
-    [SerializeField] private float initialSpeed = 22f;
-    [SerializeField] private float maxSpeed = 65f;
-    [SerializeField] private float acceleration = 75f;
-    [SerializeField] private float homingTurnRate = 120f;
+    [SerializeField] private float initialSpeed = 32f;
+    [SerializeField] private float maxSpeed = 82f;
+    [SerializeField] private float acceleration = 95f;
+    [SerializeField] private float homingTurnRate = 220f;
     [SerializeField] private float explosionRadius = 9.5f;
     [SerializeField] private float maxLifetime = 4.5f;
 
     private float currentSpeed;
     private float lifeTimer = 0f;
     private Transform homingTarget;
+    private Vector3 customAimPoint;
+    private bool hasCustomAimPoint = false;
     private bool hasExploded = false;
 
     private TrailRenderer trailRenderer;
 
-    public static MissileProjectile Spawn(Vector3 spawnPos, Quaternion spawnRot, Transform target = null)
+    public static MissileProjectile Spawn(Vector3 spawnPos, Quaternion spawnRot, Transform target = null, Vector3? targetAimPoint = null)
     {
         GameObject go = new GameObject("MicroMissile");
         go.transform.position = spawnPos;
@@ -92,6 +94,11 @@ public class MissileProjectile : MonoBehaviour
         // Componente lógica
         MissileProjectile mp = go.AddComponent<MissileProjectile>();
         mp.homingTarget = target;
+        if (targetAimPoint.HasValue)
+        {
+            mp.customAimPoint = targetAimPoint.Value;
+            mp.hasCustomAimPoint = true;
+        }
         mp.trailRenderer = tr;
 
         return mp;
@@ -116,14 +123,32 @@ public class MissileProjectile : MonoBehaviour
         // Aceleración propulsora
         currentSpeed = Mathf.Min(maxSpeed, currentSpeed + acceleration * Time.deltaTime);
 
-        // Guiado hacia objetivo (si hay uno asignado y está en frente)
+        // Guiado hacia objetivo enemigo bloqueado o hacia el punto apuntado por el artillero
+        Vector3 targetDest = Vector3.zero;
+        bool hasTarget = false;
+
         if (homingTarget != null)
         {
-            Vector3 toTarget = homingTarget.position - transform.position;
-            float angle = Vector3.Angle(transform.forward, toTarget);
-            if (angle < 85f && toTarget.sqrMagnitude > 1f)
+            targetDest = homingTarget.position + Vector3.up * 1.5f;
+            hasTarget = true;
+        }
+        else if (MechaController.Instance != null && !MechaController.Instance.IsGameOver)
+        {
+            targetDest = MechaController.Instance.GetGunnerAimTargetPoint(280f);
+            hasTarget = true;
+        }
+        else if (hasCustomAimPoint)
+        {
+            targetDest = customAimPoint;
+            hasTarget = true;
+        }
+
+        if (hasTarget)
+        {
+            Vector3 toTarget = targetDest - transform.position;
+            if (toTarget.sqrMagnitude > 4f)
             {
-                Quaternion targetRot = Quaternion.LookRotation(toTarget.normalized);
+                Quaternion targetRot = Quaternion.LookRotation(toTarget.normalized, Vector3.up);
                 transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRot, homingTurnRate * Time.deltaTime);
             }
         }
@@ -132,14 +157,17 @@ public class MissileProjectile : MonoBehaviour
         float stepDist = currentSpeed * Time.deltaTime;
         int hitMask = ~LayerMask.GetMask("Player", "Ignore Raycast");
 
-        if (Physics.Raycast(transform.position, transform.forward, out RaycastHit hit, stepDist + 0.3f, hitMask, QueryTriggerInteraction.Ignore))
+        if (Physics.Raycast(transform.position, transform.forward, out RaycastHit hit, stepDist + 0.35f, hitMask, QueryTriggerInteraction.Ignore))
         {
-            Explode(hit.point);
+            // Evitar detonar contra el propio Mecha durante el despegue inicial
+            if (MechaController.Instance == null || !hit.collider.transform.IsChildOf(MechaController.Instance.transform))
+            {
+                Explode(hit.point);
+                return;
+            }
         }
-        else
-        {
-            transform.position += transform.forward * stepDist;
-        }
+
+        transform.position += transform.forward * stepDist;
     }
 
     private void Explode(Vector3 explosionPoint)

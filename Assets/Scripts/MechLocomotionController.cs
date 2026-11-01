@@ -72,6 +72,13 @@ public class MechLocomotionController : MonoBehaviour
         float speedRatio = Mathf.Clamp01(speed / Mathf.Max(0.1f, referenceMaxSpeed));
         float currentDuration = Mathf.Lerp(maxStepDuration, minStepDuration, speedRatio);
 
+        bool isAirborne = (MechaController.Instance != null && MechaController.Instance.IsAirborne);
+        if (isAirborne)
+        {
+            stoppedTimer = 0f;
+            return;
+        }
+
         // Coordinación de gait estricto: Bípedo pesado (nunca dos patas en el aire)
         if (!AnyLegStepping)
         {
@@ -167,6 +174,7 @@ public class MechLocomotionController : MonoBehaviour
         footHeightDelta = 0f;
 
         if (leftLeg == null || rightLeg == null) return false;
+        if (MechaController.Instance != null && MechaController.Instance.IsAirborne) return false;
 
         Vector3 pL = leftLeg.CurrentFootPosition;
         Vector3 pR = rightLeg.CurrentFootPosition;

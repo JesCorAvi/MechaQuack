@@ -75,10 +75,30 @@ public class WindshieldHUDCrosshair : MonoBehaviour
 
     private void Update()
     {
+        UpdateHUDPositionOnWindshield();
         ScanForwardTargets();
         UpdateRecoilAndAnimation(Time.deltaTime);
         UpdateWeaponStatusReadouts();
         UpdateHorizonLadder();
+    }
+
+    /// <summary>
+    /// Desplaza y orienta la mirilla holográfica dinámicamente sobre la cúpula panorámica 360°
+    /// en función del azimut y elevación apuntados por el puesto de artillería (P2).
+    /// </summary>
+    private void UpdateHUDPositionOnWindshield()
+    {
+        float aimYaw = MechaController.Instance != null ? MechaController.Instance.GunnerAimYaw : 0f;
+        float aimPitch = MechaController.Instance != null ? MechaController.Instance.GunnerAimPitch : 0f;
+
+        // Proyección sobre la curvatura interna del parabrisas (radio focal ~8.0m)
+        float targetX = Mathf.Clamp(Mathf.Tan(aimYaw * Mathf.Deg2Rad) * 8.0f, -8.8f, 8.8f);
+        float targetY = 4.4f + Mathf.Clamp(Mathf.Tan(aimPitch * Mathf.Deg2Rad) * 8.0f, -2.6f, 3.2f);
+        float targetZ = 8.0f - (targetX * targetX) * 0.012f;
+
+        Vector3 targetPos = new Vector3(targetX, targetY, targetZ);
+        transform.localPosition = Vector3.Lerp(transform.localPosition, targetPos, Time.deltaTime * 14f);
+        transform.localRotation = Quaternion.Slerp(transform.localRotation, Quaternion.Euler(-aimPitch, aimYaw, 0f), Time.deltaTime * 14f);
     }
 
     /// <summary>
@@ -87,7 +107,7 @@ public class WindshieldHUDCrosshair : MonoBehaviour
     private void ScanForwardTargets()
     {
         Vector3 origin = transform.position;
-        Vector3 fwd = transform.forward;
+        Vector3 fwd = MechaController.Instance != null ? MechaController.Instance.GetGunnerAimDirection() : transform.forward;
         int mask = ~LayerMask.GetMask("Player", "Ignore Raycast");
 
         hasTargetLock = false;
@@ -149,10 +169,10 @@ public class WindshieldHUDCrosshair : MonoBehaviour
 
         if (telemetryBottom != null)
         {
-            if (currentTargetDistance > 0.1f)
-                telemetryBottom.text = $"RNG: {currentTargetDistance:F1}m";
-            else
-                telemetryBottom.text = "RNG: ---";
+            float curYaw = MechaController.Instance != null ? MechaController.Instance.GunnerAimYaw : 0f;
+            float curPitch = MechaController.Instance != null ? MechaController.Instance.GunnerAimPitch : 0f;
+            string distStr = currentTargetDistance > 0.1f ? $"{currentTargetDistance:F1}m" : "---";
+            telemetryBottom.text = $"RNG: {distStr} | AZ: {curYaw:+0.0;-0.0;0.0}° EL: {curPitch:+0.0;-0.0;0.0}°";
             telemetryBottom.color = activeColor;
         }
     }

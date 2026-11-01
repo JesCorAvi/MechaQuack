@@ -250,6 +250,12 @@ public static class MechaPrefabBuilder
         CreateButtonPrefab("MISSILES", "MISILES\n(CULAZO E)", CockpitFloorButton.ButtonType.Stomp, matBtnCyan, 3.2f, 1.9f);
         CreateButtonPrefab("SPAWN", "ROBOTS\n[ACTIVAR / PAUSAR]", CockpitFloorButton.ButtonType.Toggle, matBtnRose, 2.6f, 1.7f);
 
+        // Prefab de Plataforma Giroscópica de Puntería (Gunner Aim Pad)
+        GameObject aimPadObj = SetupGunnerAimPad.BuildAimPadHierarchy(null, Vector3.zero, matDarkSteel, matGunmetal, matChrome, matHazard, matBtnBase, matBtnCyan, matBtnGreen, matBtnAmber);
+        string aimPadPrefabPath = Path.Combine(PROPS_BUTTONS_PATH, "CockpitButton_AIM_PAD.prefab").Replace("\\", "/");
+        PrefabUtility.SaveAsPrefabAsset(aimPadObj, aimPadPrefabPath);
+        Object.DestroyImmediate(aimPadObj);
+
         // =====================================================================
         // PREFABS 4: CONSOLAS TÁCTICAS SLEEK (Assets/Prefabs/Props/Consoles/)
         // =====================================================================

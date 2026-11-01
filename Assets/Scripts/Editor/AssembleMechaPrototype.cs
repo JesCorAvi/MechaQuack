@@ -698,6 +698,7 @@ public static class AssembleMechaPrototype
         // BOTONES DE ARTILLERÍA (ALA DERECHA - JUGADOR 2)
         CreateFloorButton("GATLING", "🔫 GATLING\n[MANTENER / E]", new Vector3(2.6f, 0f, 2.5f), 1.60f, matBtnAmber, CockpitFloorButton.ButtonType.Hold, 1.9f);
         CreateFloorButton("MISSILES", "🚀 MISILES\n(CULAZO E)", new Vector3(6.4f, 0f, 2.5f), 1.60f, matBtnCyan, CockpitFloorButton.ButtonType.Stomp, 1.9f);
+        SetupGunnerAimPad.BuildAimPadHierarchy(cockpit.transform, new Vector3(4.5f, 0.04f, 4.6f), matDarkSteel, matGunmetal, matChrome, matHazard, matBtnBase, matBtnCyan, matBtnGreen, matBtnAmber);
 
         // BOTÓN AUXILIAR CENTRAL / POSTERIOR: ALARMA DE ROBOTS
         CreateFloorButton("SPAWN", "🚨 ROBOTS\n[ACTIVAR]", new Vector3(0f, 0f, -2.5f), 1.25f, matBtnRose, CockpitFloorButton.ButtonType.Toggle, 1.6f);
@@ -755,6 +756,8 @@ public static class AssembleMechaPrototype
         mechaSO.FindProperty("gatlingMuzzleTransform").objectReferenceValue = muzzleObj.transform;
         mechaSO.FindProperty("gatlingMuzzleLight").objectReferenceValue = ml;
         mechaSO.FindProperty("missilePodTransform").objectReferenceValue = podBox.transform;
+        mechaSO.FindProperty("gatlingGimbalTransform").objectReferenceValue = armLeft.transform;
+        mechaSO.FindProperty("missilePodGimbalTransform").objectReferenceValue = podBox.transform;
 
         SerializedProperty tubesProp = mechaSO.FindProperty("missileLaunchTubes");
         tubesProp.arraySize = 4;

@@ -184,9 +184,28 @@ public class ProceduralLeg : MonoBehaviour
     /// </summary>
     private void ClampPlantedFootToGround()
     {
+        bool mechaAirborne = (MechaController.Instance != null && MechaController.Instance.IsAirborne);
         Vector3 hipWorld = ikSolver.hip != null ? ikSolver.hip.position : transform.position;
-        Vector3 probeStart = new Vector3(currentFootPos.x, hipWorld.y + 1.5f, currentFootPos.z);
-        float rayDist = ikSolver.TotalLength + 3.0f;
+
+        if (mechaAirborne)
+        {
+            isGrounded = false;
+            // Pataleo/pedaleo cómico de robot torpe en caída libre
+            float flailPhase = (name.ToLower().Contains("left") || localRestOffset.x < 0) ? 0f : Mathf.PI;
+            float flailY = Mathf.Sin(Time.time * 8.5f + flailPhase) * 1.5f;
+            float flailZ = Mathf.Cos(Time.time * 8.5f + flailPhase) * 2.2f;
+
+            Vector3 dangleLocal = new Vector3(localRestOffset.x, -ikSolver.TotalLength * 0.82f + flailY, localRestOffset.z + flailZ);
+            Vector3 targetHangPos = bodyRoot != null ? bodyRoot.TransformPoint(dangleLocal) : (hipWorld + dangleLocal);
+
+            currentFootPos = Vector3.Lerp(currentFootPos, targetHangPos, Time.deltaTime * 12f);
+            Quaternion hangRot = (bodyRoot != null ? bodyRoot.rotation : transform.rotation) * Quaternion.Euler(22f, 0f, 0f);
+            currentFootRot = Quaternion.Slerp(currentFootRot, hangRot, Time.deltaTime * 10f);
+            return;
+        }
+
+        Vector3 probeStart = new Vector3(currentFootPos.x, hipWorld.y + 3.0f, currentFootPos.z);
+        float rayDist = ikSolver.TotalLength + 10.0f;
 
         if (Physics.Raycast(probeStart, Vector3.down, out RaycastHit hit, rayDist, groundMask, QueryTriggerInteraction.Ignore))
         {
@@ -194,6 +213,7 @@ public class ProceduralLeg : MonoBehaviour
             {
                 currentFootPos.y = hit.point.y + ankleToSoleOffset;
                 currentGroundNormal = hit.normal;
+                isGrounded = true;
 
                 Vector3 bodyFwd = bodyRoot != null ? bodyRoot.forward : transform.forward;
                 Vector3 projFwd = Vector3.ProjectOnPlane(bodyFwd, currentGroundNormal);
@@ -201,8 +221,12 @@ public class ProceduralLeg : MonoBehaviour
                 {
                     currentFootRot = Quaternion.LookRotation(projFwd.normalized, currentGroundNormal);
                 }
+                return;
             }
         }
+
+        // Si este pie no detecta suelo firme bajo su punto actual (ej. borde de precipicio)
+        isGrounded = false;
     }
 
     /// <summary>
@@ -328,8 +352,8 @@ public class ProceduralLeg : MonoBehaviour
             predictedOffset += tangentialVel * (stepLeadTime * 0.75f);
         }
 
-        Vector3 probeStart = new Vector3(restPos.x + predictedOffset.x, hipWorld.y + 1.5f, restPos.z + predictedOffset.z);
-        float rayDistance = (ikSolver.TotalLength + 3.0f);
+        Vector3 probeStart = new Vector3(restPos.x + predictedOffset.x, hipWorld.y + 3.0f, restPos.z + predictedOffset.z);
+        float rayDistance = (ikSolver.TotalLength + 10.0f);
 
         int hitCount = Physics.SphereCastNonAlloc(
             probeStart,
@@ -411,6 +435,7 @@ public class ProceduralLeg : MonoBehaviour
     {
         urgency = 0f;
         if (isStepping) return false;
+        if (MechaController.Instance != null && MechaController.Instance.IsAirborne) return false;
 
         // Prioridad absoluta: si hay un escalón delante, dar el paso ya para levantarse antes de chocar
         if (detectedStepAhead)
@@ -480,8 +505,8 @@ public class ProceduralLeg : MonoBehaviour
             {
                 float frac = i / 4.0f;
                 Vector3 samplePt = Vector3.Lerp(startFootPos, targetFootPos, frac);
-                Vector3 probePos = new Vector3(samplePt.x, hipWorld.y + 1.0f, samplePt.z);
-                if (Physics.Raycast(probePos, Vector3.down, out RaycastHit obsHit, ikSolver.TotalLength + 2f, groundMask, QueryTriggerInteraction.Ignore))
+                Vector3 probePos = new Vector3(samplePt.x, hipWorld.y + 3.0f, samplePt.z);
+                if (Physics.Raycast(probePos, Vector3.down, out RaycastHit obsHit, ikSolver.TotalLength + 10f, groundMask, QueryTriggerInteraction.Ignore))
                 {
                     if (bodyRoot == null || !obsHit.collider.transform.IsChildOf(bodyRoot))
                     {

@@ -17,9 +17,9 @@ public class CockpitCameraController : MonoBehaviour
     [SerializeField] private Transform mechaRoot;
 
     [Header("Configuración Órbita Libre (Modo 0)")]
-    [SerializeField] private float currentDistance = 7.5f;
-    [SerializeField] private float targetDistance = 7.5f;
-    [SerializeField] private float minDistance = 2.8f;
+    [SerializeField] private float currentDistance = 5.6f;
+    [SerializeField] private float targetDistance = 5.6f;
+    [SerializeField] private float minDistance = 0.85f;
     [SerializeField] private float maxDistance = 160.0f; // Permite ver todo el Mecha exterior colosal
     [SerializeField] private float mouseSensitivity = 2.4f;
     [SerializeField] private float zoomStep = 4.5f;
@@ -55,10 +55,18 @@ public class CockpitCameraController : MonoBehaviour
             if (mecha != null) mechaRoot = mecha.transform;
         }
 
+        Camera cam = GetComponent<Camera>();
+        if (cam == null) cam = Camera.main;
+        if (cam != null)
+        {
+            cam.nearClipPlane = 0.05f; // Evita recorte de polígonos al empujar la cámara cerca del pato o mamparas
+        }
+
+        minDistance = 0.85f;
         yaw = 0f;
-        pitch = 24f;
-        currentDistance = 7.5f;
-        targetDistance = 7.5f;
+        pitch = 22f;
+        currentDistance = 5.6f;
+        targetDistance = 5.6f;
     }
 
     private void Update()
@@ -165,44 +173,118 @@ public class CockpitCameraController : MonoBehaviour
         Transform cockpitTr = duckTarget.parent;
 
         Vector3 pivotLocal = duckTarget.localPosition + Vector3.up * 0.85f;
-        float horizDist = currentDistance * Mathf.Cos(pitch * Mathf.Deg2Rad);
-        float vertDist = currentDistance * Mathf.Sin(pitch * Mathf.Deg2Rad);
-
-        // Yaw relativo al frente de la cabina
+        float cosP = Mathf.Cos(pitch * Mathf.Deg2Rad);
+        float sinP = Mathf.Sin(pitch * Mathf.Deg2Rad);
         float radYaw = yaw * Mathf.Deg2Rad;
-        Vector3 camLocalPos = new Vector3(
-            pivotLocal.x - Mathf.Sin(radYaw) * horizDist,
-            Mathf.Max(0.5f, pivotLocal.y + vertDist),
-            pivotLocal.z - Mathf.Cos(radYaw) * horizDist
-        );
 
-        // Cuando la cámara se aleja mucho, eleva el punto de mira hacia el centro del mecha
-        float zoomProgress = Mathf.Clamp01((currentDistance - minDistance) / (maxDistance - minDistance));
-        Vector3 lookTargetLocal = pivotLocal + Vector3.up * Mathf.Lerp(0.15f, 1.2f, zoomProgress);
+        // Vector unitario que apunta desde el pivote hacia la posición deseada de la cámara
+        Vector3 dirLocal = new Vector3(
+            -Mathf.Sin(radYaw) * cosP,
+            sinP,
+            -Mathf.Cos(radYaw) * cosP
+        ).normalized;
+
+        // --- SISTEMA ANTI-RECORTE Y EMPUJE DE CÁMARA (Camera Collision Push-In) ---
+        // 1. Límites interiores analíticos de la cabina:
+        // Evita que la cámara traspase mamparas, techo o cristales cuando el pato se mueve a los bordes.
+        // Dimensiones útiles de cabina: Ancho ±9.6m, Profundidad Z: [-6.8m a +7.6m], Altura Y: [0.45m a 8.0m].
+        float maxInteriorDist = 14.0f;
+
+        if (dirLocal.x > 0.0001f)
+        {
+            float d = (9.6f - pivotLocal.x) / dirLocal.x;
+            if (d > 0f && d < maxInteriorDist) maxInteriorDist = d;
+        }
+        else if (dirLocal.x < -0.0001f)
+        {
+            float d = (-9.6f - pivotLocal.x) / dirLocal.x;
+            if (d > 0f && d < maxInteriorDist) maxInteriorDist = d;
+        }
+
+        if (dirLocal.y > 0.0001f)
+        {
+            float d = (8.0f - pivotLocal.y) / dirLocal.y;
+            if (d > 0f && d < maxInteriorDist) maxInteriorDist = d;
+        }
+        else if (dirLocal.y < -0.0001f)
+        {
+            float d = (0.45f - pivotLocal.y) / dirLocal.y;
+            if (d > 0f && d < maxInteriorDist) maxInteriorDist = d;
+        }
+
+        if (dirLocal.z > 0.0001f)
+        {
+            float d = (7.6f - pivotLocal.z) / dirLocal.z;
+            if (d > 0f && d < maxInteriorDist) maxInteriorDist = d;
+        }
+        else if (dirLocal.z < -0.0001f)
+        {
+            float d = (-6.8f - pivotLocal.z) / dirLocal.z;
+            if (d > 0f && d < maxInteriorDist) maxInteriorDist = d;
+        }
+
+        // Margen de seguridad de 0.20m para evitar que el plano cercano toque paredes
+        maxInteriorDist = Mathf.Max(minDistance, maxInteriorDist - 0.20f);
+
+        Vector3 camLocalPos;
+        Vector3 lookTargetLocal;
+
+        // Comportamiento según si el jugador está en vista interior de cabina o vista exterior colosal
+        if (targetDistance <= 10.5f)
+        {
+            // VISTA INTERIOR CABINA: Se respeta estrictamente el volumen cerrado de la cúpula
+            float safeCockpitDist = Mathf.Min(currentDistance, maxInteriorDist);
+            camLocalPos = pivotLocal + dirLocal * safeCockpitDist;
+            camLocalPos.y = Mathf.Max(0.45f, camLocalPos.y);
+            lookTargetLocal = pivotLocal + Vector3.up * 0.12f;
+        }
+        else
+        {
+            // VISTA EXTERIOR MECHA: Permite alejar la cámara hacia el exterior del mecha colosal
+            float zoomProgress = Mathf.Clamp01((currentDistance - 10.5f) / (maxDistance - 10.5f));
+            lookTargetLocal = pivotLocal + Vector3.up * Mathf.Lerp(0.12f, 2.0f, zoomProgress);
+            camLocalPos = pivotLocal + dirLocal * currentDistance;
+        }
 
         Vector3 worldCamPos = cockpitTr != null ? cockpitTr.TransformPoint(camLocalPos) : camLocalPos;
         Vector3 worldLookTarget = cockpitTr != null ? cockpitTr.TransformPoint(lookTargetLocal) : lookTargetLocal;
 
-        // Anti-recorte de cámara (Camera Collision Push-In según camera-systems)
-        // Evita que al alejar la cámara se incruste dentro de rocas, pilares o rascacielos
-        Vector3 camToTarget = worldCamPos - worldLookTarget;
-        float desiredDist = camToTarget.magnitude;
-        if (desiredDist > 0.05f)
+        // 2. Colisión exterior con obstáculos del entorno (rascacielos, montañas, peñascos, puentes gigantes):
+        // Usa SphereCastAll filtrando la estructura del propio Mecha y del Pato.
+        Vector3 camRay = worldCamPos - worldLookTarget;
+        float camRayDist = camRay.magnitude;
+        if (camRayDist > 0.1f)
         {
-            Vector3 camDir = camToTarget / desiredDist;
+            Vector3 camRayDir = camRay / camRayDist;
             int groundMask = ~LayerMask.GetMask("Player", "Ignore Raycast");
-            if (Physics.SphereCast(worldLookTarget, 0.28f, camDir, out RaycastHit camHit, desiredDist, groundMask, QueryTriggerInteraction.Ignore))
+            RaycastHit[] hits = Physics.SphereCastAll(worldLookTarget, 0.32f, camRayDir, camRayDist, groundMask, QueryTriggerInteraction.Ignore);
+
+            float minHitDist = camRayDist;
+            bool hitObstacle = false;
+
+            for (int i = 0; i < hits.Length; i++)
             {
-                if (mechaRoot == null || !camHit.collider.transform.IsChildOf(mechaRoot))
+                var h = hits[i];
+                if (h.collider == null) continue;
+                if (mechaRoot != null && h.collider.transform.IsChildOf(mechaRoot)) continue;
+                if (duckTarget != null && h.collider.transform.IsChildOf(duckTarget)) continue;
+
+                if (h.distance < minHitDist && h.distance > 1.2f)
                 {
-                    float safeDist = Mathf.Max(minDistance, camHit.distance - 0.15f);
-                    worldCamPos = worldLookTarget + camDir * safeDist;
+                    minHitDist = h.distance;
+                    hitObstacle = true;
                 }
+            }
+
+            if (hitObstacle)
+            {
+                float safeExteriorDist = Mathf.Max(minDistance, minHitDist - 0.35f);
+                worldCamPos = worldLookTarget + camRayDir * safeExteriorDist;
             }
         }
 
         // Suavizado exponencial independiente de la tasa de refresco (Pattern 2 de camera-systems)
-        float smoothT = 1f - Mathf.Exp(-24f * Time.deltaTime);
+        float smoothT = 1f - Mathf.Exp(-28f * Time.deltaTime);
         transform.position = Vector3.Lerp(transform.position, worldCamPos, smoothT);
         transform.LookAt(worldLookTarget);
     }
@@ -266,9 +348,9 @@ public class CockpitCameraController : MonoBehaviour
     {
         currentMode = CameraMode.FreeOrbit;
         yaw = 0f;
-        pitch = 24f;
-        targetDistance = 4.8f;
-        currentDistance = 4.8f;
+        pitch = 22f;
+        targetDistance = 5.6f;
+        currentDistance = 5.6f;
         MechaHUD.Instance?.UpdateCameraModeLabel(GetModeLabel());
     }
 

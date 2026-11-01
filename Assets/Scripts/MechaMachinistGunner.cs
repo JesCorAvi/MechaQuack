@@ -113,22 +113,26 @@ public class MechaMachinistGunner : MonoBehaviour
                 tacticalScreenLight.intensity = 1.2f;
             }
 
-            // Escaneo sutil de cabeza buscando blancos
+            // Escaneo sutil de cabeza buscando blancos o seguimiento de puntería activa
             if (gunnerHeadTransform != null)
             {
-                float scanAngle = Mathf.Sin(idleScanTimer * 1.5f) * 14f;
-                gunnerHeadTransform.localRotation = headRestRot * Quaternion.Euler(0f, scanAngle, 0f);
+                float aimYaw = mecha.GunnerAimYaw;
+                float aimPitch = mecha.GunnerAimPitch;
+                float headYaw = (Mathf.Abs(aimYaw) > 1f) ? aimYaw * 0.75f : Mathf.Sin(idleScanTimer * 1.5f) * 14f;
+                gunnerHeadTransform.localRotation = headRestRot * Quaternion.Euler(-aimPitch * 0.6f, headYaw, 0f);
             }
         }
 
         // Aplicar rotación dinámica a los joysticks del maquinista
+        float curAimYaw = mecha.GunnerAimYaw;
+        float curAimPitch = mecha.GunnerAimPitch;
         if (joystickLeft != null)
         {
-            joystickLeft.localRotation = joyLRestRot * Quaternion.Euler(-joystickRecoilAngle, 0f, 0f);
+            joystickLeft.localRotation = joyLRestRot * Quaternion.Euler(-joystickRecoilAngle - curAimPitch * 0.5f, 0f, -curAimYaw * 0.45f);
         }
         if (joystickRight != null)
         {
-            joystickRight.localRotation = joyRRestRot * Quaternion.Euler(-joystickRecoilAngle, 0f, 0f);
+            joystickRight.localRotation = joyRRestRot * Quaternion.Euler(-joystickRecoilAngle - curAimPitch * 0.5f, 0f, -curAimYaw * 0.45f);
         }
 
         // Aviso cómico en caso de vuelco del mecha
