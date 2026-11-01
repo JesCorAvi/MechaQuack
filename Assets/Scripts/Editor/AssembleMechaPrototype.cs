@@ -747,6 +747,14 @@ public static class AssembleMechaPrototype
 
         // 11. CONECTAR REFERENCIAS EN MECHACONTROLLER
         SerializedObject mechaSO = new SerializedObject(mechaCtrl);
+        string physConfigPath = "Assets/Prefabs/Mecha/MechaPhysicsConfig.asset";
+        MechaPhysicsConfig physConfig = AssetDatabase.LoadAssetAtPath<MechaPhysicsConfig>(physConfigPath);
+        if (physConfig != null)
+        {
+            mechaSO.FindProperty("physicsConfig").objectReferenceValue = physConfig;
+        }
+        mechaSO.FindProperty("leftLeg").objectReferenceValue = legLeft;
+        mechaSO.FindProperty("rightLeg").objectReferenceValue = legRight;
         mechaSO.FindProperty("cockpitTransform").objectReferenceValue = cockpit.transform;
         mechaSO.FindProperty("leftLegTransform").objectReferenceValue = legLeft.transform;
         mechaSO.FindProperty("rightLegTransform").objectReferenceValue = legRight.transform;

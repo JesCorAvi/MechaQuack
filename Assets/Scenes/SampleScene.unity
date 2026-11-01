@@ -10055,6 +10055,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AutoPlayTester
   stepDuration: 0.95
+  triggerTestNow: 0
 --- !u!4 &637302511
 Transform:
   m_ObjectHideFlags: 0
@@ -39959,11 +39960,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2429099670154126773, guid: 8f4fc9ee805630e4aa0e054440468f11, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: -0.000008583069
       objectReference: {fileID: 0}
     - target: {fileID: 2429099670154126773, guid: 8f4fc9ee805630e4aa0e054440468f11, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: -0.000000067055225
       objectReference: {fileID: 0}
     - target: {fileID: 2429099670154126773, guid: 8f4fc9ee805630e4aa0e054440468f11, type: 3}
       propertyPath: m_LocalRotation.w
@@ -39994,6 +39995,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4986990437799854079, guid: 8f4fc9ee805630e4aa0e054440468f11, type: 3}
+      propertyPath: physicsConfig
+      value: 
+      objectReference: {fileID: 11400000, guid: 720abff7dc88d9746a12d8ed2454cb21, type: 2}
+    - target: {fileID: 4986990437799854079, guid: 8f4fc9ee805630e4aa0e054440468f11, type: 3}
       propertyPath: gatlingGimbalTransform
       value: 
       objectReference: {fileID: 1096219629}
@@ -40001,6 +40006,30 @@ PrefabInstance:
       propertyPath: missilePodGimbalTransform
       value: 
       objectReference: {fileID: 895663753}
+    - target: {fileID: 6601842730721350287, guid: 8f4fc9ee805630e4aa0e054440468f11, type: 3}
+      propertyPath: m_UseGravity
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6601842730721350287, guid: 8f4fc9ee805630e4aa0e054440468f11, type: 3}
+      propertyPath: m_ImplicitCom
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6601842730721350287, guid: 8f4fc9ee805630e4aa0e054440468f11, type: 3}
+      propertyPath: m_LinearDamping
+      value: 0.85
+      objectReference: {fileID: 0}
+    - target: {fileID: 6601842730721350287, guid: 8f4fc9ee805630e4aa0e054440468f11, type: 3}
+      propertyPath: m_AngularDamping
+      value: 1.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 6601842730721350287, guid: 8f4fc9ee805630e4aa0e054440468f11, type: 3}
+      propertyPath: m_CenterOfMass.y
+      value: 6.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 6601842730721350287, guid: 8f4fc9ee805630e4aa0e054440468f11, type: 3}
+      propertyPath: m_CenterOfMass.z
+      value: 0.05
+      objectReference: {fileID: 0}
     - target: {fileID: 7512011905969713111, guid: 8f4fc9ee805630e4aa0e054440468f11, type: 3}
       propertyPath: m_Name
       value: Mecha_Root

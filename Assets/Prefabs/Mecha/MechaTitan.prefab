@@ -1431,19 +1431,18 @@ MonoBehaviour:
   ankleToSoleOffset: 1.6
   bodyRoot: {fileID: 2429099670154126773}
   bodyRigidbody: {fileID: 6601842730721350287}
+  physicsConfig: {fileID: 0}
   stepDistance: 6.4
   turnStepAngle: 22
   stepHeight: 2.2
   stepDuration: 0.38
   stepLeadTime: 0.32
-  maxSlopeAngle: 48
-  footRadius: 1.3
-  stepAnticipationDistance: 6.4
+  localRestOffset: {x: -8.4, y: 0, z: 0}
   maxClimbableStepHeight: 5.2
-  minStepObstacleHeight: 0.12
-  stepClearanceMargin: 0.45
+  stepAnticipationDistance: 6.4
   footToeForwardOffset: 6.4
   footHalfWidth: 3.6
+  footRadius: 1.3
   stepHeightCurve:
     serializedVersion: 2
     m_Curve:
@@ -1504,7 +1503,6 @@ MonoBehaviour:
   groundMask:
     serializedVersion: 2
     m_Bits: 0
-  localRestOffset: {x: -8.4, y: 0, z: 0}
 --- !u!1 &463357618982768869
 GameObject:
   m_ObjectHideFlags: 0
@@ -8639,19 +8637,18 @@ MonoBehaviour:
   ankleToSoleOffset: 1.6
   bodyRoot: {fileID: 2429099670154126773}
   bodyRigidbody: {fileID: 6601842730721350287}
+  physicsConfig: {fileID: 0}
   stepDistance: 6.4
   turnStepAngle: 22
   stepHeight: 2.2
   stepDuration: 0.38
   stepLeadTime: 0.32
-  maxSlopeAngle: 48
-  footRadius: 1.3
-  stepAnticipationDistance: 6.4
+  localRestOffset: {x: 8.4, y: 0, z: 0}
   maxClimbableStepHeight: 5.2
-  minStepObstacleHeight: 0.12
-  stepClearanceMargin: 0.45
+  stepAnticipationDistance: 6.4
   footToeForwardOffset: 6.4
   footHalfWidth: 3.6
+  footRadius: 1.3
   stepHeightCurve:
     serializedVersion: 2
     m_Curve:
@@ -8712,7 +8709,6 @@ MonoBehaviour:
   groundMask:
     serializedVersion: 2
     m_Bits: 0
-  localRestOffset: {x: 8.4, y: 0, z: 0}
 --- !u!1 &3280106961157563985
 GameObject:
   m_ObjectHideFlags: 0
@@ -18513,14 +18509,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 12eb9fa2d00055e45aaee48d8985cd61, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MechaController
-  movePower: 1200000
-  turnTorque: 900000
-  maxLinearVelocity: 22
-  suspensionStrength: 1800000
-  suspensionDamping: 220000
-  targetRideHeight: 21.2
-  legRayLength: 30
+  physicsConfig: {fileID: 11400000, guid: 720abff7dc88d9746a12d8ed2454cb21, type: 2}
+  leftLeg: {fileID: 0}
+  rightLeg: {fileID: 0}
   cockpitTransform: {fileID: 4420311598378050162}
+  pelvisTransform: {fileID: 0}
   leftLegTransform: {fileID: 7503544159517614456}
   rightLegTransform: {fileID: 941239643805677750}
   leftArmTransform: {fileID: 356697968373122556}
@@ -18536,9 +18529,13 @@ MonoBehaviour:
   - {fileID: 2730752129642946894}
   - {fileID: 105105320525193848}
   missileCooldownDuration: 3.5
+  gunnerAimYaw: 0
+  gunnerAimPitch: 0
+  gatlingGimbalTransform: {fileID: 0}
+  missilePodGimbalTransform: {fileID: 0}
   maxHp: 100
   currentHp: 100
-  laserCooldownDuration: 3.5
+  drawBalanceGizmos: 1
 --- !u!65 &3406342538592685424
 BoxCollider:
   m_ObjectHideFlags: 0

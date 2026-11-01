@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b956ba592be5243489b9677cb432e36e, type: 3}
+  m_Name: MechaPhysicsConfig
+  m_EditorClassIdentifier: Assembly-CSharp::MechaPhysicsConfig
+  mass: 44000
+  totalHeight: 52
+  nominalRideHeight: 21.2
+  maxLegExtension: 22.8
+  minLegCompression: 15
+  localCenterOfMass: {x: 0, y: 6.4, z: 0.05}
+  inertiaTensor: {x: 850000, y: 480000, z: 920000}
+  gravity: 9.81
+  gravityScale: 1
+  airborneLinearDamping: 0.015
+  groundedLinearDamping: 0.85
+  airborneAngularDamping: 0.15
+  groundedAngularDamping: 1.8
+  terminalVelocity: 65
+  legSpringStiffness: 1800000
+  legSpringDamping: 220000
+  fallingStateTimeThreshold: 0.25
+  footProbeRadius: 1.3
+  footHalfLength: 5.6
+  footHalfWidth: 3.4
+  maxStableSlopeAngle: 32
+  criticalSlideSlopeAngle: 46
+  slopeSlideAcceleration: 7.5
+  stabilityMarginThreshold: 0.65
+  pointOfNoReturnDistance: 3.2
+  criticalTiltAngle: 42
+  maxUnstableDuration: 0.65
+  uprightTorqueKp: 4500000
+  uprightTorqueKd: 480000
+  maxAnkleCorrectiveTorque: 1200000
+  recoveryReactionTime: 0.14
+  emergencyStepDuration: 0.38
+  maxCounterweightLeanAngle: 18
+  counterweightAngularSpeed: 55
+  hardLandingSpeedThreshold: 5.5
+  collapseImpactSpeedThreshold: 26
+  maxLandingTiltAngle: 32
+  landingRecoveryDuration: 0.65
+  gravityToppleMultiplier: 1.35
+  fallenJointSpring: 45000
+  fallenJointDamping: 8500
+  minFallenStunTime: 1.6
+  getUpSequenceDuration: 3.2
+  moveForce: 1200000
+  turnTorque: 900000
+  maxWalkSpeed: 22
