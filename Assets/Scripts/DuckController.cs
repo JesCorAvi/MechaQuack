@@ -10,9 +10,11 @@ public class DuckController : MonoBehaviour
 {
     public static DuckController Instance { get; private set; }
 
-    [Header("Límites de la Cabina")]
+    [Header("Límites de la Cabina Multinivel")]
     [SerializeField] private float cockpitHalfX = 10.2f;
     [SerializeField] private float cockpitHalfZ = 7.8f;
+    [SerializeField] private float cockpitMaxY = 16.0f;
+    [SerializeField] private float duckRadius = 0.5f;
 
     [Header("Movimiento")]
     [SerializeField] private float moveSpeed = 14.0f;
@@ -24,10 +26,11 @@ public class DuckController : MonoBehaviour
     [SerializeField] private float jumpForce = 15.5f;
     [SerializeField] private float stompSpeed = 32f;
     [SerializeField] private float gravity = 36f;
+    [SerializeField] private float stepSnapOffset = 0.85f; // Absorción suave de escalones al correr
 
     [Header("Inclinación de Cabina (Tolerancia y Deslizamiento)")]
     [Tooltip("Ángulo de inclinación en grados por debajo del cual el pato no resbala (tolerancia / agarre de patas de goma)")]
-    [SerializeField] private float tiltToleranceAngle = 12f;
+    [SerializeField] private float tiltToleranceAngle = 14f;
     [Tooltip("Aceleración máxima de deslizamiento por pendiente (siempre inferior a la aceleración de 42 m/s² del pato para poder contraatacar)")]
     [SerializeField] private float maxTiltSlideAccel = 18f;
 
@@ -45,6 +48,10 @@ public class DuckController : MonoBehaviour
     private float localYaw = 0f;
     private bool isGrounded = true;
     private bool isStomping = false;
+    private float currentFloorY = 0.5f;
+
+    // Buffer preasignado para detección de suelo sin GC allocations
+    private readonly RaycastHit[] groundHits = new RaycastHit[8];
 
     private float waddleTimer = 0f;
     private float wingFlapTimer = 0f;
@@ -64,6 +71,36 @@ public class DuckController : MonoBehaviour
     public bool IsGrounded => isGrounded;
     public bool IsStomping => isStomping;
     public Vector3 LocalPosition => localPos;
+
+    /// <summary>
+    /// Nivel actual del pato dentro de la cabina de 3 pisos:
+    /// 1 = Planta Conductor (Y < 3.0m)
+    /// 2 = Planta Artillero (3.0m <= Y < 7.5m)
+    /// 3 = Planta Capitán / Puente de Mando (Y >= 7.5m)
+    /// </summary>
+    public int CurrentFloorLevel
+    {
+        get
+        {
+            if (localPos.y < 3.0f) return 1;
+            if (localPos.y < 7.5f) return 2;
+            return 3;
+        }
+    }
+
+    public string CurrentFloorName
+    {
+        get
+        {
+            switch (CurrentFloorLevel)
+            {
+                case 1: return "PLANTA 1: CONDUCTOR [Búnker Blindado - Guiado por Capitán]";
+                case 2: return "PLANTA 2: ARTILLERO [Ventanales Panorámicos - Puntería Despejada]";
+                case 3: return "PLANTA 3: CABEZA DEL MECHA [Capitán - 3ª Persona Automática]";
+                default: return "PLANTA 1: CONDUCTOR";
+            }
+        }
+    }
 
     private void Awake()
     {
@@ -238,33 +275,111 @@ public class DuckController : MonoBehaviour
             localVel.z *= Mathf.Pow(0.1f, dt * 60f);
         }
 
-        // Gravedad e integración vertical
-        localVel.y -= gravity * dt;
-
+        // Integrar movimiento horizontal
         localPos.x += localVel.x * dt;
-        localPos.y += localVel.y * dt;
         localPos.z += localVel.z * dt;
 
-        // Límites de las paredes de la cabina
+        // 2. Detección de suelo multinivel robusta (Planta 1, Planta 2, Planta 3 y Escaleras)
+        float detectedFloorY = 0f;
+        bool foundFloor = false;
+
+        if (parentCockpit != null)
+        {
+            // Lanzar raycast vertical desde una altura suficiente (localPos.y + 1.2m)
+            // para que el origen NUNCA quede dentro de un escalón o rampa ascendente
+            Vector3 worldOrigin = parentCockpit.TransformPoint(new Vector3(localPos.x, localPos.y + 1.2f, localPos.z));
+            Vector3 worldDown = parentCockpit.TransformDirection(Vector3.down);
+            int hitCount = Physics.RaycastNonAlloc(worldOrigin, worldDown, groundHits, 24.0f, ~LayerMask.GetMask("Player", "Ignore Raycast"), QueryTriggerInteraction.Ignore);
+
+            float highestLocalY = -100f;
+            for (int i = 0; i < hitCount; i++)
+            {
+                var h = groundHits[i];
+                if (h.collider == null) continue;
+                // Exclusividad: Solo colisionar con superficies dentro de la cabina
+                if (!h.collider.transform.IsChildOf(parentCockpit)) continue;
+                if (h.collider.transform.IsChildOf(transform)) continue;
+
+                Vector3 localHitPoint = parentCockpit.InverseTransformPoint(h.point);
+                // Considerar impactos en o por debajo del pato (con holgura de escalón stepSnapOffset)
+                if (localHitPoint.y <= localPos.y + stepSnapOffset + 0.35f && localHitPoint.y > highestLocalY)
+                {
+                    highestLocalY = localHitPoint.y;
+                    foundFloor = true;
+                }
+            }
+
+            if (foundFloor)
+            {
+                detectedFloorY = highestLocalY;
+            }
+            else
+            {
+                // Fallback seguro por plantas para evitar caídas catastróficas al vacío si un raycast falla
+                if (localPos.y >= 7.0f) detectedFloorY = 9.0f;
+                else if (localPos.y >= 2.5f) detectedFloorY = 4.5f;
+                else detectedFloorY = 0.0f;
+            }
+        }
+
+        if (detectedFloorY < 0f)
+        {
+            detectedFloorY = 0f;
+        }
+
+        currentFloorY = detectedFloorY + duckRadius;
+
+        // 3. Adhesión al suelo / Escalones suaves (Step Snapping bidireccional a 14 m/s)
+        if (isGrounded && !isStomping)
+        {
+            float diff = localPos.y - currentFloorY;
+            // Si el pato sube un peldaño/rampa (diff < 0) o desciende suavemente (diff <= stepSnapOffset)
+            if (diff >= -stepSnapOffset && diff <= stepSnapOffset)
+            {
+                localPos.y = currentFloorY;
+                localVel.y = 0f;
+            }
+            else if (diff > stepSnapOffset)
+            {
+                // El pato ha dejado de tocar suelo (salto voluntario o caída libre por el hueco)
+                isGrounded = false;
+            }
+            else if (diff < -stepSnapOffset)
+            {
+                // El pato se encuentra por debajo de una rampa que sube rápido: ajustar a la superficie
+                localPos.y = currentFloorY;
+                localVel.y = 0f;
+            }
+        }
+
+        // 4. Gravedad e integración vertical cuando está en el aire
+        if (!isGrounded)
+        {
+            localVel.y -= gravity * dt;
+            localPos.y += localVel.y * dt;
+
+            if (localPos.y <= currentFloorY)
+            {
+                bool landedFromStomp = isStomping;
+                localPos.y = currentFloorY;
+                localVel.y = 0f;
+                isGrounded = true;
+                isStomping = false;
+
+                if (landedFromStomp)
+                {
+                    OnStompLanded();
+                }
+            }
+        }
+
+        // Límites de las paredes de la cabina multinivel
         if (localPos.x < -cockpitHalfX) { localPos.x = -cockpitHalfX; localVel.x *= -0.3f; }
         if (localPos.x >  cockpitHalfX) { localPos.x =  cockpitHalfX; localVel.x *= -0.3f; }
         if (localPos.z < -cockpitHalfZ) { localPos.z = -cockpitHalfZ; localVel.z *= -0.3f; }
         if (localPos.z >  cockpitHalfZ) { localPos.z =  cockpitHalfZ; localVel.z *= -0.3f; }
-
-        // Suelo de la cabina (y = 0.5f relativo al piso)
-        if (localPos.y <= 0.5f)
-        {
-            bool landedFromStomp = isStomping;
-            localPos.y = 0.5f;
-            localVel.y = 0f;
-            isGrounded = true;
-            isStomping = false;
-
-            if (landedFromStomp)
-            {
-                OnStompLanded();
-            }
-        }
+        if (localPos.y >  cockpitMaxY)  { localPos.y =  cockpitMaxY;  localVel.y = 0f; }
+        if (localPos.y <  0.5f)         { localPos.y =  0.5f;          localVel.y = 0f; isGrounded = true; }
     }
 
     private void CheckButtons()
@@ -277,10 +392,16 @@ public class DuckController : MonoBehaviour
             var btn = buttons[i];
             if (btn == null) continue;
 
-            float dist = Vector2.Distance(new Vector2(localPos.x, localPos.z), new Vector2(btn.transform.localPosition.x, btn.transform.localPosition.z));
+            float distX = localPos.x - btn.transform.localPosition.x;
+            float distZ = localPos.z - btn.transform.localPosition.z;
+            float distHoriz = Mathf.Sqrt(distX * distX + distZ * distZ);
+
+            // Verificación estricta de altura para no activar botones de pisos superiores o inferiores
+            float distY = Mathf.Abs(localPos.y - (btn.transform.localPosition.y + 0.5f));
+
             float activationRadius = btn.detectionRadius > 0.1f ? btn.detectionRadius : 1.6f;
 
-            if (dist <= activationRadius)
+            if (distHoriz <= activationRadius && distY < 1.6f)
             {
                 if (isGrounded && !isStomping)
                 {
@@ -335,9 +456,15 @@ public class DuckController : MonoBehaviour
             for (int i = 0; i < buttons.Length; i++)
             {
                 var btn = buttons[i];
-                float dist = Vector2.Distance(new Vector2(localPos.x, localPos.z), new Vector2(btn.transform.localPosition.x, btn.transform.localPosition.z));
-                float stompRadius = btn.detectionRadius > 0.1f ? btn.detectionRadius * 1.25f : 2.2f;
-                if (dist <= stompRadius)
+                if (btn == null) continue;
+
+                float distX = localPos.x - btn.transform.localPosition.x;
+                float distZ = localPos.z - btn.transform.localPosition.z;
+                float distHoriz = Mathf.Sqrt(distX * distX + distZ * distZ);
+                float distY = Mathf.Abs(localPos.y - (btn.transform.localPosition.y + 0.5f));
+                float stompRadius = btn.detectionRadius > 0.1f ? btn.detectionRadius * 1.35f : 2.2f;
+
+                if (distHoriz <= stompRadius && distY < 1.8f)
                 {
                     hitBtn = btn;
                     break;
@@ -380,12 +507,13 @@ public class DuckController : MonoBehaviour
         localPos = targetLocalPos;
         localVel = Vector3.zero;
         transform.localPosition = localPos;
-        isGrounded = targetLocalPos.y <= 0.55f;
+        isGrounded = true;
+        isStomping = false;
     }
 
     public void ForceTriggerStompAt(Vector3 targetLocalPos)
     {
-        TeleportToLocal(new Vector3(targetLocalPos.x, 2.5f, targetLocalPos.z));
+        TeleportToLocal(new Vector3(targetLocalPos.x, targetLocalPos.y + 2.5f, targetLocalPos.z));
         PerformStomp();
     }
 
@@ -465,9 +593,9 @@ public class DuckController : MonoBehaviour
     {
         if (dropShadowTransform == null) return;
 
-        dropShadowTransform.localPosition = new Vector3(0f, 0.01f - (localPos.y - 0.5f), 0f);
-        float height = Mathf.Max(0f, localPos.y - 0.5f);
-        float scale = Mathf.Clamp(1.0f - height * 0.12f, 0.35f, 1.0f);
+        float heightAboveFloor = Mathf.Max(0f, localPos.y - currentFloorY);
+        dropShadowTransform.localPosition = new Vector3(0f, 0.01f - heightAboveFloor, 0f);
+        float scale = Mathf.Clamp(1.0f - heightAboveFloor * 0.12f, 0.35f, 1.0f);
         dropShadowTransform.localScale = new Vector3(scale, 0.005f, scale);
     }
 }

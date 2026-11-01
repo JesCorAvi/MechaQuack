@@ -9,20 +9,20 @@ using UnityEngine;
 public class MechaPhysicsConfig : ScriptableObject
 {
     [Header("1. Dimensiones y Masa Realista")]
-    [Tooltip("Masa total del mecha en kilogramos (44 toneladas = 44000 kg para coloso ~52m; 5000 kg para mecha 5m)")]
-    public float mass = 44000f;
+    [Tooltip("Masa total del mecha en kilogramos (48 toneladas = 48000 kg para coloso 50m con torso multinivel de 3 plantas; 5000 kg para mecha 5m)")]
+    public float mass = 48000f;
     [Tooltip("Altura total del mecha erguido en metros")]
-    public float totalHeight = 52.0f;
+    public float totalHeight = 50.0f;
     [Tooltip("Altura nominal de la cadera/pelvis sobre el suelo en postura normal (m)")]
-    public float nominalRideHeight = 21.2f;
+    public float nominalRideHeight = 21.0f;
     [Tooltip("Extensión máxima física de la pierna desde la cadera hasta la suela (m). Más allá de esto NO hay contacto.")]
-    public float maxLegExtension = 22.8f;
+    public float maxLegExtension = 23.5f;
     [Tooltip("Compresión mínima de la pierna en sentadilla de impacto (m)")]
     public float minLegCompression = 15.0f;
     [Tooltip("Posición local del Centro de Masa (CoM) respecto a la raíz de la pelvis (m)")]
-    public Vector3 localCenterOfMass = new Vector3(0f, 6.4f, 0.05f);
+    public Vector3 localCenterOfMass = new Vector3(0f, 6.2f, 0.05f);
     [Tooltip("Tensor de inercia explícito (kg·m²) para evitar que colliders mal escalados distorsionen el vuelco")]
-    public Vector3 inertiaTensor = new Vector3(850000f, 480000f, 920000f);
+    public Vector3 inertiaTensor = new Vector3(880000f, 500000f, 950000f);
 
     [Header("2. Gravedad y Aerodinámica (Caída Libre Real)")]
     [Tooltip("Aceleración gravitacional estándar (m/s²). Con 9.81, 10m tardan exactamente 1.428s.")]
@@ -42,9 +42,9 @@ public class MechaPhysicsConfig : ScriptableObject
 
     [Header("3. Suspensión Principal (Muelle-Amortiguador en FixedUpdate)")]
     [Tooltip("Rigidez del muelle por pierna (N/m).")]
-    public float legSpringStiffness = 1800000f;
+    public float legSpringStiffness = 1900000f;
     [Tooltip("Amortiguación de la suspensión por pierna (N·s/m)")]
-    public float legSpringDamping = 220000f;
+    public float legSpringDamping = 230000f;
     [Tooltip("Tiempo antes de pasar de Airborne a Falling puro (s)")]
     public float fallingStateTimeThreshold = 0.25f;
 
@@ -118,16 +118,16 @@ public class MechaPhysicsConfig : ScriptableObject
     [Tooltip("Velocidad lineal máxima de caminata (m/s)")]
     public float maxWalkSpeed = 22.0f;
 
-    [ContextMenu("Set 52m Scale (MechaQuack Colossus)")]
-    public void Set52mColossusScale()
+    [ContextMenu("Set 50m Scale (MechaQuack 50m Titan Colossus)")]
+    public void Set50mColossusScale()
     {
-        mass = 44000f;
-        totalHeight = 52.0f;
-        nominalRideHeight = 21.2f;
-        maxLegExtension = 22.8f;
+        mass = 48000f;
+        totalHeight = 50.0f;
+        nominalRideHeight = 21.0f;
+        maxLegExtension = 23.5f;
         minLegCompression = 15.0f;
-        localCenterOfMass = new Vector3(0f, 6.4f, 0.05f);
-        inertiaTensor = new Vector3(850000f, 480000f, 920000f);
+        localCenterOfMass = new Vector3(0f, 6.2f, 0.05f);
+        inertiaTensor = new Vector3(880000f, 500000f, 950000f);
 
         gravity = 9.81f;
         gravityScale = 1.0f;
@@ -137,13 +137,13 @@ public class MechaPhysicsConfig : ScriptableObject
         groundedAngularDamping = 1.80f;
         terminalVelocity = 65.0f;
 
-        legSpringStiffness = 1800000f;
-        legSpringDamping = 220000f;
+        legSpringStiffness = 1900000f;
+        legSpringDamping = 230000f;
         fallingStateTimeThreshold = 0.25f;
 
         footProbeRadius = 1.3f;
         footHalfLength = 5.6f;
-        footHalfWidth = 3.4f;
+        footHalfWidth = 3.6f;
         maxStableSlopeAngle = 32.0f;
         criticalSlideSlopeAngle = 46.0f;
         slopeSlideAcceleration = 7.5f;
@@ -152,9 +152,9 @@ public class MechaPhysicsConfig : ScriptableObject
         pointOfNoReturnDistance = 3.2f;
         criticalTiltAngle = 42.0f;
         maxUnstableDuration = 0.65f;
-        uprightTorqueKp = 4500000f;
-        uprightTorqueKd = 480000f;
-        maxAnkleCorrectiveTorque = 1200000f;
+        uprightTorqueKp = 4600000f;
+        uprightTorqueKd = 490000f;
+        maxAnkleCorrectiveTorque = 1250000f;
 
         recoveryReactionTime = 0.14f;
         emergencyStepDuration = 0.38f;
@@ -172,10 +172,14 @@ public class MechaPhysicsConfig : ScriptableObject
         minFallenStunTime = 1.6f;
         getUpSequenceDuration = 3.2f;
 
-        moveForce = 1200000f;
-        turnTorque = 900000f;
+        moveForce = 1250000f;
+        turnTorque = 950000f;
         maxWalkSpeed = 22.0f;
     }
+
+    // Mantener alias para compatibilidad
+    [ContextMenu("Set 52m Scale")]
+    public void Set52mColossusScale() => Set50mColossusScale();
 
     [ContextMenu("Set 5m Scale (Small Mecha Prototype)")]
     public void Set5mPrototypeScale()

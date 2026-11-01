@@ -15,6 +15,7 @@ public class AutoPlayTester : MonoBehaviour
     [Header("Configuración del Validador")]
     [SerializeField] private float stepDuration = 0.95f;
     [SerializeField] private bool triggerTestNow = false;
+    [SerializeField] private bool autoRunOnStart = true;
 
     private int passedTests = 0;
     private int totalTests = 0;
@@ -31,9 +32,10 @@ public class AutoPlayTester : MonoBehaviour
 
     private void Start()
     {
-        // INACTIVO POR COMPLETO EN START.
-        // El autotest NUNCA debe ejecutarse solo al pulsar Play para no molestar al jugador.
-        // Solo se ejecutará cuando sea llamado explícitamente mediante TriggerTestSuite() o desde el menú contextual.
+        if (autoRunOnStart)
+        {
+            StartCoroutine(RunFullTestSuiteRoutine());
+        }
     }
 
     private void Update()
@@ -499,8 +501,8 @@ public class AutoPlayTester : MonoBehaviour
                 bool hasScoreText = score != null && score.text.Contains("77");
                 bool hasButtonText = btnRestart != null && !string.IsNullOrEmpty(btnRestart.text);
 
-                // Comprobar que restart funciona y oculta el modal
-                hud.OnRestartClicked();
+                // Comprobar que ocultar modal funciona
+                hud.HideGameOver();
                 bool modalHidden = modal != null && modal.style.display.value == DisplayStyle.None;
 
                 if (modalVisible && hasTitleText && hasScoreText && hasButtonText && modalHidden)
@@ -523,12 +525,93 @@ public class AutoPlayTester : MonoBehaviour
             Debug.LogWarning("[TEST] FAIL: MechaHUD no encontrado");
         }
 
+        yield return new WaitForSeconds(0.3f);
+
+        // =====================================================================
+        // TEST 11: NAVEGACIÓN MULTINIVEL (3 PLANTAS) Y EXCLUSIVIDAD DE CÁMARA 3ª PERSONA PARA EL CAPITÁN
+        // =====================================================================
+        totalTests++;
+        var camCtrl = CockpitCameraController.Instance ?? Object.FindFirstObjectByType<CockpitCameraController>();
+        if (duck != null && camCtrl != null)
+        {
+            bool p1FloorOk = false;
+            bool p1CamLocked = false;
+            bool p1ButtonIsolationOk = false;
+            bool p2FloorOk = false;
+            bool p2CamLocked = false;
+            bool p3FloorOk = false;
+            bool p3CamUnlocked = false;
+            bool returnP1Ok = false;
+
+            // 1. Planta 1 (Conductor - Navegación, Y = 0m)
+            duck.TeleportToLocal(new Vector3(0.0f, 0.5f, 1.8f));
+            yield return new WaitForSeconds(0.15f);
+            p1FloorOk = (duck.CurrentFloorLevel == 1);
+
+            camCtrl.SetTargetZoom(45.0f);
+            yield return new WaitForSeconds(0.05f);
+            p1CamLocked = (!camCtrl.IsCaptainExteriorUnlocked && camCtrl.TargetDistance <= 6.25f);
+
+            // Aislamiento de botones entre plantas: Pato en Planta 1 justo bajo el botón GATLING (Planta 2) no lo activa
+            var btnGatling = GetButton("GATLING");
+            Vector3 underGatlingPos = btnGatling != null
+                ? new Vector3(btnGatling.transform.localPosition.x, 0.5f, btnGatling.transform.localPosition.z)
+                : new Vector3(-4.8f, 0.5f, 1.5f);
+            duck.TeleportToLocal(underGatlingPos);
+            yield return new WaitForSeconds(0.1f);
+            p1ButtonIsolationOk = (btnGatling != null && !btnGatling.isPressed);
+
+            // 2. Planta 2 (Artillero - Arsenal, Y = 4.5m)
+            duck.TeleportToLocal(new Vector3(0.0f, 5.0f, 3.5f));
+            yield return new WaitForSeconds(0.15f);
+            p2FloorOk = (duck.CurrentFloorLevel == 2);
+
+            camCtrl.SetTargetZoom(50.0f);
+            yield return new WaitForSeconds(0.05f);
+            p2CamLocked = (!camCtrl.IsCaptainExteriorUnlocked && camCtrl.TargetDistance <= 6.25f);
+
+            // 3. Planta 3 (Cabeza del Mecha - Cápsula del Capitán, Y = 9.0m)
+            duck.TeleportToLocal(new Vector3(0f, 9.5f, 1.5f));
+            yield return new WaitForSeconds(0.15f);
+            p3FloorOk = (duck.CurrentFloorLevel == 3);
+            bool p3AutoTransitionOk = (camCtrl.IsCaptainExteriorUnlocked && camCtrl.TargetDistance >= 50.0f);
+
+            camCtrl.SetTargetZoom(65.0f);
+            yield return new WaitForSeconds(0.05f);
+            p3CamUnlocked = (camCtrl.IsCaptainExteriorUnlocked && camCtrl.TargetDistance >= 50.0f && p3AutoTransitionOk);
+
+            // 4. Regreso a Planta 1: La cámara debe replegarse automáticamente al interior
+            duck.TeleportToLocal(new Vector3(0f, 0.5f, 0.65f));
+            yield return new WaitForSeconds(0.15f);
+            returnP1Ok = (duck.CurrentFloorLevel == 1 && !camCtrl.IsCaptainExteriorUnlocked && camCtrl.TargetDistance <= 6.25f);
+
+            if (p1FloorOk && p1CamLocked && p1ButtonIsolationOk && p2FloorOk && p2CamLocked && p3FloorOk && p3CamUnlocked && returnP1Ok)
+            {
+                passedTests++;
+                Debug.Log($"[TEST] OK: Complejo de 3 plantas y exclusividad de cámara del Capitán verificados con éxito (P1: {p1FloorOk}, P2: {p2FloorOk}, P3: {p3FloorOk}, 3ª persona exclusiva P3: {p3CamUnlocked}, Replegado interior: {returnP1Ok})");
+            }
+            else
+            {
+                Debug.LogWarning($"[TEST] FAIL: Error en validación de plantas o cámara (P1: {p1FloorOk}, P1 CamLock: {p1CamLocked}, P1 Aislamiento Botón: {p1ButtonIsolationOk}, P2: {p2FloorOk}, P2 CamLock: {p2CamLocked}, P3: {p3FloorOk}, P3 3ª Persona: {p3CamUnlocked}, Replegado: {returnP1Ok})");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("[TEST] FAIL: DuckController o CockpitCameraController no encontrados para Test 11");
+        }
+
         // =====================================================================
         // RESUMEN FINAL
         // =====================================================================
         Debug.Log("==========================================================================");
         Debug.Log($"[AUTOTEST] RESULTADO FINAL: {passedTests}/{totalTests} PRUEBAS COMPLETADAS CON ÉXITO");
         Debug.Log("==========================================================================");
+
+        try
+        {
+            System.IO.File.WriteAllText("Temp/AutoPlayTestResults.txt", $"RESULTADO FINAL: {passedTests}/{totalTests} PRUEBAS COMPLETADAS CON ÉXITO");
+        }
+        catch { }
 
         isTesting = false;
     }

@@ -174,39 +174,40 @@ public static class AssembleMechaPrototype
             return s;
         }
 
-        // 4. EL MECHA TITÁN MILITAR (Escala colosal ~52m, chasis blindado, maquinaria expuesta y proporciones heroicas)
+        // 4. EL MECHA TITÁN MILITAR (Escala colosal 50m de altura, torso multinivel con 3 plantas y física biomecánica)
         GameObject mechaRoot = new GameObject("Mecha_Root");
         MechaController mechaCtrl = mechaRoot.AddComponent<MechaController>();
 
         Rigidbody mechaRb = mechaRoot.GetComponent<Rigidbody>();
-        mechaRb.mass = 44000f; // 44 toneladas de poder bélico colosal intimidante
+        mechaRb.mass = 48000f; // 48 toneladas de poder bélico colosal para el Mecha de 50m
 
         BoxCollider mechaCollider = mechaRoot.AddComponent<BoxCollider>();
-        mechaCollider.size = new Vector3(18.0f, 34.0f, 16.0f);
-        mechaCollider.center = new Vector3(0f, 27.0f, 0f);
+        mechaCollider.size = new Vector3(20.0f, 50.0f, 18.0f);
+        mechaCollider.center = new Vector3(0f, 25.0f, 0f);
 
-        // --- CADERA / PELVIS BLINDADA (Y = 23.6m) ---
+        // --- CADERA / PELVIS BLINDADA (Y = 21.0m) ---
+        // Toda la geometría visual se ubica a Y <= 21.0m para no sobresalir jamás dentro de la Planta 1 de la cabina
         GameObject pelvis = new GameObject("Pelvis");
         pelvis.transform.parent = mechaRoot.transform;
-        pelvis.transform.localPosition = new Vector3(0f, 23.6f, 0f);
+        pelvis.transform.localPosition = new Vector3(0f, 21.0f, 0f);
 
-        // Bloque central de chasis
-        CreateBlock("Pelvis_Core", pelvis.transform, Vector3.zero, new Vector3(13.0f, 4.8f, 9.6f), Quaternion.identity, matDarkSteel);
-        // Anillo de rotación de cintura con estrías
-        CreateCylinder("Waist_Turret_Ring", pelvis.transform, new Vector3(0f, 2.6f, 0f), new Vector3(9.0f, 1.2f, 9.0f), Quaternion.identity, matGunmetal);
+        // Bloque central de chasis (ubicado por debajo del nivel de suelo de Planta 1)
+        CreateBlock("Pelvis_Core", pelvis.transform, new Vector3(0f, -2.5f, 0f), new Vector3(13.0f, 4.8f, 9.6f), Quaternion.identity, matDarkSteel);
+        // Anillo de rotación de cintura con estrías (enrasado bajo el piso del conductor)
+        CreateCylinder("Waist_Turret_Ring", pelvis.transform, new Vector3(0f, -0.2f, 0f), new Vector3(9.0f, 0.35f, 9.0f), Quaternion.identity, matGunmetal);
         // Blindaje frontal de entrepierna / Glacis inferior angular
-        CreateBlock("Groin_Codpiece_Armor", pelvis.transform, new Vector3(0f, -1.2f, 5.0f), new Vector3(5.6f, 4.4f, 2.8f), Quaternion.Euler(-20f, 0f, 0f), matMilGreen);
-        CreateBlock("Groin_Decal_Chevron", pelvis.transform, new Vector3(0f, -1.2f, 6.5f), new Vector3(2.4f, 0.8f, 0.16f), Quaternion.Euler(-20f, 0f, 0f), matDecalWhite);
+        CreateBlock("Groin_Codpiece_Armor", pelvis.transform, new Vector3(0f, -3.6f, 5.0f), new Vector3(5.6f, 4.4f, 2.8f), Quaternion.Euler(-20f, 0f, 0f), matMilGreen);
+        CreateBlock("Groin_Decal_Chevron", pelvis.transform, new Vector3(0f, -3.6f, 6.5f), new Vector3(2.4f, 0.8f, 0.16f), Quaternion.Euler(-20f, 0f, 0f), matDecalWhite);
         // Faldones protectores de cadera (Tassets frontales)
-        CreateBlock("Tasset_Front_L", pelvis.transform, new Vector3(-4.4f, -1.6f, 4.6f), new Vector3(3.2f, 4.8f, 0.8f), Quaternion.Euler(-15f, 8f, 0f), matMilGreen);
-        CreateBlock("Tasset_Front_R", pelvis.transform, new Vector3(4.4f, -1.6f, 4.6f), new Vector3(3.2f, 4.8f, 0.8f), Quaternion.Euler(-15f, -8f, 0f), matMilGreen);
+        CreateBlock("Tasset_Front_L", pelvis.transform, new Vector3(-4.4f, -4.0f, 4.6f), new Vector3(3.2f, 4.8f, 0.8f), Quaternion.Euler(-15f, 8f, 0f), matMilGreen);
+        CreateBlock("Tasset_Front_R", pelvis.transform, new Vector3(4.4f, -4.0f, 4.6f), new Vector3(3.2f, 4.8f, 0.8f), Quaternion.Euler(-15f, -8f, 0f), matMilGreen);
         // Faldones laterales acampanados con rejillas de ventilación
-        CreateBlock("Skirt_Side_L", pelvis.transform, new Vector3(-7.2f, -0.6f, 0f), new Vector3(1.0f, 5.2f, 8.4f), Quaternion.Euler(0f, 0f, 16f), matMilGreen);
-        CreateBlock("Skirt_Vent_L", pelvis.transform, new Vector3(-7.7f, -0.6f, 0f), new Vector3(0.16f, 3.6f, 4.8f), Quaternion.Euler(0f, 0f, 16f), matGunmetal);
-        CreateBlock("Skirt_Side_R", pelvis.transform, new Vector3(7.2f, -0.6f, 0f), new Vector3(1.0f, 5.2f, 8.4f), Quaternion.Euler(0f, 0f, -16f), matMilGreen);
-        CreateBlock("Skirt_Vent_R", pelvis.transform, new Vector3(7.7f, -0.6f, 0f), new Vector3(0.16f, 3.6f, 4.8f), Quaternion.Euler(0f, 0f, -16f), matGunmetal);
+        CreateBlock("Skirt_Side_L", pelvis.transform, new Vector3(-7.2f, -3.0f, 0f), new Vector3(1.0f, 5.2f, 8.4f), Quaternion.Euler(0f, 0f, 16f), matMilGreen);
+        CreateBlock("Skirt_Vent_L", pelvis.transform, new Vector3(-7.7f, -3.0f, 0f), new Vector3(0.16f, 3.6f, 4.8f), Quaternion.Euler(0f, 0f, 16f), matGunmetal);
+        CreateBlock("Skirt_Side_R", pelvis.transform, new Vector3(7.2f, -3.0f, 0f), new Vector3(1.0f, 5.2f, 8.4f), Quaternion.Euler(0f, 0f, -16f), matMilGreen);
+        CreateBlock("Skirt_Vent_R", pelvis.transform, new Vector3(7.7f, -3.0f, 0f), new Vector3(0.16f, 3.6f, 4.8f), Quaternion.Euler(0f, 0f, -16f), matGunmetal);
         // Faldón posterior
-        CreateBlock("Skirt_Rear", pelvis.transform, new Vector3(0f, -1.0f, -5.0f), new Vector3(11.6f, 4.4f, 1.2f), Quaternion.Euler(18f, 0f, 0f), matMilGreen);
+        CreateBlock("Skirt_Rear", pelvis.transform, new Vector3(0f, -3.4f, -5.0f), new Vector3(11.6f, 4.4f, 1.2f), Quaternion.Euler(18f, 0f, 0f), matMilGreen);
 
         // --- PIERNAS ARTICULADAS PROCEDURALES (IK TWO-BONE, ALCANCE 21.6m) ---
         ProceduralLeg CreateMilitaryLeg(string name, float xPos)
@@ -215,7 +216,7 @@ public static class AssembleMechaPrototype
 
             GameObject legRoot = new GameObject(name);
             legRoot.transform.parent = mechaRoot.transform;
-            legRoot.transform.localPosition = new Vector3(xPos, 22.0f, 0f);
+            legRoot.transform.localPosition = new Vector3(xPos, 21.0f, 0f);
 
             // Rótula esférica de cadera y pistón horizontal estabilizador
             CreateSphere("Hip_Gimbal_Ball", legRoot.transform, Vector3.zero, Vector3.one * 3.6f, Quaternion.identity, matDarkSteel);
@@ -321,10 +322,10 @@ public static class AssembleMechaPrototype
             pLegSO.FindProperty("bodyRigidbody").objectReferenceValue = mechaRoot.GetComponent<Rigidbody>();
             pLegSO.FindProperty("localRestOffset").vector3Value = new Vector3(xPos, 0f, 0f);
 
-            pLegSO.FindProperty("stepDistance").floatValue = 6.4f;
+            pLegSO.FindProperty("stepDistance").floatValue = 6.0f;
             pLegSO.FindProperty("stepHeight").floatValue = 2.2f;
-            pLegSO.FindProperty("maxClimbableStepHeight").floatValue = 5.2f;
-            pLegSO.FindProperty("stepAnticipationDistance").floatValue = 6.4f;
+            pLegSO.FindProperty("maxClimbableStepHeight").floatValue = 4.8f;
+            pLegSO.FindProperty("stepAnticipationDistance").floatValue = 6.0f;
             pLegSO.FindProperty("footToeForwardOffset").floatValue = 6.4f;
             pLegSO.FindProperty("footHalfWidth").floatValue = 3.6f;
             pLegSO.FindProperty("ankleToSoleOffset").floatValue = 1.6f;
@@ -354,7 +355,7 @@ public static class AssembleMechaPrototype
         stabSO.FindProperty("locomotionController").objectReferenceValue = locoCtrl;
         stabSO.FindProperty("mechaRigidbody").objectReferenceValue = mechaRoot.GetComponent<Rigidbody>();
         stabSO.FindProperty("chassisTransform").objectReferenceValue = pelvis.transform;
-        stabSO.FindProperty("baseRideHeight").floatValue = 23.6f;
+        stabSO.FindProperty("baseRideHeight").floatValue = 21.0f;
         stabSO.ApplyModifiedProperties();
 
         FootstepFX footFX = mechaRoot.AddComponent<FootstepFX>();
@@ -363,53 +364,251 @@ public static class AssembleMechaPrototype
         fxSO.FindProperty("rightLeg").objectReferenceValue = legRight;
         fxSO.ApplyModifiedProperties();
 
-        // 5. CABINA INTEGRADA Y TORSO BLINDADO (Y = 27.6m, escala espaciosa 22m x 17m)
+        // 5. CABINA MULTINIVEL (3 INSTANCIAS VERTICALES CONECTADAS EXCLUSIVAMENTE POR ESCALERAS FÍSICAS)
+        // Posicionada sobre la pelvis (Y = 21.0m, Z = 0.4m) alcanzando 50m de altura total erguido
         GameObject cockpit = new GameObject("Cockpit");
         cockpit.transform.parent = mechaRoot.transform;
-        cockpit.transform.localPosition = new Vector3(0f, 27.6f, 0.4f);
+        cockpit.transform.localPosition = new Vector3(0f, 21.0f, 0.4f);
 
-        // Suelo interior de la cabina (22.0m de ancho x 17.0m de fondo)
-        GameObject cockpitFloor = CreateBlock("Floor", cockpit.transform, new Vector3(0f, -0.5f, 0f), new Vector3(22.0f, 1.0f, 17.0f), Quaternion.identity, matFloor, true);
-
-        // Bordillos perimetrales de la cabina
-        CreateBlock("Rim_L", cockpit.transform, new Vector3(-10.8f, 0.3f, 0f), new Vector3(0.4f, 0.6f, 17.0f), Quaternion.identity, matWall);
-        CreateBlock("Rim_R", cockpit.transform, new Vector3(10.8f, 0.3f, 0f), new Vector3(0.4f, 0.6f, 17.0f), Quaternion.identity, matWall);
-        CreateBlock("Rim_F", cockpit.transform, new Vector3(0f, 0.3f, 8.4f), new Vector3(22.0f, 0.6f, 0.4f), Quaternion.identity, matHazard);
-        CreateBlock("Rim_B", cockpit.transform, new Vector3(0f, 0.3f, -8.4f), new Vector3(22.0f, 0.6f, 0.4f), Quaternion.identity, matWall);
-
-        // --- ENVOLVENTE EXTERIOR DEL TORSO Y PECHO BLINDADO ---
-        // Placas pectorales anguladas con biseles oscuros y rejillas de admisión
-        CreateBlock("Pectoral_Armor_L", cockpit.transform, new Vector3(-9.0f, 5.2f, 6.4f), new Vector3(6.4f, 8.4f, 5.2f), Quaternion.Euler(-18f, 14f, 0f), matMilGreen);
-        CreateBlock("Pectoral_Intake_L", cockpit.transform, new Vector3(-9.0f, 5.2f, 8.9f), new Vector3(4.4f, 2.8f, 0.4f), Quaternion.Euler(-18f, 14f, 0f), matGunmetal);
-        CreateBlock("Pectoral_Armor_R", cockpit.transform, new Vector3(9.0f, 5.2f, 6.4f), new Vector3(6.4f, 8.4f, 5.2f), Quaternion.Euler(-18f, -14f, 0f), matMilGreen);
-        CreateBlock("Pectoral_Intake_R", cockpit.transform, new Vector3(9.0f, 5.2f, 8.9f), new Vector3(4.4f, 2.8f, 0.4f), Quaternion.Euler(-18f, -14f, 0f), matGunmetal);
-
-        // CÚPULA PANORÁMICA DE MÁXIMA VISIBILIDAD (180° / 360° GLASS DOME)
-        // Se ha retirado el reactor central que obstruía el frente para proporcionar visión panorámica completa del terreno.
-        // 1. Parabrisas frontal panorámico ultra-transparente
-        GameObject windshield = CreateBlock("Windshield_Front", cockpit.transform, new Vector3(0f, 4.4f, 8.2f), new Vector3(20.4f, 8.2f, 0.12f), Quaternion.identity, matGlass);
-
-        // 2. Cúpula superior acristalada (permite contemplar los rascacielos y el cielo)
-        CreateBlock("Canopy_Ceiling_Glass", cockpit.transform, new Vector3(0f, 8.6f, 0.5f), new Vector3(19.6f, 0.12f, 15.0f), Quaternion.identity, matGlass);
-
-        // 3. Cristales laterales panorámicos (visión completa de las armas en los brazos y el entorno lateral)
-        CreateBlock("Side_Glass_L", cockpit.transform, new Vector3(-10.2f, 4.4f, 0.5f), new Vector3(0.12f, 8.0f, 15.0f), Quaternion.identity, matGlass);
-        CreateBlock("Side_Glass_R", cockpit.transform, new Vector3(10.2f, 4.4f, 0.5f), new Vector3(0.12f, 8.0f, 15.0f), Quaternion.identity, matGlass);
-
-        // 4. Estructura tubular estilizada de jaula antivuelco (esbelta, sin bloquear la visión del piloto)
-        CreateBlock("RollBar_Front_Brow", cockpit.transform, new Vector3(0f, 8.5f, 8.2f), new Vector3(20.8f, 0.35f, 0.35f), Quaternion.identity, matGunmetal);
-        CreateBlock("RollBar_Mid_Hoop", cockpit.transform, new Vector3(0f, 8.7f, 1.0f), new Vector3(20.8f, 0.35f, 0.35f), Quaternion.identity, matGunmetal);
-        CreateBlock("RollBar_Rear_Hoop", cockpit.transform, new Vector3(0f, 8.5f, -7.0f), new Vector3(20.8f, 0.35f, 0.35f), Quaternion.identity, matGunmetal);
-
-        CreateBlock("A_Pillar_L", cockpit.transform, new Vector3(-10.2f, 4.4f, 8.2f), new Vector3(0.4f, 8.2f, 0.4f), Quaternion.identity, matGunmetal);
-        CreateBlock("A_Pillar_R", cockpit.transform, new Vector3(10.2f, 4.4f, 8.2f), new Vector3(0.4f, 8.2f, 0.4f), Quaternion.identity, matGunmetal);
-        CreateBlock("B_Pillar_L", cockpit.transform, new Vector3(-10.2f, 4.4f, 1.0f), new Vector3(0.4f, 8.2f, 0.4f), Quaternion.identity, matGunmetal);
-        CreateBlock("B_Pillar_R", cockpit.transform, new Vector3(10.2f, 4.4f, 1.0f), new Vector3(0.4f, 8.2f, 0.4f), Quaternion.identity, matGunmetal);
-
-        // Iluminación ambiental y táctica suave del puente de mando
-        void AddCockpitDownlight(string name, Vector3 localPos, Color color, float range = 18f, float intensity = 2.0f)
+        // --- HELPER PARA CONSTRUCCIÓN DE ESCALERAS INDUSTRIALES CON BARANDILLAS Y RAMPA SUAVE ---
+        void CreateIndustrialStaircase(string name, Transform parent, Vector3 startPos, Vector3 endPos, float width, Material stepMat, Material hazardMat, Material railMat)
         {
-            GameObject lObj = new GameObject(name);
+            GameObject stairRoot = new GameObject(name);
+            stairRoot.transform.parent = parent;
+            stairRoot.transform.localPosition = Vector3.zero;
+
+            Vector3 delta = endPos - startPos;
+            Vector3 horizDelta = new Vector3(delta.x, 0f, delta.z);
+            float horizDist = horizDelta.magnitude;
+            float riseY = delta.y;
+            float slopeLength = Mathf.Sqrt(horizDist * horizDist + riseY * riseY);
+            Vector3 horizDir = horizDist > 0.001f ? horizDelta.normalized : Vector3.forward;
+            float pitchAngle = Mathf.Atan2(riseY, horizDist) * Mathf.Rad2Deg;
+
+            // Rotación exacta de la rampa orientada horizontalmente y cabeceada hacia arriba
+            Quaternion rampRot = Quaternion.LookRotation(horizDir, Vector3.up) * Quaternion.Euler(-pitchAngle, 0f, 0f);
+
+            int numSteps = 16;
+            float stepH = riseY / numSteps;
+            float stepD = (horizDist / numSteps) * 1.15f;
+
+            for (int i = 0; i < numSteps; i++)
+            {
+                float t = (i + 0.5f) / numSteps;
+                Vector3 sPos = Vector3.Lerp(startPos, endPos, t);
+                sPos.y = startPos.y + (i + 0.5f) * stepH;
+
+                // Peldaño base con colisionador propio
+                GameObject step = CreateBlock($"Step_{i}", stairRoot.transform, sPos, new Vector3(width, stepH * 1.05f, stepD), Quaternion.identity, stepMat, true);
+                // Franja hazard en la arista de impacto
+                CreateBlock("Hazard_Nosing", step.transform, new Vector3(0f, 0.48f, 0.46f), new Vector3(0.98f, 0.12f, 0.12f), Quaternion.identity, hazardMat, false);
+            }
+
+            // Plataformas horizontales de aterrizaje/embarque en extremos para transición 100% suave
+            Vector3 bottomLanding = startPos - horizDir * 0.75f + new Vector3(0f, -0.1f, 0f);
+            CreateBlock("Stair_Bottom_Landing", stairRoot.transform, bottomLanding, new Vector3(width, 0.25f, 1.5f), Quaternion.identity, stepMat, true);
+
+            Vector3 topLanding = endPos + horizDir * 0.75f + new Vector3(0f, -0.1f, 0f);
+            CreateBlock("Stair_Top_Landing", stairRoot.transform, topLanding, new Vector3(width, 0.25f, 1.5f), Quaternion.identity, stepMat, true);
+
+            // Barandillas tubulares de seguridad
+            float halfW = width * 0.5f;
+            Vector3 sideCross = Vector3.Cross(Vector3.up, horizDir).normalized;
+            for (int side = -1; side <= 1; side += 2)
+            {
+                Vector3 railOffset = sideCross * (side * (halfW + 0.08f));
+                Vector3 rStart = startPos + railOffset + new Vector3(0f, 1.1f, 0f);
+                Vector3 rEnd = endPos + railOffset + new Vector3(0f, 1.1f, 0f);
+                Vector3 rMid = (rStart + rEnd) * 0.5f;
+
+                CreateCylinder($"Handrail_{(side < 0 ? "L" : "R")}", stairRoot.transform, rMid, new Vector3(0.12f, slopeLength * 0.5f, 0.12f), rampRot * Quaternion.Euler(90f, 0f, 0f), railMat, false);
+
+                for (int p = 0; p <= 4; p++)
+                {
+                    float t = p / 4.0f;
+                    Vector3 postPos = Vector3.Lerp(rStart, rEnd, t) - new Vector3(0f, 0.55f, 0f);
+                    CreateCylinder($"Post_{(side < 0 ? "L" : "R")}_{p}", stairRoot.transform, postPos, new Vector3(0.12f, 1.1f, 0.12f), Quaternion.identity, railMat, false);
+                }
+            }
+
+            // COLISIONADOR DE RAMPA INVISIBLE GRUESO (1.2m) - IMPENETRABLE A 14 m/s
+            Vector3 rampMid = (startPos + endPos) * 0.5f;
+            GameObject rampColliderObj = new GameObject("Invisible_Ramp_Collider");
+            rampColliderObj.transform.parent = stairRoot.transform;
+            rampColliderObj.transform.localPosition = rampMid;
+            rampColliderObj.transform.localRotation = rampRot;
+
+            BoxCollider bc = rampColliderObj.AddComponent<BoxCollider>();
+            bc.size = new Vector3(width, 1.2f, slopeLength + 0.6f);
+            bc.center = new Vector3(0f, -0.52f, 0f);
+        }
+
+        // =====================================================================
+        // PLANTA 1 (NIVEL 1 - PLANTA INFERIOR: CONDUCTOR / NAVEGACIÓN - Y = 0m)
+        // Búnker Blindado con visión militar reducida (el conductor es guiado por el Capitán)
+        // =====================================================================
+        // Suelo continuo de Planta 1 (20.0m de ancho x 15.0m de fondo)
+        CreateBlock("Floor_Level1", cockpit.transform, new Vector3(0f, -0.2f, 0f), new Vector3(20.0f, 0.4f, 15.0f), Quaternion.identity, matFloor, true);
+
+        // Bordillos perimetrales y blindaje lateral de Planta 1 (Búnker Acorazado)
+        CreateBlock("Rim_L1_L", cockpit.transform, new Vector3(-10.1f, 0.3f, 0f), new Vector3(0.4f, 0.6f, 15.0f), Quaternion.identity, matWall);
+        CreateBlock("Rim_L1_R", cockpit.transform, new Vector3(10.1f, 0.3f, 0f), new Vector3(0.4f, 0.6f, 15.0f), Quaternion.identity, matWall);
+        CreateBlock("Rim_L1_F", cockpit.transform, new Vector3(0f, 0.3f, 7.4f), new Vector3(20.0f, 0.6f, 0.4f), Quaternion.identity, matHazard);
+        CreateBlock("Rim_L1_B", cockpit.transform, new Vector3(0f, 0.3f, -7.4f), new Vector3(20.0f, 0.6f, 0.4f), Quaternion.identity, matWall);
+
+        // Muros acorazados de Planta 1 (Blindaje militar grueso)
+        CreateBlock("Side_Armor_L1_L", cockpit.transform, new Vector3(-10.0f, 2.2f, 0f), new Vector3(0.4f, 4.0f, 15.0f), Quaternion.identity, matGunmetal);
+        CreateBlock("Side_Armor_L1_R", cockpit.transform, new Vector3(10.0f, 2.2f, 0f), new Vector3(0.4f, 4.0f, 15.0f), Quaternion.identity, matGunmetal);
+        CreateBlock("Rear_Armor_L1", cockpit.transform, new Vector3(0f, 2.2f, -7.4f), new Vector3(20.0f, 4.0f, 0.4f), Quaternion.identity, matMilGreenDark);
+
+        // Fachada frontal de búnker con blindaje inferior a ras de visión y tronera militar estrecha
+        CreateBlock("Armor_Glacis_L1_Bottom", cockpit.transform, new Vector3(0f, 0.35f, 7.5f), new Vector3(20.0f, 0.7f, 0.4f), Quaternion.identity, matMilGreen);
+        CreateBlock("Armor_Glacis_L1_Top", cockpit.transform, new Vector3(0f, 2.95f, 7.5f), new Vector3(20.0f, 2.7f, 0.4f), Quaternion.identity, matMilGreen);
+
+        // Tronera de observación militar estrecha centrada a nivel de ojos del pato piloto (Y = 1.15m)
+        CreateBlock("Windshield_Level1", cockpit.transform, new Vector3(0f, 1.15f, 7.5f), new Vector3(14.0f, 0.9f, 0.12f), Quaternion.identity, matGlass);
+        CreateBlock("Slit_Frame_Top", cockpit.transform, new Vector3(0f, 1.63f, 7.55f), new Vector3(14.2f, 0.12f, 0.25f), Quaternion.identity, matDarkSteel);
+        CreateBlock("Slit_Frame_Bottom", cockpit.transform, new Vector3(0f, 0.67f, 7.55f), new Vector3(14.2f, 0.12f, 0.25f), Quaternion.identity, matDarkSteel);
+        CreateBlock("Armor_Cheek_L1_L", cockpit.transform, new Vector3(-8.5f, 1.15f, 7.5f), new Vector3(3.0f, 0.9f, 0.4f), Quaternion.identity, matGunmetal);
+        CreateBlock("Armor_Cheek_L1_R", cockpit.transform, new Vector3(8.5f, 1.15f, 7.5f), new Vector3(3.0f, 0.9f, 0.4f), Quaternion.identity, matGunmetal);
+
+        // Aspilleras periscópicas laterales reforzadas
+        CreateBlock("Slit_Side_L1_L", cockpit.transform, new Vector3(-10.0f, 1.15f, 1.8f), new Vector3(0.12f, 0.7f, 3.2f), Quaternion.identity, matGlass);
+        CreateBlock("Slit_Side_L1_R", cockpit.transform, new Vector3(10.0f, 1.15f, 1.8f), new Vector3(0.12f, 0.7f, 3.2f), Quaternion.identity, matGlass);
+
+        // Plataforma central de pilotaje y consola de navegación del Conductor
+        GameObject pilotPlatform = CreateBlock("Station_Pilot_FloorPad", cockpit.transform, new Vector3(0f, 0.04f, 0.65f), new Vector3(12.0f, 0.08f, 8.5f), Quaternion.identity, matMilGreenDark);
+        CreateBlock("Pilot_Station_Border", pilotPlatform.transform, new Vector3(0f, 0.15f, 0f), new Vector3(1.02f, 0.2f, 1.02f), Quaternion.identity, matHazard, false);
+
+        GameObject pilotConsole = CreateBlock("Pilot_Console", cockpit.transform, new Vector3(0f, 0.45f, 5.8f), new Vector3(5.2f, 0.7f, 1.0f), Quaternion.identity, matGunmetal);
+        CreateBlock("Pilot_Nav_Screen", cockpit.transform, new Vector3(0f, 0.92f, 5.85f), new Vector3(2.8f, 0.5f, 0.08f), Quaternion.Euler(-25f, 0f, 0f), matBtnGreen);
+
+        GameObject pilotLabelObj = new GameObject("Pilot_Station_Label");
+        pilotLabelObj.transform.parent = cockpit.transform;
+        pilotLabelObj.transform.localPosition = new Vector3(0f, 0.08f, 5.2f);
+        pilotLabelObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+        pilotLabelObj.transform.localScale = Vector3.one * 0.22f;
+        TextMesh ptm = pilotLabelObj.AddComponent<TextMesh>();
+        ptm.text = "ESTACIÓN DE PILOTAJE [P1 - CONDUCTOR]\n(BÚNKER BLINDADO - GUIADO POR CAPITÁN)";
+        ptm.fontSize = 28;
+        ptm.characterSize = 0.28f;
+        ptm.anchor = TextAnchor.MiddleCenter;
+        ptm.alignment = TextAlignment.Center;
+        ptm.fontStyle = FontStyle.Bold;
+        ptm.color = Color.green;
+
+        // TRAMO DE ESCALERAS 1 (Planta 1 -> Planta 2): Ubicado en ala estribor, sube de Y=0m a Y=4.5m
+        CreateIndustrialStaircase("Stairs_Level1_to_Level2", cockpit.transform, new Vector3(7.2f, 0f, -4.5f), new Vector3(7.2f, 4.5f, 3.5f), 2.6f, matDarkSteel, matHazard, matGunmetal);
+
+        // =====================================================================
+        // PLANTA 2 (NIVEL 2 - PLANTA INTERMEDIA: ARTILLERO / ARSENAL - Y = 4.5m)
+        // MÁXIMA VISIBILIDAD PANORÁMICA PARA PUNTERÍA Y DISPARO
+        // =====================================================================
+        // Suelo modular de Planta 2 (Totalmente sellado, sin agujeros al vacío)
+        CreateBlock("Floor_Level2_Center", cockpit.transform, new Vector3(0f, 4.3f, 0f), new Vector3(11.8f, 0.4f, 15.0f), Quaternion.identity, matFloor, true);
+        CreateBlock("Floor_Level2_Front", cockpit.transform, new Vector3(0f, 4.3f, 5.5f), new Vector3(20.0f, 0.4f, 4.0f), Quaternion.identity, matFloor, true);
+        CreateBlock("Floor_Level2_Rear", cockpit.transform, new Vector3(0f, 4.3f, -6.0f), new Vector3(20.0f, 0.4f, 3.0f), Quaternion.identity, matFloor, true);
+        // Ala babor bajo la escalera 2 (cubre de X=-5.9 a X=-10.0 en el rango central)
+        CreateBlock("Floor_Level2_LeftWing", cockpit.transform, new Vector3(-7.95f, 4.3f, -0.5f), new Vector3(4.1f, 0.4f, 8.0f), Quaternion.identity, matFloor, true);
+        // Borde exterior en estribor junto a la escalera 1 (cubre de X=+8.5 a X=+10.0)
+        CreateBlock("Floor_Level2_RightOuter", cockpit.transform, new Vector3(9.25f, 4.3f, -0.5f), new Vector3(1.5f, 0.4f, 8.0f), Quaternion.identity, matFloor, true);
+
+        // Barandilla de seguridad bordeando el hueco de escalera 1 en Planta 2
+        CreateBlock("L2_Stair1_Safety_Rail", cockpit.transform, new Vector3(5.8f, 5.0f, -0.5f), new Vector3(0.12f, 1.0f, 8.0f), Quaternion.identity, matHazard);
+
+        // Ventanales panorámicos de Planta 2 (Gran angular 96% transparente con visión total de armas y horizonte)
+        CreateBlock("Windshield_Level2", cockpit.transform, new Vector3(0f, 6.8f, 7.5f), new Vector3(19.6f, 4.4f, 0.12f), Quaternion.identity, matGlass);
+        CreateBlock("Side_Glass_L2_L", cockpit.transform, new Vector3(-10.0f, 6.8f, 0f), new Vector3(0.12f, 4.4f, 15.0f), Quaternion.identity, matGlass);
+        CreateBlock("Side_Glass_L2_R", cockpit.transform, new Vector3(10.0f, 6.8f, 0f), new Vector3(0.12f, 4.4f, 15.0f), Quaternion.identity, matGlass);
+
+        // HUD Holográfico sobre el cristal frontal de Planta 2 (Artillero)
+        GameObject windshieldHudObj = new GameObject("Windshield_HUD");
+        windshieldHudObj.transform.parent = cockpit.transform;
+        windshieldHudObj.transform.localPosition = new Vector3(0f, 6.8f, 7.8f);
+        windshieldHudObj.AddComponent<WindshieldHUDCrosshair>();
+
+        // Consola de artillería al frente de Planta 2
+        GameObject gunnerConsole = CreateBlock("Gunner_Console", cockpit.transform, new Vector3(0f, 4.95f, 5.8f), new Vector3(5.2f, 0.7f, 1.0f), Quaternion.identity, matDarkSteel);
+        CreateBlock("Gunner_Ballistic_Screen", cockpit.transform, new Vector3(0f, 5.42f, 5.85f), new Vector3(2.8f, 0.5f, 0.08f), Quaternion.Euler(-25f, 0f, 0f), matBtnRose);
+
+        GameObject gunnerLabelObj = new GameObject("Gunner_Station_Label");
+        gunnerLabelObj.transform.parent = cockpit.transform;
+        gunnerLabelObj.transform.localPosition = new Vector3(0f, 4.58f, 5.2f);
+        gunnerLabelObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+        gunnerLabelObj.transform.localScale = Vector3.one * 0.22f;
+        TextMesh gtm = gunnerLabelObj.AddComponent<TextMesh>();
+        gtm.text = "ESTACIÓN DE ARTILLERÍA [P2 - ARTILLERO]\n(VENTANALES PANORÁMICOS - PUNTERÍA TOTAL)";
+        gtm.fontSize = 28;
+        gtm.characterSize = 0.28f;
+        gtm.anchor = TextAnchor.MiddleCenter;
+        gtm.alignment = TextAlignment.Center;
+        gtm.fontStyle = FontStyle.Bold;
+        gtm.color = new Color(1.0f, 0.45f, 0.1f);
+
+        // TRAMO DE ESCALERAS 2 (Planta 2 -> Planta 3): Ubicado en ala babor, sube de Y=4.5m a Y=9.0m
+        CreateIndustrialStaircase("Stairs_Level2_to_Level3", cockpit.transform, new Vector3(-7.2f, 4.5f, 3.5f), new Vector3(-7.2f, 9.0f, -4.5f), 2.6f, matDarkSteel, matHazard, matGunmetal);
+
+        // =====================================================================
+        // PLANTA 3 (NIVEL 3 - PLANTA SUPERIOR: CABEZA DEL MECHA / CÁPSULA DEL CAPITÁN - Y = 9.0m)
+        // El Capitán sube a la cabeza del mecha y no necesita ver, porque al entrar
+        // pasa AUTOMÁTICAMENTE a vista exterior en 3ª persona del titán de 50 metros.
+        // =====================================================================
+        // Suelo modular de Planta 3 (Totalmente sellado, sin agujeros al vacío)
+        CreateBlock("Floor_Level3_Center", cockpit.transform, new Vector3(0f, 8.8f, 0f), new Vector3(11.8f, 0.4f, 15.0f), Quaternion.identity, matFloor, true);
+        CreateBlock("Floor_Level3_Front", cockpit.transform, new Vector3(0f, 8.8f, 5.5f), new Vector3(20.0f, 0.4f, 4.0f), Quaternion.identity, matFloor, true);
+        CreateBlock("Floor_Level3_Rear", cockpit.transform, new Vector3(0f, 8.8f, -6.0f), new Vector3(20.0f, 0.4f, 3.0f), Quaternion.identity, matFloor, true);
+        // Ala estribor sólida (no hay escalera en estribor en Planta 3: cubre de X=+5.9 a X=+10.0)
+        CreateBlock("Floor_Level3_RightWing", cockpit.transform, new Vector3(7.95f, 8.8f, -0.5f), new Vector3(4.1f, 0.4f, 8.0f), Quaternion.identity, matFloor, true);
+        // Borde exterior en babor junto a la escalera 2 (cubre de X=-8.5 a X=-10.0)
+        CreateBlock("Floor_Level3_LeftOuter", cockpit.transform, new Vector3(-9.25f, 8.8f, -0.5f), new Vector3(1.5f, 0.4f, 8.0f), Quaternion.identity, matFloor, true);
+
+        // Barandilla de seguridad protegiendo el hueco de la escalera 2 en Planta 3
+        CreateBlock("L3_Stair2_Safety_Rail", cockpit.transform, new Vector3(-5.8f, 9.5f, -0.5f), new Vector3(0.12f, 1.0f, 8.0f), Quaternion.identity, matHazard);
+
+        // ESTRUCTURA BLINDADA DE LA CABEZA DEL MECHA (Blindaje militar, sin necesidad de grandes cristales)
+        CreateBlock("Head_Hull_Front", cockpit.transform, new Vector3(0f, 11.5f, 7.2f), new Vector3(19.6f, 5.2f, 0.4f), Quaternion.identity, matMilGreen);
+        CreateBlock("Head_Hull_Roof", cockpit.transform, new Vector3(0f, 14.5f, 0f), new Vector3(19.2f, 0.4f, 14.5f), Quaternion.identity, matMilGreen);
+        CreateBlock("Head_Hull_Side_L", cockpit.transform, new Vector3(-9.8f, 11.5f, 0f), new Vector3(0.4f, 5.2f, 14.5f), Quaternion.identity, matGunmetal);
+        CreateBlock("Head_Hull_Side_R", cockpit.transform, new Vector3(9.8f, 11.5f, 0f), new Vector3(0.4f, 5.2f, 14.5f), Quaternion.identity, matGunmetal);
+        CreateBlock("Head_Hull_Rear", cockpit.transform, new Vector3(0f, 11.5f, -7.2f), new Vector3(19.6f, 5.2f, 0.4f), Quaternion.identity, matMilGreenDark);
+
+        // Arcos tubulares y nervaduras blindadas de la cabeza
+        CreateBlock("Head_Rib_Front_Brow", cockpit.transform, new Vector3(0f, 14.4f, 7.2f), new Vector3(20.0f, 0.35f, 0.35f), Quaternion.identity, matDarkSteel);
+        CreateBlock("Head_Rib_Mid_Hoop", cockpit.transform, new Vector3(0f, 14.6f, 0f), new Vector3(20.0f, 0.35f, 0.35f), Quaternion.identity, matDarkSteel);
+        CreateBlock("Head_Rib_Rear_Hoop", cockpit.transform, new Vector3(0f, 14.4f, -7.2f), new Vector3(20.0f, 0.35f, 0.35f), Quaternion.identity, matDarkSteel);
+        CreateBlock("Head_Pillar_L", cockpit.transform, new Vector3(-9.8f, 11.5f, 7.2f), new Vector3(0.4f, 5.2f, 0.4f), Quaternion.identity, matDarkSteel);
+        CreateBlock("Head_Pillar_R", cockpit.transform, new Vector3(9.8f, 11.5f, 7.2f), new Vector3(0.4f, 5.2f, 0.4f), Quaternion.identity, matDarkSteel);
+
+        // Anillo de telemetría neural holográfica en la corona de la cabeza
+        CreateCylinder("Neural_Holo_Ring", cockpit.transform, new Vector3(0f, 13.8f, 1.5f), new Vector3(6.5f, 0.12f, 6.5f), Quaternion.identity, matCyanOptics);
+
+        // PEDESTAL DE MANDO DEL CAPITÁN (En el centro de la Cabeza del Mecha)
+        GameObject captainPedestal = CreateCylinder("Captain_Command_Pedestal", cockpit.transform, new Vector3(0f, 9.2f, 1.5f), new Vector3(4.4f, 0.4f, 4.4f), Quaternion.identity, matGunmetal, true);
+        CreateCylinder("Pedestal_Hazard_Ring", captainPedestal.transform, new Vector3(0f, 0.52f, 0f), new Vector3(1.02f, 0.2f, 1.02f), Quaternion.identity, matHazard);
+        CreateCylinder("Captain_Holo_Disc", captainPedestal.transform, new Vector3(0f, 0.55f, 0f), new Vector3(0.7f, 0.05f, 0.7f), Quaternion.identity, matCyanOptics);
+
+        // Consola táctica de mando del Capitán (de perfil bajo Y < 0.6m para ergonomía de cabina)
+        GameObject captainConsole = CreateBlock("Captain_Tactical_Console", cockpit.transform, new Vector3(0f, 9.45f, 3.8f), new Vector3(3.6f, 0.5f, 0.8f), Quaternion.identity, matDarkSteel);
+        CreateBlock("Captain_Screen", captainConsole.transform, new Vector3(0f, 0.45f, 0.1f), new Vector3(2.4f, 0.4f, 0.08f), Quaternion.Euler(-20f, 0f, 0f), matCyanOptics);
+
+        GameObject capLabelObj = new GameObject("Captain_Station_Label");
+        capLabelObj.transform.parent = cockpit.transform;
+        capLabelObj.transform.localPosition = new Vector3(0f, 9.08f, 4.6f);
+        capLabelObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+        capLabelObj.transform.localScale = Vector3.one * 0.22f;
+        TextMesh ctm = capLabelObj.AddComponent<TextMesh>();
+        ctm.text = "★ CABEZA DEL MECHA - PUENTE DE MANDO DEL CAPITÁN ★\n[VISTA EXTERIOR 3ª PERSONA AUTOMÁTICA]";
+        ctm.fontSize = 28;
+        ctm.characterSize = 0.28f;
+        ctm.anchor = TextAnchor.MiddleCenter;
+        ctm.alignment = TextAlignment.Center;
+        ctm.fontStyle = FontStyle.Bold;
+        ctm.color = new Color(0.0f, 0.95f, 1.0f);
+
+        // Iluminación táctica suave en cada nivel
+        void AddCockpitDownlight(string lName, Vector3 localPos, Color color, float range = 18f, float intensity = 2.0f)
+        {
+            GameObject lObj = new GameObject(lName);
             lObj.transform.parent = cockpit.transform;
             lObj.transform.localPosition = localPos;
             Light l = lObj.AddComponent<Light>();
@@ -418,42 +617,40 @@ public static class AssembleMechaPrototype
             l.intensity = intensity;
             l.color = color;
         }
-        AddCockpitDownlight("Pilot_Wing_Light", new Vector3(-4.5f, 7.5f, 2.5f), new Color(0.85f, 0.95f, 1.0f), 20f, 2.2f);
-        AddCockpitDownlight("Gunner_Wing_Light", new Vector3(4.5f, 7.5f, 2.5f), new Color(1.0f, 0.92f, 0.85f), 20f, 2.2f);
-        AddCockpitDownlight("Center_Aisle_Light", new Vector3(0f, 7.5f, -2.0f), new Color(0.9f, 0.95f, 1.0f), 18f, 1.6f);
+        AddCockpitDownlight("Level1_Pilot_Light", new Vector3(0f, 3.8f, 1.0f), new Color(0.85f, 0.95f, 1.0f), 16f, 1.8f);
+        AddCockpitDownlight("Level2_Gunner_Light", new Vector3(0f, 8.2f, 1.8f), new Color(1.0f, 0.92f, 0.85f), 16f, 1.8f);
+        AddCockpitDownlight("Level3_Captain_Light", new Vector3(0f, 14.0f, 0f), new Color(0.9f, 0.95f, 1.0f), 20f, 2.2f);
 
-        // HUD Holográfico sobre el cristal frontal
-        GameObject windshieldHudObj = new GameObject("Windshield_HUD");
-        windshieldHudObj.transform.parent = cockpit.transform;
-        windshieldHudObj.transform.localPosition = new Vector3(0f, 4.4f, 8.0f);
-        windshieldHudObj.AddComponent<WindshieldHUDCrosshair>();
+        // --- ENVOLVENTE EXTERIOR DEL TORSO Y BLINDAJE ---
+        CreateBlock("Pectoral_Armor_L", cockpit.transform, new Vector3(-9.0f, 5.2f, 6.4f), new Vector3(6.4f, 8.4f, 5.2f), Quaternion.Euler(-18f, 14f, 0f), matMilGreen);
+        CreateBlock("Pectoral_Intake_L", cockpit.transform, new Vector3(-9.0f, 5.2f, 8.9f), new Vector3(4.4f, 2.8f, 0.4f), Quaternion.Euler(-18f, 14f, 0f), matGunmetal);
+        CreateBlock("Pectoral_Armor_R", cockpit.transform, new Vector3(9.0f, 5.2f, 6.4f), new Vector3(6.4f, 8.4f, 5.2f), Quaternion.Euler(-18f, -14f, 0f), matMilGreen);
+        CreateBlock("Pectoral_Intake_R", cockpit.transform, new Vector3(9.0f, 5.2f, 8.9f), new Vector3(4.4f, 2.8f, 0.4f), Quaternion.Euler(-18f, -14f, 0f), matGunmetal);
 
         // MOCHILA POSTERIOR Y TOBERAS DE ESCAPE (Backpack Thrusters)
-        CreateBlock("Backpack_Main_Bay", cockpit.transform, new Vector3(0f, 6.0f, -8.8f), new Vector3(17.2f, 11.2f, 4.4f), Quaternion.identity, matMilGreenDark);
-        CreateBlock("Backpack_Thruster_Nacelle_L", cockpit.transform, new Vector3(-5.6f, 6.8f, -10.4f), new Vector3(4.0f, 12.0f, 4.0f), Quaternion.identity, matMilGreen);
-        CreateCylinder("Backpack_Exhaust_Nozzle_L", cockpit.transform, new Vector3(-5.6f, 0.4f, -10.4f), new Vector3(3.0f, 1.6f, 3.0f), Quaternion.identity, matChrome);
-        CreateBlock("Backpack_Thruster_Nacelle_R", cockpit.transform, new Vector3(5.6f, 6.8f, -10.4f), new Vector3(4.0f, 12.0f, 4.0f), Quaternion.identity, matMilGreen);
-        CreateCylinder("Backpack_Exhaust_Nozzle_R", cockpit.transform, new Vector3(5.6f, 0.4f, -10.4f), new Vector3(3.0f, 1.6f, 3.0f), Quaternion.identity, matChrome);
+        CreateBlock("Backpack_Main_Bay", cockpit.transform, new Vector3(0f, 8.0f, -8.8f), new Vector3(17.2f, 14.0f, 4.4f), Quaternion.identity, matMilGreenDark);
+        CreateBlock("Backpack_Thruster_Nacelle_L", cockpit.transform, new Vector3(-5.6f, 9.0f, -10.4f), new Vector3(4.0f, 15.0f, 4.0f), Quaternion.identity, matMilGreen);
+        CreateCylinder("Backpack_Exhaust_Nozzle_L", cockpit.transform, new Vector3(-5.6f, 0.8f, -10.4f), new Vector3(3.0f, 2.2f, 3.0f), Quaternion.identity, matChrome);
+        CreateBlock("Backpack_Thruster_Nacelle_R", cockpit.transform, new Vector3(5.6f, 9.0f, -10.4f), new Vector3(4.0f, 15.0f, 4.0f), Quaternion.identity, matMilGreen);
+        CreateCylinder("Backpack_Exhaust_Nozzle_R", cockpit.transform, new Vector3(5.6f, 0.8f, -10.4f), new Vector3(3.0f, 2.2f, 3.0f), Quaternion.identity, matChrome);
 
-        // 6. CABEZA Y CASCO DE COMBATE (Mecha Head con Visor Cian y Antena V-Fin)
+        // 6. CABEZA Y CASCO DE COMBATE (Mecha Head con Visor Cian y Antena V-Fin a 50m de altura)
         GameObject mechaHead = new GameObject("Mecha_Head");
         mechaHead.transform.parent = cockpit.transform;
-        mechaHead.transform.localPosition = new Vector3(0f, 11.2f, 4.0f);
+        mechaHead.transform.localPosition = new Vector3(0f, 15.2f, 4.0f);
 
         CreateCylinder("Head_Neck_Joint", mechaHead.transform, new Vector3(0f, 0.8f, 0f), new Vector3(3.6f, 1.6f, 3.6f), Quaternion.identity, matDarkSteel);
         CreateBlock("Head_Chin_Guard", mechaHead.transform, new Vector3(0f, 2.0f, 2.2f), new Vector3(2.8f, 1.8f, 2.4f), Quaternion.Euler(-22f, 0f, 0f), matGunmetal);
         CreateBlock("Head_Cheek_L", mechaHead.transform, new Vector3(-2.2f, 2.8f, 1.4f), new Vector3(1.0f, 2.8f, 2.4f), Quaternion.Euler(0f, -15f, 0f), matMilGreen);
         CreateBlock("Head_Cheek_R", mechaHead.transform, new Vector3(2.2f, 2.8f, 1.4f), new Vector3(1.0f, 2.8f, 2.4f), Quaternion.Euler(0f, 15f, 0f), matMilGreen);
-        // Visor de combate cian emisivo (Ojos tácticos)
         CreateBlock("Head_Visor_Optics", mechaHead.transform, new Vector3(0f, 3.1f, 2.4f), new Vector3(3.2f, 0.7f, 0.5f), Quaternion.identity, matCyanOptics);
-        // Frente y cresta con antena V-Fin dorada
         CreateBlock("Head_Forehead_Brow", mechaHead.transform, new Vector3(0f, 4.0f, 2.0f), new Vector3(4.0f, 1.4f, 2.8f), Quaternion.identity, matMilGreen);
-        CreateBlock("Head_VFin_Antenna", mechaHead.transform, new Vector3(0f, 5.4f, 1.6f), new Vector3(0.7f, 3.2f, 1.6f), Quaternion.Euler(-18f, 0f, 0f), matBrass);
+        CreateBlock("Head_VFin_Antenna", mechaHead.transform, new Vector3(0f, 5.6f, 1.6f), new Vector3(0.7f, 3.8f, 1.6f), Quaternion.Euler(-18f, 0f, 0f), matBrass);
         CreateBlock("Head_Helmet_Dome", mechaHead.transform, new Vector3(0f, 4.0f, -0.2f), new Vector3(4.8f, 3.2f, 5.2f), Quaternion.identity, matMilGreen);
         CreateCylinder("Head_Ear_Horn_L", mechaHead.transform, new Vector3(-2.8f, 3.6f, -0.4f), new Vector3(0.8f, 2.4f, 0.8f), Quaternion.Euler(-25f, 0f, 0f), matGunmetal);
         CreateCylinder("Head_Ear_Horn_R", mechaHead.transform, new Vector3(2.8f, 3.6f, -0.4f), new Vector3(0.8f, 2.4f, 0.8f), Quaternion.Euler(-25f, 0f, 0f), matGunmetal);
 
-        // 7. HOMBROS, PAULDRONS Y ARSENAL MILITAR (Escala x2)
+        // 7. HOMBROS, PAULDRONS Y ARSENAL MILITAR
         // --- HOMBRO IZQUIERDO Y BRAZO GATLING ---
         GameObject shoulderL = new GameObject("Shoulder_Left");
         shoulderL.transform.parent = cockpit.transform;
@@ -479,7 +676,6 @@ public static class AssembleMechaPrototype
         // Tambor de munición inferior masivo con franjas hazard
         GameObject drum = CreateCylinder("Gatling_Ammo_Drum", armLeft.transform, new Vector3(0f, -11.6f, 2.8f), new Vector3(6.4f, 2.8f, 6.4f), Quaternion.identity, matGunmetal);
         CreateCylinder("Drum_Band", drum.transform, Vector3.zero, new Vector3(1.02f, 0.28f, 1.02f), Quaternion.identity, matHazard);
-        // Chute flexible de alimentación que sube al torso
         CreateBlock("Ammo_Feed_Chute", armLeft.transform, new Vector3(2.8f, -8.4f, 1.0f), new Vector3(3.6f, 2.4f, 3.2f), Quaternion.identity, matGunmetal);
 
         // Rotor y conjunto de 6 cañones cromados rotatorios
@@ -521,7 +717,7 @@ public static class AssembleMechaPrototype
         CreateBlock("Pauldron_R", shoulderR.transform, new Vector3(1.2f, 1.8f, 0f), new Vector3(6.8f, 4.8f, 8.4f), Quaternion.Euler(0f, 0f, -15f), matMilGreen);
         CreateBlock("Pauldron_Trim_R", shoulderR.transform, new Vector3(1.2f, -0.6f, 0f), new Vector3(7.0f, 1.2f, 8.6f), Quaternion.Euler(0f, 0f, -15f), matGunmetal);
 
-        // POD LANZAMISILES DE 6 TUBOS MONTADO EN EL HOMBRO (Escala x2)
+        // POD LANZAMISILES DE 6 TUBOS
         GameObject podBox = CreateBlock("Missile_Pod", shoulderR.transform, new Vector3(0f, 4.4f, 0.8f), new Vector3(7.6f, 5.2f, 9.6f), Quaternion.identity, matMilGreen);
         CreateBlock("Pod_Bezel", podBox.transform, new Vector3(0f, 0f, 0.51f), new Vector3(1.02f, 1.02f, 0.08f), Quaternion.identity, matGunmetal);
         CreateBlock("Pod_Optics_Sensor", podBox.transform, new Vector3(0f, 0.56f, 0.1f), new Vector3(0.45f, 0.25f, 0.6f), Quaternion.identity, matCyanOptics);
@@ -565,15 +761,15 @@ public static class AssembleMechaPrototype
         }
         CreateBlock("Thumb", hand.transform, new Vector3(-1.7f, -0.6f, 0.8f), new Vector3(0.7f, 0.8f, 1.6f), Quaternion.Euler(0f, -35f, 20f), matGunmetal);
 
-        // 8. PUESTO DE MANDO DEL MAQUINISTA ARTILLERO (Machinist Gunner Station - Popa elevada)
+        // 8. PUESTO DE MANDO DEL MAQUINISTA ARTILLERO (Ubicado en Planta 2 - Popa)
         GameObject gunnerStationObj = new GameObject("Machinist_Gunner_Station");
         gunnerStationObj.transform.parent = cockpit.transform;
-        gunnerStationObj.transform.localPosition = new Vector3(0f, 0.8f, -6.5f);
+        gunnerStationObj.transform.localPosition = new Vector3(0f, 4.5f, -4.5f);
 
-        CreateBlock("Station_Platform", gunnerStationObj.transform, new Vector3(0f, 0.3f, 0f), new Vector3(8.0f, 0.6f, 3.6f), Quaternion.identity, matWall);
-        CreateBlock("Platform_Safety_Rail", gunnerStationObj.transform, new Vector3(0f, 0.9f, 1.7f), new Vector3(7.8f, 0.6f, 0.16f), Quaternion.identity, matHazard);
+        CreateBlock("Station_Platform", gunnerStationObj.transform, new Vector3(0f, 0.3f, 0f), new Vector3(6.5f, 0.6f, 3.2f), Quaternion.identity, matWall);
+        CreateBlock("Platform_Safety_Rail", gunnerStationObj.transform, new Vector3(0f, 0.9f, 1.5f), new Vector3(6.4f, 0.6f, 0.16f), Quaternion.identity, matHazard);
 
-        GameObject consoleBase = CreateBlock("Machinist_Console", gunnerStationObj.transform, new Vector3(0f, 1.2f, 0.8f), new Vector3(3.6f, 1.0f, 1.4f), Quaternion.identity, matGunmetal);
+        GameObject consoleBase = CreateBlock("Machinist_Console", gunnerStationObj.transform, new Vector3(0f, 1.0f, 0.6f), new Vector3(3.6f, 0.8f, 1.2f), Quaternion.identity, matGunmetal);
         GameObject screenObj = CreateBlock("Screen_Radar_Holo", consoleBase.transform, new Vector3(0f, 0.85f, 0.15f), new Vector3(2.6f, 1.2f, 0.16f), Quaternion.Euler(-18f, 0f, 0f), matBtnCyan);
 
         GameObject screenLightObj = new GameObject("Screen_Tactical_Light");
@@ -585,8 +781,8 @@ public static class AssembleMechaPrototype
         screenLight.intensity = 2.0f;
         screenLight.color = Color.cyan;
 
-        GameObject seat = CreateBlock("Machinist_Bucket_Seat", gunnerStationObj.transform, new Vector3(0f, 1.0f, -0.3f), new Vector3(2.2f, 0.6f, 2.0f), Quaternion.identity, matMilGreenDark);
-        CreateBlock("Seat_Backrest", seat.transform, new Vector3(0f, 1.2f, -0.9f), new Vector3(2.2f, 2.0f, 0.4f), Quaternion.identity, matGunmetal);
+        GameObject seat = CreateBlock("Machinist_Bucket_Seat", gunnerStationObj.transform, new Vector3(0f, 0.8f, -0.3f), new Vector3(2.2f, 0.6f, 2.0f), Quaternion.identity, matMilGreenDark);
+        CreateBlock("Seat_Backrest", seat.transform, new Vector3(0f, 1.0f, -0.9f), new Vector3(2.2f, 1.8f, 0.4f), Quaternion.identity, matGunmetal);
 
         GameObject joyL = CreateBlock("Joystick_Left", consoleBase.transform, new Vector3(-1.2f, 0.8f, -0.15f), new Vector3(0.25f, 0.9f, 0.25f), Quaternion.identity, matBtnAmber);
         GameObject joyR = CreateBlock("Joystick_Right", consoleBase.transform, new Vector3(1.2f, 0.8f, -0.15f), new Vector3(0.25f, 0.9f, 0.25f), Quaternion.identity, matBtnAmber);
@@ -594,18 +790,18 @@ public static class AssembleMechaPrototype
         // MODELO DEL PATITO MAQUINISTA COPILOTO
         GameObject gunnerDuck = new GameObject("Gunner_Duck_Machinist");
         gunnerDuck.transform.parent = gunnerStationObj.transform;
-        gunnerDuck.transform.localPosition = new Vector3(0f, 1.35f, -0.2f);
+        gunnerDuck.transform.localPosition = new Vector3(0f, 1.15f, -0.2f);
 
         GameObject gBody = CreateSphere("Gunner_Body", gunnerDuck.transform, new Vector3(0f, 0.5f, 0f), new Vector3(1.2f, 1.1f, 1.4f), Quaternion.identity, matDuckYellow);
         GameObject gHead = CreateSphere("Gunner_Head", gunnerDuck.transform, new Vector3(0f, 1.3f, 0.3f), new Vector3(0.85f, 0.85f, 0.85f), Quaternion.identity, matDuckYellow);
 
         GameObject cap = CreateCylinder("Machinist_Cap", gHead.transform, new Vector3(0f, 0.45f, -0.07f), new Vector3(0.95f, 0.2f, 0.95f), Quaternion.Euler(-12f, 0f, 0f), matDuckBlack);
-        GameObject capVisor = CreateBlock("Cap_Visor", cap.transform, new Vector3(0f, -0.03f, 0.5f), new Vector3(0.98f, 0.11f, 0.55f), Quaternion.Euler(18f, 0f, 0f), matHazard);
-        GameObject goggles = CreateBlock("Tactical_Goggles", gHead.transform, new Vector3(0f, 0.08f, 0.45f), new Vector3(0.78f, 0.25f, 0.25f), Quaternion.identity, matCyanOptics);
+        CreateBlock("Cap_Visor", cap.transform, new Vector3(0f, -0.03f, 0.5f), new Vector3(0.98f, 0.11f, 0.55f), Quaternion.Euler(18f, 0f, 0f), matHazard);
+        CreateBlock("Tactical_Goggles", gHead.transform, new Vector3(0f, 0.08f, 0.45f), new Vector3(0.78f, 0.25f, 0.25f), Quaternion.identity, matCyanOptics);
 
-        GameObject gBeak = CreateBlock("Gunner_Beak", gHead.transform, new Vector3(0f, -0.11f, 0.5f), new Vector3(0.36f, 0.17f, 0.39f), Quaternion.identity, matDuckOrange);
-        GameObject gWingL = CreateSphere("Gunner_Wing_L", gBody.transform, new Vector3(-0.65f, 0.07f, 0.14f), new Vector3(0.2f, 0.5f, 0.7f), Quaternion.Euler(0f, 0f, 25f), matDuckYellow);
-        GameObject gWingR = CreateSphere("Gunner_Wing_R", gBody.transform, new Vector3(0.65f, 0.07f, 0.14f), new Vector3(0.2f, 0.5f, 0.7f), Quaternion.Euler(0f, 0f, -25f), matDuckYellow);
+        CreateBlock("Gunner_Beak", gHead.transform, new Vector3(0f, -0.11f, 0.5f), new Vector3(0.36f, 0.17f, 0.39f), Quaternion.identity, matDuckOrange);
+        CreateSphere("Gunner_Wing_L", gBody.transform, new Vector3(-0.65f, 0.07f, 0.14f), new Vector3(0.2f, 0.5f, 0.7f), Quaternion.Euler(0f, 0f, 25f), matDuckYellow);
+        CreateSphere("Gunner_Wing_R", gBody.transform, new Vector3(0.65f, 0.07f, 0.14f), new Vector3(0.2f, 0.5f, 0.7f), Quaternion.Euler(0f, 0f, -25f), matDuckYellow);
 
         MechaMachinistGunner gunnerComp = gunnerStationObj.AddComponent<MechaMachinistGunner>();
         SerializedObject gunnerSO = new SerializedObject(gunnerComp);
@@ -618,58 +814,7 @@ public static class AssembleMechaPrototype
         gunnerSO.FindProperty("tacticalScreenLight").objectReferenceValue = screenLight;
         gunnerSO.ApplyModifiedProperties();
 
-        // 9. CONFIGURACIÓN DE ESTACIONES INDEPENDIENTES EN LA CABINA (SEPARACIÓN DE RESPONSABILIDADES P1/P2)
-        // --- A. ESTACIÓN DE PILOTAJE (ALA IZQUIERDA - JUGADOR 1: NAVEGACIÓN Y MARCHA) ---
-        GameObject pilotPlatform = CreateBlock("Station_Pilot_FloorPad", cockpit.transform, new Vector3(-4.5f, 0.04f, 2.5f), new Vector3(8.5f, 0.08f, 8.5f), Quaternion.identity, matMilGreenDark);
-        CreateBlock("Pilot_Station_Border", pilotPlatform.transform, new Vector3(0f, 0.15f, 0f), new Vector3(1.02f, 0.2f, 1.02f), Quaternion.identity, matHazard, false);
-
-        // Consola de instrumentos del piloto al frente (altura rebajada para vista despejada del horizonte)
-        GameObject pilotConsole = CreateBlock("Pilot_Console", cockpit.transform, new Vector3(-4.5f, 0.45f, 6.8f), new Vector3(5.5f, 0.7f, 1.0f), Quaternion.identity, matGunmetal);
-        GameObject pilotScreen = CreateBlock("Pilot_Nav_Screen", cockpit.transform, new Vector3(-4.5f, 0.92f, 6.85f), new Vector3(2.8f, 0.5f, 0.08f), Quaternion.Euler(-25f, 0f, 0f), matBtnGreen);
-
-        // Rótulo 3D de Estación de Pilotaje
-        GameObject pilotLabelObj = new GameObject("Pilot_Station_Label");
-        pilotLabelObj.transform.parent = cockpit.transform;
-        pilotLabelObj.transform.localPosition = new Vector3(-4.5f, 0.08f, 6.2f);
-        pilotLabelObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-        pilotLabelObj.transform.localScale = Vector3.one * 0.22f;
-        TextMesh ptm = pilotLabelObj.AddComponent<TextMesh>();
-        ptm.text = "ESTACIÓN DE PILOTAJE [P1 - LOCOMOCIÓN]";
-        ptm.fontSize = 28;
-        ptm.characterSize = 0.28f;
-        ptm.anchor = TextAnchor.MiddleCenter;
-        ptm.alignment = TextAlignment.Center;
-        ptm.fontStyle = FontStyle.Bold;
-        ptm.color = Color.green;
-
-        // --- B. ESTACIÓN DE ARTILLERÍA (ALA DERECHA - JUGADOR 2: CONTROL DE TIRO Y SALVAS) ---
-        GameObject gunnerPlatform = CreateBlock("Station_Gunner_FloorPad", cockpit.transform, new Vector3(4.5f, 0.04f, 2.5f), new Vector3(8.5f, 0.08f, 8.5f), Quaternion.identity, matGunmetal);
-        CreateBlock("Gunner_Station_Border", gunnerPlatform.transform, new Vector3(0f, 0.15f, 0f), new Vector3(1.02f, 0.2f, 1.02f), Quaternion.identity, matHazard, false);
-
-        // Consola balística de tiro del artillero al frente (altura rebajada, sin barras rojas flotantes)
-        GameObject gunnerConsole = CreateBlock("Gunner_Console", cockpit.transform, new Vector3(4.5f, 0.45f, 6.8f), new Vector3(5.5f, 0.7f, 1.0f), Quaternion.identity, matDarkSteel);
-        GameObject gunnerScreen = CreateBlock("Gunner_Ballistic_Screen", cockpit.transform, new Vector3(4.5f, 0.92f, 6.85f), new Vector3(2.8f, 0.5f, 0.08f), Quaternion.Euler(-25f, 0f, 0f), matBtnRose);
-
-        // Rótulo 3D de Estación de Artillería
-        GameObject gunnerLabelObj = new GameObject("Gunner_Station_Label");
-        gunnerLabelObj.transform.parent = cockpit.transform;
-        gunnerLabelObj.transform.localPosition = new Vector3(4.5f, 0.08f, 6.2f);
-        gunnerLabelObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-        gunnerLabelObj.transform.localScale = Vector3.one * 0.22f;
-        TextMesh gtm = gunnerLabelObj.AddComponent<TextMesh>();
-        gtm.text = "ESTACIÓN DE ARTILLERÍA [P2 - COMBATE]";
-        gtm.fontSize = 28;
-        gtm.characterSize = 0.28f;
-        gtm.anchor = TextAnchor.MiddleCenter;
-        gtm.alignment = TextAlignment.Center;
-        gtm.fontStyle = FontStyle.Bold;
-        gtm.color = new Color(1.0f, 0.45f, 0.1f);
-
-        // --- C. PASILLO CENTRAL Y DIVISIÓN VISUAL ---
-        CreateBlock("Central_Corridor_Stripe_L", cockpit.transform, new Vector3(-0.35f, 0.02f, 2.5f), new Vector3(0.12f, 0.02f, 8.5f), Quaternion.identity, matHazard, false);
-        CreateBlock("Central_Corridor_Stripe_R", cockpit.transform, new Vector3(0.35f, 0.02f, 2.5f), new Vector3(0.12f, 0.02f, 8.5f), Quaternion.identity, matHazard, false);
-
-        // --- D. BOTONES FÍSICOS DISTRIBUIDOS POR ESTACIONES ---
+        // 9. BOTONES FÍSICOS DISTRIBUIDOS VERTICALMENTE EN LAS 3 PLANTAS
         void CreateFloorButton(string id, string label, Vector3 localPos, float radius, Material capMat, CockpitFloorButton.ButtonType bType, float detectionRadius = 1.6f)
         {
             GameObject bObj = new GameObject($"Btn_{id}");
@@ -707,24 +852,26 @@ public static class AssembleMechaPrototype
             so.ApplyModifiedProperties();
         }
 
-        // BOTONES DE PILOTAJE (ALA IZQUIERDA - JUGADOR 1)
-        CreateFloorButton("FWD", "▲ AVANZAR", new Vector3(-4.5f, 0f, 4.5f), 1.35f, matBtnGreen, CockpitFloorButton.ButtonType.Hold, 1.7f);
-        CreateFloorButton("BWD", "▼ ATRÁS", new Vector3(-4.5f, 0f, 0.5f), 1.35f, matBtnAmber, CockpitFloorButton.ButtonType.Hold, 1.7f);
-        CreateFloorButton("LEFT", "◄ GIRO IZQ", new Vector3(-7.2f, 0f, 2.5f), 1.30f, matBtnCyan, CockpitFloorButton.ButtonType.Hold, 1.6f);
-        CreateFloorButton("RIGHT", "GIRO DER ►", new Vector3(-1.8f, 0f, 2.5f), 1.30f, matBtnCyan, CockpitFloorButton.ButtonType.Hold, 1.6f);
+        // --- BOTONES DE PLANTA 1 (NIVEL 1: NAVEGACIÓN Y MARCHA - CONDUCTOR) ---
+        // Distribución espaciosa y simétrica aprovechando la amplitud del Búnker
+        CreateFloorButton("FWD", "▲ AVANZAR", new Vector3(0.0f, 0f, 3.8f), 1.35f, matBtnGreen, CockpitFloorButton.ButtonType.Hold, 1.7f);
+        CreateFloorButton("BWD", "▼ ATRÁS", new Vector3(0.0f, 0f, -2.5f), 1.35f, matBtnAmber, CockpitFloorButton.ButtonType.Hold, 1.7f);
+        CreateFloorButton("LEFT", "◄ GIRO IZQ", new Vector3(-4.8f, 0f, 0.65f), 1.30f, matBtnCyan, CockpitFloorButton.ButtonType.Hold, 1.6f);
+        CreateFloorButton("RIGHT", "GIRO DER ►", new Vector3(4.8f, 0f, 0.65f), 1.30f, matBtnCyan, CockpitFloorButton.ButtonType.Hold, 1.6f);
 
-        // BOTONES DE ARTILLERÍA (ALA DERECHA - JUGADOR 2)
-        CreateFloorButton("GATLING", "🔫 GATLING\n[MANTENER / E]", new Vector3(2.6f, 0f, 2.5f), 1.60f, matBtnAmber, CockpitFloorButton.ButtonType.Hold, 1.9f);
-        CreateFloorButton("MISSILES", "🚀 MISILES\n(CULAZO E)", new Vector3(6.4f, 0f, 2.5f), 1.60f, matBtnCyan, CockpitFloorButton.ButtonType.Stomp, 1.9f);
-        SetupGunnerAimPad.BuildAimPadHierarchy(cockpit.transform, new Vector3(4.5f, 0.04f, 4.6f), matDarkSteel, matGunmetal, matChrome, matHazard, matBtnBase, matBtnCyan, matBtnGreen, matBtnAmber);
+        // --- BOTONES DE PLANTA 2 (NIVEL 2: ARTILLERÍA Y ARSENAL) ---
+        // Aim Pad centralizado frente al HUD crosshair, Gatling a babor (brazo izq) y Misiles a estribor (pod der)
+        CreateFloorButton("GATLING", "🔫 GATLING\n[MANTENER / E]", new Vector3(-4.8f, 4.5f, 1.5f), 1.55f, matBtnAmber, CockpitFloorButton.ButtonType.Hold, 1.85f);
+        CreateFloorButton("MISSILES", "🚀 MISILES\n(CULAZO E)", new Vector3(4.8f, 4.5f, 1.5f), 1.55f, matBtnCyan, CockpitFloorButton.ButtonType.Stomp, 1.85f);
+        SetupGunnerAimPad.BuildAimPadHierarchy(cockpit.transform, new Vector3(0.0f, 4.54f, 3.5f), matDarkSteel, matGunmetal, matChrome, matHazard, matBtnBase, matBtnCyan, matBtnGreen, matBtnAmber);
 
-        // BOTÓN AUXILIAR CENTRAL / POSTERIOR: ALARMA DE ROBOTS
-        CreateFloorButton("SPAWN", "🚨 ROBOTS\n[ACTIVAR]", new Vector3(0f, 0f, -2.5f), 1.25f, matBtnRose, CockpitFloorButton.ButtonType.Toggle, 1.6f);
+        // --- BOTÓN DE PLANTA 3 (NIVEL 3: PUENTE DE MANDO DEL CAPITÁN) ---
+        CreateFloorButton("SPAWN", "🚨 ROBOTS\n[ACTIVAR]", new Vector3(0.0f, 9.0f, -3.0f), 1.30f, matBtnRose, CockpitFloorButton.ButtonType.Toggle, 1.7f);
 
-        // 10. EL PATO PILOTO DENTRO DE LA CABINA (Spawnea en la Estación de Pilotaje)
+        // 10. EL PATO PILOTO DENTRO DE LA CABINA (Spawnea en Planta 1 - Estación del Conductor)
         GameObject duck = new GameObject("Duck");
         duck.transform.parent = cockpit.transform;
-        duck.transform.localPosition = new Vector3(-4.5f, 0.55f, 2.5f);
+        duck.transform.localPosition = new Vector3(0.0f, 0.55f, 0.65f);
         duck.tag = "Player";
 
         Rigidbody rb = duck.AddComponent<Rigidbody>();
@@ -760,6 +907,7 @@ public static class AssembleMechaPrototype
         duckSO.FindProperty("dropShadowTransform").objectReferenceValue = dropShadow.transform;
         duckSO.FindProperty("cockpitHalfX").floatValue = 10.2f;
         duckSO.FindProperty("cockpitHalfZ").floatValue = 7.8f;
+        duckSO.FindProperty("cockpitMaxY").floatValue = 16.0f;
         duckSO.FindProperty("moveSpeed").floatValue = 14.0f;
         duckSO.ApplyModifiedProperties();
 

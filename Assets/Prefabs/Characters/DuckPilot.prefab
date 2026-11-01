@@ -588,6 +588,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DuckController
   cockpitHalfX: 10.2
   cockpitHalfZ: 7.8
+  cockpitMaxY: 16
+  duckRadius: 0.5
   moveSpeed: 14
   acceleration: 60
   friction: 0.88
@@ -595,7 +597,8 @@ MonoBehaviour:
   jumpForce: 15.5
   stompSpeed: 32
   gravity: 36
-  tiltToleranceAngle: 12
+  stepSnapOffset: 0.85
+  tiltToleranceAngle: 14
   maxTiltSlideAccel: 18
   visualTransform: {fileID: 8270385890023607736}
   leftWingTransform: {fileID: 4486007602720732399}

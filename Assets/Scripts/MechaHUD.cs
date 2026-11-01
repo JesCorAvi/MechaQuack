@@ -37,6 +37,8 @@ public class MechaHUD : MonoBehaviour
     private Label missileStatusText;
     private Label scoreText;
     private Label spawnerStatusText;
+    private Label floorIndicatorText;
+    private int lastFloorLevel = -1;
 
     public UIDocument UIDocumentComponent => uiDocument;
 
@@ -86,6 +88,8 @@ public class MechaHUD : MonoBehaviour
         hpText = root.Q<Label>("hp-text");
         missileStatusText = root.Q<Label>("missile-text") ?? root.Q<Label>("laser-text");
         spawnerStatusText = root.Q<Label>("spawner-status-text");
+        floorIndicatorText = root.Q<Label>("floor-indicator-text");
+        lastFloorLevel = -1;
 
         // Panel Radar y Score
         radarCircle = root.Q<VisualElement>("radar-circle");
@@ -237,6 +241,21 @@ public class MechaHUD : MonoBehaviour
             {
                 missileStatusText.text = "MISILES: [4/4] LISTOS";
                 missileStatusText.style.color = new StyleColor(new Color(0.22f, 0.74f, 0.97f));
+            }
+        }
+
+        // Actualizar indicador de planta / estación en tiempo real (0 allocations cuando no cambia)
+        if (floorIndicatorText != null && DuckController.Instance != null)
+        {
+            int floorLevel = DuckController.Instance.CurrentFloorLevel;
+            if (floorLevel != lastFloorLevel)
+            {
+                lastFloorLevel = floorLevel;
+                floorIndicatorText.text = DuckController.Instance.CurrentFloorName;
+                floorIndicatorText.RemoveFromClassList("floor-level-1");
+                floorIndicatorText.RemoveFromClassList("floor-level-2");
+                floorIndicatorText.RemoveFromClassList("floor-level-3");
+                floorIndicatorText.AddToClassList($"floor-level-{floorLevel}");
             }
         }
     }
@@ -416,8 +435,20 @@ public class MechaHUD : MonoBehaviour
     {
         if (CockpitCameraController.Instance != null)
         {
-            float targetDist = CockpitCameraController.Instance.CurrentDistance > 12f ? 4.8f : 24.0f;
-            CockpitCameraController.Instance.SetTargetZoom(targetDist);
+            if (CockpitCameraController.Instance.CurrentFloor < 3)
+            {
+                var duck = DuckController.Instance;
+                if (duck != null)
+                {
+                    FloatingText.Spawn(duck.transform.position + Vector3.up * 1.5f, "⚠️ SUBE AL NIVEL 3 (CAPITÁN) PARA VISTA EXTERIOR", Color.yellow, 0.4f);
+                }
+                CockpitCameraController.Instance.SetTargetZoom(5.2f);
+            }
+            else
+            {
+                float targetDist = CockpitCameraController.Instance.CurrentDistance > 12f ? 5.2f : 32.0f;
+                CockpitCameraController.Instance.SetTargetZoom(targetDist);
+            }
         }
     }
 

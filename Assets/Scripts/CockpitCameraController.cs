@@ -23,6 +23,8 @@ public class CockpitCameraController : MonoBehaviour
     [SerializeField] private float targetDistance = 5.6f;
     [SerializeField] private float minDistance = 0.85f;
     [SerializeField] private float maxDistance = 160.0f; // Permite ver todo el Mecha exterior colosal
+    [SerializeField] private float maxInteriorDistance = 6.2f; // Zoom interior máximo en Niveles 1 y 2
+    [SerializeField] private float captainExteriorDistance = 55.0f; // Zoom exterior automático al entrar en la cabeza del Mecha
     [SerializeField] private float mouseSensitivity = 2.4f;
     [SerializeField] private float zoomStep = 4.5f;
     [SerializeField] private float zoomSmoothing = 14f;
@@ -39,9 +41,17 @@ public class CockpitCameraController : MonoBehaviour
     private Vector3 droneWorldPos;
     private float droneYaw = 0f;
     private float dronePitch = 15f;
+    private int currentFloor = 1;
+    private int previousFloor = 1;
+
+    // Buffer preasignado para evitar GC allocations en SphereCast
+    private readonly RaycastHit[] camObstacleHits = new RaycastHit[16];
 
     public float CurrentDistance => currentDistance;
+    public float TargetDistance => targetDistance;
     public bool IsCursorLocked => isCursorLocked;
+    public int CurrentFloor => currentFloor;
+    public bool IsCaptainExteriorUnlocked => currentFloor == 3;
 
     private void Awake()
     {
@@ -131,6 +141,61 @@ public class CockpitCameraController : MonoBehaviour
         var keyboard = Keyboard.current;
         var mouse = Mouse.current;
 
+        // 1. Detectar planta del pato para aplicar reglas de cámara
+        int detectedFloor = currentFloor;
+        if (duckTarget != null)
+        {
+            float dy = duckTarget.localPosition.y;
+            if (dy < 3.0f) detectedFloor = 1;
+            else if (dy < 7.5f) detectedFloor = 2;
+            else detectedFloor = 3;
+        }
+
+        // Transición de planta: el Capitán sube a la cabeza del Mecha y no necesita ver por ventanas
+        // porque al entrar pasa AUTOMÁTICAMENTE a vista exterior en 3ª persona.
+        if (detectedFloor != currentFloor)
+        {
+            previousFloor = currentFloor;
+            currentFloor = detectedFloor;
+
+            if (currentFloor == 3)
+            {
+                // ¡ENTRADA A LA CABEZA DEL MECHA!
+                // Activar automáticamente la cámara exterior en 3ª persona del titán de 50 metros
+                targetDistance = captainExteriorDistance;
+                pitch = 18f;
+                if (duckTarget != null)
+                {
+                    FloatingText.Spawn(duckTarget.position + Vector3.up * 1.5f, "👑 CABEZA DEL MECHA: ¡3ª PERSONA AUTOMÁTICA!", Color.cyan, 0.45f);
+                }
+            }
+            else if (previousFloor == 3)
+            {
+                // Salida de la cabeza del Mecha hacia Planta 2 (Artillero) o Planta 1 (Conductor):
+                // Replegar inmediatamente la cámara al interior estricto de la cabina
+                targetDistance = maxInteriorDistance;
+                if (currentMode == CameraMode.SpectatorDrone)
+                {
+                    currentMode = CameraMode.FreeOrbit;
+                    MechaHUD.Instance?.UpdateCameraModeLabel(GetModeLabel());
+                }
+            }
+        }
+
+        // REGLA ESTRICTA: En Niveles 1 (Conductor) y 2 (Artillero), vista exterior estrictamente bloqueada
+        if (currentFloor < 3)
+        {
+            if (targetDistance > maxInteriorDistance)
+            {
+                targetDistance = maxInteriorDistance;
+            }
+            if (currentMode == CameraMode.SpectatorDrone)
+            {
+                currentMode = CameraMode.FreeOrbit;
+                MechaHUD.Instance?.UpdateCameraModeLabel(GetModeLabel());
+            }
+        }
+
         // Alternar anclaje del ratón con Alt, Escape o Tab
         if (keyboard != null && (keyboard.leftAltKey.wasPressedThisFrame ||
                                  keyboard.rightAltKey.wasPressedThisFrame ||
@@ -184,7 +249,7 @@ public class CockpitCameraController : MonoBehaviour
                     MechaHUD.Instance?.UpdateCameraModeLabel(GetModeLabel());
                 }
 
-                if (currentMode == CameraMode.SpectatorDrone)
+                if (currentMode == CameraMode.SpectatorDrone && currentFloor == 3)
                 {
                     droneYaw += delta.x * mouseSensitivity * 0.1f;
                     dronePitch = Mathf.Clamp(dronePitch - delta.y * mouseSensitivity * 0.1f, -80f, 80f);
@@ -221,9 +286,11 @@ public class CockpitCameraController : MonoBehaviour
             MechaHUD.Instance?.UpdateCameraModeLabel(GetModeLabel());
         }
 
+        float effectiveMaxDist = currentFloor == 3 ? maxDistance : maxInteriorDistance;
+
         // Escala dinámica: más veloz a mayor distancia para no tener que dar mil vueltas a la rueda
         float dynamicSpeed = zoomStep * (1f + (targetDistance / maxDistance) * 1.5f);
-        targetDistance = Mathf.Clamp(targetDistance - (scrollUnits * dynamicSpeed), minDistance, maxDistance);
+        targetDistance = Mathf.Clamp(targetDistance - (scrollUnits * dynamicSpeed), minDistance, effectiveMaxDist);
     }
 
     private void LateUpdate()
@@ -260,11 +327,29 @@ public class CockpitCameraController : MonoBehaviour
             -Mathf.Cos(radYaw) * cosP
         ).normalized;
 
-        // --- SISTEMA ANTI-RECORTE Y EMPUJE DE CÁMARA (Camera Collision Push-In) ---
-        // 1. Límites interiores analíticos de la cabina:
-        // Evita que la cámara traspase mamparas, techo o cristales cuando el pato se mueve a los bordes.
-        // Dimensiones útiles de cabina: Ancho ±9.6m, Profundidad Z: [-6.8m a +7.6m], Altura Y: [0.45m a 8.0m].
-        float maxInteriorDist = 14.0f;
+        // --- SISTEMA ANTI-RECORTE Y EMPUJE DE CÁMARA MULTINIVEL ---
+        // Delimita los planos de suelo y techo analíticos según la planta en la que se encuentra el pato
+        float boxMinY, boxMaxY;
+        if (pivotLocal.y < 3.8f)
+        {
+            // Planta 1: Conductor
+            boxMinY = 0.45f;
+            boxMaxY = 4.30f;
+        }
+        else if (pivotLocal.y < 8.2f)
+        {
+            // Planta 2: Artillero
+            boxMinY = 4.70f;
+            boxMaxY = 8.75f;
+        }
+        else
+        {
+            // Planta 3: Capitán
+            boxMinY = 9.20f;
+            boxMaxY = 15.0f;
+        }
+
+        float maxInteriorDist = 12.0f;
 
         if (dirLocal.x > 0.0001f)
         {
@@ -279,12 +364,12 @@ public class CockpitCameraController : MonoBehaviour
 
         if (dirLocal.y > 0.0001f)
         {
-            float d = (8.0f - pivotLocal.y) / dirLocal.y;
+            float d = (boxMaxY - pivotLocal.y) / dirLocal.y;
             if (d > 0f && d < maxInteriorDist) maxInteriorDist = d;
         }
         else if (dirLocal.y < -0.0001f)
         {
-            float d = (0.45f - pivotLocal.y) / dirLocal.y;
+            float d = (boxMinY - pivotLocal.y) / dirLocal.y;
             if (d > 0f && d < maxInteriorDist) maxInteriorDist = d;
         }
 
@@ -305,42 +390,45 @@ public class CockpitCameraController : MonoBehaviour
         Vector3 camLocalPos;
         Vector3 lookTargetLocal;
 
-        // Comportamiento según si el jugador está en vista interior de cabina o vista exterior colosal
-        if (targetDistance <= 10.5f)
+        // REGLA ESTRICTA DE CÁMARA:
+        // En Plantas 1 y 2, siempre restringido al interior.
+        // En Planta 3 (Capitán / Cabeza del Mecha), la vista exterior en 3ª persona encuadra al titán colosal de 50 metros.
+        if (currentFloor < 3 || targetDistance <= maxInteriorDistance)
         {
-            // VISTA INTERIOR CABINA: Se respeta estrictamente el volumen cerrado de la cúpula
+            // VISTA INTERIOR CABINA
             float safeCockpitDist = Mathf.Min(currentDistance, maxInteriorDist);
             camLocalPos = pivotLocal + dirLocal * safeCockpitDist;
-            camLocalPos.y = Mathf.Max(0.45f, camLocalPos.y);
+            camLocalPos.y = Mathf.Clamp(camLocalPos.y, boxMinY, boxMaxY);
             lookTargetLocal = pivotLocal + Vector3.up * 0.12f;
         }
         else
         {
-            // VISTA EXTERIOR MECHA: Permite alejar la cámara hacia el exterior del mecha colosal
-            float zoomProgress = Mathf.Clamp01((currentDistance - 10.5f) / (maxDistance - 10.5f));
-            lookTargetLocal = pivotLocal + Vector3.up * Mathf.Lerp(0.12f, 2.0f, zoomProgress);
-            camLocalPos = pivotLocal + dirLocal * currentDistance;
+            // VISTA EXTERIOR MECHA EN 3ª PERSONA (Exclusiva de la Cabeza del Mecha en Planta 3)
+            float zoomProgress = Mathf.Clamp01((currentDistance - maxInteriorDistance) / (maxDistance - maxInteriorDistance));
+            Vector3 mechaCenterLocal = new Vector3(0f, 6.0f, 1.0f); // Centro superior de masa / torso del Mecha de 50m
+            lookTargetLocal = Vector3.Lerp(pivotLocal + Vector3.up * 0.12f, mechaCenterLocal, Mathf.SmoothStep(0f, 1f, zoomProgress));
+            camLocalPos = lookTargetLocal + dirLocal * currentDistance;
         }
 
         Vector3 worldCamPos = cockpitTr != null ? cockpitTr.TransformPoint(camLocalPos) : camLocalPos;
         Vector3 worldLookTarget = cockpitTr != null ? cockpitTr.TransformPoint(lookTargetLocal) : lookTargetLocal;
 
         // 2. Colisión exterior con obstáculos del entorno (rascacielos, montañas, peñascos, puentes gigantes):
-        // Usa SphereCastAll filtrando la estructura del propio Mecha y del Pato.
+        // Usa SphereCastNonAlloc filtrando la estructura del propio Mecha y del Pato sin GC allocations.
         Vector3 camRay = worldCamPos - worldLookTarget;
         float camRayDist = camRay.magnitude;
         if (camRayDist > 0.1f)
         {
             Vector3 camRayDir = camRay / camRayDist;
             int groundMask = ~LayerMask.GetMask("Player", "Ignore Raycast");
-            RaycastHit[] hits = Physics.SphereCastAll(worldLookTarget, 0.32f, camRayDir, camRayDist, groundMask, QueryTriggerInteraction.Ignore);
+            int hitCount = Physics.SphereCastNonAlloc(worldLookTarget, 0.32f, camRayDir, camObstacleHits, camRayDist, groundMask, QueryTriggerInteraction.Ignore);
 
             float minHitDist = camRayDist;
             bool hitObstacle = false;
 
-            for (int i = 0; i < hits.Length; i++)
+            for (int i = 0; i < hitCount; i++)
             {
-                var h = hits[i];
+                var h = camObstacleHits[i];
                 if (h.collider == null) continue;
                 if (mechaRoot != null && h.collider.transform.IsChildOf(mechaRoot)) continue;
                 if (duckTarget != null && h.collider.transform.IsChildOf(duckTarget)) continue;
@@ -367,6 +455,12 @@ public class CockpitCameraController : MonoBehaviour
 
     private void UpdateSpectatorDrone()
     {
+        if (currentFloor < 3)
+        {
+            currentMode = CameraMode.FreeOrbit;
+            return;
+        }
+
         var keyboard = Keyboard.current;
         if (keyboard != null)
         {
@@ -387,10 +481,11 @@ public class CockpitCameraController : MonoBehaviour
     private void UpdateFixedCockpit()
     {
         if (mechaRoot == null) return;
-        Transform cockpitTr = duckTarget.parent ?? mechaRoot;
+        Transform cockpitTr = duckTarget != null && duckTarget.parent != null ? duckTarget.parent : mechaRoot;
 
-        Vector3 cockpitCamOffset = cockpitTr.TransformPoint(new Vector3(0f, 2.8f, -4.2f));
-        Vector3 lookTarget = cockpitTr.TransformPoint(new Vector3(0f, 1.2f, 3.5f));
+        float floorBaseY = currentFloor == 1 ? 0f : (currentFloor == 2 ? 4.5f : 9.0f);
+        Vector3 cockpitCamOffset = cockpitTr.TransformPoint(new Vector3(0f, floorBaseY + 2.8f, -4.2f));
+        Vector3 lookTarget = cockpitTr.TransformPoint(new Vector3(0f, floorBaseY + 1.2f, 3.5f));
 
         transform.position = Vector3.Lerp(transform.position, cockpitCamOffset, Time.deltaTime * 14f);
         transform.LookAt(lookTarget);
@@ -398,13 +493,25 @@ public class CockpitCameraController : MonoBehaviour
 
     public void ToggleMode()
     {
-        currentMode = (CameraMode)(((int)currentMode + 1) % 3);
-
-        if (currentMode == CameraMode.SpectatorDrone)
+        if (currentFloor < 3)
         {
-            droneWorldPos = transform.position + transform.forward * -2f + Vector3.up * 4f;
-            droneYaw = transform.eulerAngles.y;
-            dronePitch = transform.eulerAngles.x;
+            // En Niveles 1 y 2, sólo se puede alternar entre Órbita Libre y Fija de Cabina (Dron bloqueado)
+            currentMode = currentMode == CameraMode.FreeOrbit ? CameraMode.FixedCockpit : CameraMode.FreeOrbit;
+            if (duckTarget != null)
+            {
+                FloatingText.Spawn(duckTarget.position + Vector3.up * 1.4f, "⚠️ 3ª PERSONA / DRON: EXCLUSIVO DEL CAPITÁN (PLANTA 3)", Color.yellow, 0.35f);
+            }
+        }
+        else
+        {
+            currentMode = (CameraMode)(((int)currentMode + 1) % 3);
+
+            if (currentMode == CameraMode.SpectatorDrone)
+            {
+                droneWorldPos = transform.position + transform.forward * -2f + Vector3.up * 4f;
+                droneYaw = transform.eulerAngles.y;
+                dronePitch = transform.eulerAngles.x;
+            }
         }
 
         MechaHUD.Instance?.UpdateCameraModeLabel(GetModeLabel());
@@ -412,7 +519,8 @@ public class CockpitCameraController : MonoBehaviour
 
     public void SetTargetZoom(float dist)
     {
-        targetDistance = Mathf.Clamp(dist, minDistance, maxDistance);
+        float maxD = currentFloor == 3 ? maxDistance : maxInteriorDistance;
+        targetDistance = Mathf.Clamp(dist, minDistance, maxD);
         if (currentMode == CameraMode.FixedCockpit)
         {
             currentMode = CameraMode.FreeOrbit;

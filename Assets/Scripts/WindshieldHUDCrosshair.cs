@@ -22,6 +22,7 @@ public class WindshieldHUDCrosshair : MonoBehaviour
     [Header("Configuración de Escaneo")]
     [SerializeField] private float scanRange = 260f;
     [SerializeField] private float reticleRadius = 0.55f;
+    [SerializeField] private float baseHeightY = 6.8f; // Centrado en parabrisas de Planta 2 (Artillería)
 
     // Elementos visuales
     private Transform reticleCenterRoot;
@@ -91,9 +92,9 @@ public class WindshieldHUDCrosshair : MonoBehaviour
         float aimYaw = MechaController.Instance != null ? MechaController.Instance.GunnerAimYaw : 0f;
         float aimPitch = MechaController.Instance != null ? MechaController.Instance.GunnerAimPitch : 0f;
 
-        // Proyección sobre la curvatura interna del parabrisas (radio focal ~8.0m)
+        // Proyección sobre la curvatura interna del parabrisas de Planta 2 (radio focal ~8.0m)
         float targetX = Mathf.Clamp(Mathf.Tan(aimYaw * Mathf.Deg2Rad) * 8.0f, -8.8f, 8.8f);
-        float targetY = 4.4f + Mathf.Clamp(Mathf.Tan(aimPitch * Mathf.Deg2Rad) * 8.0f, -2.6f, 3.2f);
+        float targetY = baseHeightY + Mathf.Clamp(Mathf.Tan(aimPitch * Mathf.Deg2Rad) * 8.0f, -2.2f, 2.2f);
         float targetZ = 8.0f - (targetX * targetX) * 0.012f;
 
         Vector3 targetPos = new Vector3(targetX, targetY, targetZ);

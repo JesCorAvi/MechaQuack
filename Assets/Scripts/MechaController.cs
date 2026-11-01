@@ -184,20 +184,34 @@ public class MechaController : MonoBehaviour
         Application.runInBackground = true;
         currentHp = maxHp;
 
-        // Crear configuración por defecto en memoria si no se asignó un ScriptableObject en el Inspector
+        EnsureBalanceModel();
+        AutoWireReferences();
+    }
+
+    private void OnEnable()
+    {
+        EnsureBalanceModel();
+    }
+
+    private void EnsureBalanceModel()
+    {
         if (physicsConfig == null)
         {
             physicsConfig = ScriptableObject.CreateInstance<MechaPhysicsConfig>();
             physicsConfig.Set52mColossusScale();
         }
 
-        _balanceModel = new MechaBalanceModel(physicsConfig);
+        if (_balanceModel == null)
+        {
+            _balanceModel = new MechaBalanceModel(physicsConfig);
+        }
 
-        _rb = GetComponent<Rigidbody>();
-        if (_rb == null) _rb = gameObject.AddComponent<Rigidbody>();
-        ConfigureRigidbody();
-
-        AutoWireReferences();
+        if (_rb == null)
+        {
+            _rb = GetComponent<Rigidbody>();
+            if (_rb == null) _rb = gameObject.AddComponent<Rigidbody>();
+            ConfigureRigidbody();
+        }
     }
 
     private void ConfigureRigidbody()
@@ -289,6 +303,7 @@ public class MechaController : MonoBehaviour
     private void FixedUpdate()
     {
         if (_isGameOver) return;
+        if (_balanceModel == null || _rb == null) EnsureBalanceModel();
 
         float dt = Time.fixedDeltaTime;
         _stateTimer += dt;

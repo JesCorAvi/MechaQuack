@@ -12,7 +12,7 @@
             <!-- PANEL HP Y LÁSER -->
             <ui:VisualElement name="hp-panel" class="hud-panel hp-panel">
                 <ui:VisualElement class="hp-header-row">
-                    <ui:Label text="CHASIS MECHAQUACK" class="hp-title" />
+                    <ui:Label text="CHASIS MECHAQUACK (50M)" class="hp-title" />
                     <ui:Label name="hp-text" text="100%" class="hp-value-text" />
                 </ui:VisualElement>
                 
@@ -24,6 +24,12 @@
                     <ui:Label name="laser-text" text="MISILES: [4/4] LISTOS" class="laser-status-text" />
                     <ui:Label name="spawner-status-text" text="🛡️ EXPLORACIÓN SEGURA" class="spawner-status-badge" />
                 </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- PANEL INDICADOR DE PLANTA EN CABINA (MULTINIVEL 3 PISOS) -->
+            <ui:VisualElement name="floor-panel" class="hud-panel floor-panel">
+                <ui:Label text="ESTACIÓN ACTIVA EN CABINA" class="floor-title" />
+                <ui:Label name="floor-indicator-text" text="PLANTA 1: CONDUCTOR [Vista Interior]" class="floor-indicator-text floor-level-1" />
             </ui:VisualElement>
 
             <!-- PANEL RADAR Y SCORE -->

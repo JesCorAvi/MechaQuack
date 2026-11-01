@@ -183,8 +183,8 @@ public static class MechaProvingGroundsGenerator
             CreateBlock($"Grid_Mark_Z{z}", parent, new Vector3(0f, 0.04f, z * 12.4f), new Vector3(72f, 0.08f, 0.7f), Quaternion.identity, pal.matHazard, false);
         }
 
-        // Gran Arco Gantry de Salida Norte: 92m de luz, 52m de alto, sin colliders
-        CreateSignGantry("Gantry_ExitNorth", parent, new Vector3(0f, 0f, 76f), 92f, 52f, "▲ PISTA DE VELOCIDAD (600M)", pal.matWall, pal.matCyan);
+        // Gran Arco Gantry de Salida Norte: 96m de luz, 68m de altura libre (sin colliders, Mecha 50m pasa con holgura)
+        CreateSignGantry("Gantry_ExitNorth", parent, new Vector3(0f, 0f, 76f), 96f, 68f, "▲ PISTA DE VELOCIDAD (600M)", pal.matWall, pal.matCyan);
 
         // Monolito de Señalización Central (sin collider)
         CreateDirectionPillar(parent, new Vector3(-24f, 0f, 24f), "▲ NORTE: VELOCIDAD 600M\n► ESTE: ESCALONES Y RAMPAS\n▼ SUR: FOSO DE VUELCO\n◄ OESTE: ROCAS Y ÁCIDO", pal);
@@ -547,9 +547,9 @@ public static class MechaProvingGroundsGenerator
         for (int i = 0; i < towerOffsets.Length; i++)
         {
             Vector3 pos = cityCenter + towerOffsets[i];
-            float w = (float)(rng.NextDouble() * 16.0 + 28.0);
-            float h = (float)(rng.NextDouble() * 60.0 + 84.0);
-            float d = (float)(rng.NextDouble() * 16.0 + 28.0);
+            float w = (float)(rng.NextDouble() * 18.0 + 32.0);
+            float h = (float)(rng.NextDouble() * 70.0 + 95.0); // Rascacielos de 95m a 165m para sobrepasar al mecha de 50m
+            float d = (float)(rng.NextDouble() * 18.0 + 32.0);
             float tiltX = (float)(rng.NextDouble() * 16.0 - 8.0);
             float tiltZ = (float)(rng.NextDouble() * 16.0 - 8.0);
             float rotY = (float)(rng.NextDouble() * 90.0);
@@ -629,15 +629,15 @@ public static class MechaProvingGroundsGenerator
         gantry.transform.parent = parent;
         gantry.transform.position = pos;
 
-        height = Mathf.Max(height, 52f);
-        spanWidth = Mathf.Max(spanWidth, 92f);
+        height = Mathf.Max(height, 68f); // 68m de altura libre para Mecha de 50m
+        spanWidth = Mathf.Max(spanWidth, 96f);
 
         // Postes y vigas sin colisionador
-        CreateBlock("Pillar_L", gantry.transform, pos + new Vector3(-spanWidth * 0.5f, height * 0.5f, 0f), new Vector3(3.2f, height, 3.2f), Quaternion.identity, frameMat, false);
-        CreateBlock("Pillar_R", gantry.transform, pos + new Vector3(spanWidth * 0.5f, height * 0.5f, 0f), new Vector3(3.2f, height, 3.2f), Quaternion.identity, frameMat, false);
-        CreateBlock("Crossbeam", gantry.transform, pos + new Vector3(0f, height - 1.4f, 0f), new Vector3(spanWidth + 4.0f, 2.8f, 3.2f), Quaternion.identity, frameMat, false);
+        CreateBlock("Pillar_L", gantry.transform, pos + new Vector3(-spanWidth * 0.5f, height * 0.5f, 0f), new Vector3(3.6f, height, 3.6f), Quaternion.identity, frameMat, false);
+        CreateBlock("Pillar_R", gantry.transform, pos + new Vector3(spanWidth * 0.5f, height * 0.5f, 0f), new Vector3(3.6f, height, 3.6f), Quaternion.identity, frameMat, false);
+        CreateBlock("Crossbeam", gantry.transform, pos + new Vector3(0f, height - 1.4f, 0f), new Vector3(spanWidth + 4.0f, 3.2f, 3.6f), Quaternion.identity, frameMat, false);
 
-        GameObject board = CreateBlock("SignBoard", gantry.transform, pos + new Vector3(0f, height - 1.4f, -1.8f), new Vector3(spanWidth - 8.0f, 5.0f, 0.7f), Quaternion.identity, frameMat, false);
+        GameObject board = CreateBlock("SignBoard", gantry.transform, pos + new Vector3(0f, height - 1.4f, -1.8f), new Vector3(spanWidth - 8.0f, 5.5f, 0.7f), Quaternion.identity, frameMat, false);
 
         GameObject textObj = new GameObject("Label3D");
         textObj.transform.parent = board.transform;
