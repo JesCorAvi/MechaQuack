@@ -109,7 +109,25 @@ public static class AssembleMechaPrototype
 
         // 2. SISTEMA DE AUDIO PROCEDURAL
         GameObject audioObj = new GameObject("ProceduralAudio");
-        audioObj.AddComponent<ProceduralAudio>();
+        var procAudio = audioObj.AddComponent<ProceduralAudio>();
+        string[] quackGuids = AssetDatabase.FindAssets("t:AudioClip", new[] { "Assets/Audio/Quacks" });
+        if (quackGuids.Length > 0)
+        {
+            var quackClips = new System.Collections.Generic.List<AudioClip>();
+            foreach (var g in quackGuids)
+            {
+                var clip = AssetDatabase.LoadAssetAtPath<AudioClip>(AssetDatabase.GUIDToAssetPath(g));
+                if (clip != null) quackClips.Add(clip);
+            }
+            var soAudio = new SerializedObject(procAudio);
+            var propClips = soAudio.FindProperty("customQuackClips");
+            if (propClips != null)
+            {
+                propClips.arraySize = quackClips.Count;
+                for (int i = 0; i < quackClips.Count; i++) propClips.GetArrayElementAtIndex(i).objectReferenceValue = quackClips[i];
+                soAudio.ApplyModifiedProperties();
+            }
+        }
 
         // 3. MEGATERRENO DE PRUEBAS DE MOVIMIENTO (600m x 600m, 8 sectores especializados)
         GameObject outside = new GameObject("OutsideCityView");

@@ -19,6 +19,19 @@ public class ProceduralAudio : MonoBehaviour
 
     private AudioSource audioSource;
 
+    [Header("Clips de Graznidos Externos (Libres de Derechos)")]
+    [SerializeField] private AudioClip[] customQuackClips;
+    private readonly System.Collections.Generic.List<AudioClip> _allQuackClips = new System.Collections.Generic.List<AudioClip>();
+
+    public System.Collections.Generic.IReadOnlyList<AudioClip> QuackClips
+    {
+        get
+        {
+            EnsureQuackPoolInitialized();
+            return _allQuackClips;
+        }
+    }
+
     private AudioClip clipQuack;
     private AudioClip clipJump;
     private AudioClip clipStomp;
@@ -49,6 +62,52 @@ public class ProceduralAudio : MonoBehaviour
         audioSource.spatialBlend = 0f; // 2D para claridad cómica del HUD
 
         GenerateAllClips();
+        InitializeQuackPool();
+    }
+
+    private void EnsureQuackPoolInitialized()
+    {
+        if (_allQuackClips.Count == 0)
+        {
+            InitializeQuackPool();
+        }
+    }
+
+    private void InitializeQuackPool()
+    {
+        _allQuackClips.Clear();
+
+        if (customQuackClips != null)
+        {
+            for (int i = 0; i < customQuackClips.Length; i++)
+            {
+                if (customQuackClips[i] != null && !_allQuackClips.Contains(customQuackClips[i]))
+                {
+                    _allQuackClips.Add(customQuackClips[i]);
+                }
+            }
+        }
+
+#if UNITY_EDITOR
+        if (_allQuackClips.Count == 0)
+        {
+            string[] guids = UnityEditor.AssetDatabase.FindAssets("t:AudioClip", new[] { "Assets/Audio/Quacks" });
+            foreach (string guid in guids)
+            {
+                string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
+                AudioClip clip = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>(path);
+                if (clip != null && !_allQuackClips.Contains(clip))
+                {
+                    _allQuackClips.Add(clip);
+                }
+            }
+        }
+#endif
+
+        if (clipQuack != null && !_allQuackClips.Contains(clipQuack))
+        {
+            _allQuackClips.Add(clipQuack);
+        }
     }
 
     private void GenerateAllClips()
@@ -71,7 +130,19 @@ public class ProceduralAudio : MonoBehaviour
         clipCrashLand = GenerateToneSweepClip(140f, 32f, 0.42f, WaveType.Sawtooth, 0.95f);
     }
 
-    public void PlayQuack() => PlayClip(clipQuack, 0.9f);
+    public void PlayQuack()
+    {
+        EnsureQuackPoolInitialized();
+        if (_allQuackClips.Count > 0)
+        {
+            int index = Random.Range(0, _allQuackClips.Count);
+            PlayClip(_allQuackClips[index], 0.95f);
+        }
+        else
+        {
+            PlayClip(clipQuack, 0.9f);
+        }
+    }
     public void PlayJump() => PlayClip(clipJump, 0.5f);
     public void PlayStomp() => PlayClip(clipStomp, 0.9f);
     public void PlayButtonClick() => PlayClip(clipButtonClick, 0.6f);
@@ -90,12 +161,18 @@ public class ProceduralAudio : MonoBehaviour
 
     private void PlayClip(AudioClip clip, float volume = 1f)
     {
-        if (clip != null && audioSource != null)
+        if (clip == null) return;
+        if (audioSource == null)
         {
-            // Variación sutil de tono (SFX variation según audio-design) para evitar fatiga auditiva
-            audioSource.pitch = 1.0f + Random.Range(-0.05f, 0.05f);
-            audioSource.PlayOneShot(clip, volume);
+            audioSource = GetComponent<AudioSource>();
+            if (audioSource == null) audioSource = gameObject.AddComponent<AudioSource>();
+            audioSource.playOnAwake = false;
+            audioSource.spatialBlend = 0f;
         }
+
+        // Variación sutil de tono (SFX variation según audio-design) para evitar fatiga auditiva
+        audioSource.pitch = 1.0f + Random.Range(-0.05f, 0.05f);
+        audioSource.PlayOneShot(clip, volume);
     }
 
     private enum WaveType { Sine, Sawtooth, Triangle, Noise }

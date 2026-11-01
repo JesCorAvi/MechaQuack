@@ -6040,6 +6040,7 @@ MonoBehaviour:
   mouseSensitivity: 2.2
   zoomStep: 3.2
   zoomSmoothing: 14
+  lockCursorOnStart: 1
   currentMode: 0
 --- !u!1 &339558298
 GameObject:
@@ -20413,6 +20414,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2f8ba17d4cd1f6b4e9e9bc0d5213e38e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ProceduralAudio
+  customQuackClips:
+  - {fileID: 8300000, guid: d73146e46d2ebf04aab9f3465d523324, type: 3}
+  - {fileID: 8300000, guid: bb6047cc7b9fcec4797533404cbb3dfd, type: 3}
+  - {fileID: 8300000, guid: 814e528408509b54bbd74836e6608a5e, type: 3}
+  - {fileID: 8300000, guid: ddaf5c672ef869b47ae8bf9121a40dc8, type: 3}
 --- !u!4 &1050672729
 Transform:
   m_ObjectHideFlags: 0

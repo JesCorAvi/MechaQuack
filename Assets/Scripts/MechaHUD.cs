@@ -38,6 +38,8 @@ public class MechaHUD : MonoBehaviour
     private Label scoreText;
     private Label spawnerStatusText;
 
+    public UIDocument UIDocumentComponent => uiDocument;
+
     private VisualElement radarCircle;
     private readonly List<VisualElement> pooledBlips = new List<VisualElement>();
 
@@ -46,6 +48,7 @@ public class MechaHUD : MonoBehaviour
     private Button btnZoom;
     private Button btnQuack;
     private Button btnSpawner;
+    private Button btnCursor;
 
     private VisualElement gameOverModal;
     private Label finalScoreText;
@@ -89,15 +92,23 @@ public class MechaHUD : MonoBehaviour
         scoreText = root.Q<Label>("score-text");
 
         // Botones de acción
+        btnCursor = root.Q<Button>("btn-cursor");
         btnZoom = root.Q<Button>("btn-zoom");
         btnCam = root.Q<Button>("btn-cam");
         btnQuack = root.Q<Button>("btn-quack");
         btnSpawner = root.Q<Button>("btn-spawner");
 
+        if (btnCursor != null) btnCursor.clicked += OnToggleCursorClicked;
         if (btnZoom != null) btnZoom.clicked += OnZoomOutClicked;
         if (btnCam != null) btnCam.clicked += OnToggleCameraClicked;
         if (btnQuack != null) btnQuack.clicked += OnQuackClicked;
         if (btnSpawner != null) btnSpawner.clicked += OnToggleSpawnerClicked;
+
+        // Sincronizar estado inicial de ratón
+        if (CockpitCameraController.Instance != null)
+        {
+            UpdateCursorLockStatus(CockpitCameraController.Instance.IsCursorLocked);
+        }
 
         // Modal de Game Over
         gameOverModal = root.Q<VisualElement>("game-over-modal");
@@ -301,6 +312,29 @@ public class MechaHUD : MonoBehaviour
         }
     }
 
+    public void UpdateCursorLockStatus(bool isLocked)
+    {
+        if (btnCursor != null)
+        {
+            btnCursor.text = isLocked ? "🔒 RATÓN: ANCLADO (ALT/ESC)" : "🔓 RATÓN: LIBRE (CLIC/ALT)";
+            if (isLocked)
+            {
+                btnCursor.RemoveFromClassList("btn-cursor-unlocked");
+                btnCursor.AddToClassList("btn-cursor-locked");
+            }
+            else
+            {
+                btnCursor.RemoveFromClassList("btn-cursor-locked");
+                btnCursor.AddToClassList("btn-cursor-unlocked");
+            }
+        }
+    }
+
+    private void OnToggleCursorClicked()
+    {
+        CockpitCameraController.Instance?.ToggleCursorLock();
+    }
+
     public void ShowGameOver(int finalScore)
     {
         if (gameOverModal != null)
@@ -311,6 +345,7 @@ public class MechaHUD : MonoBehaviour
             {
                 finalScoreText.text = $"BOTS ELIMINADOS: {finalScore}";
             }
+            CockpitCameraController.Instance?.SetCursorLock(false);
         }
     }
 
@@ -391,8 +426,11 @@ public class MechaHUD : MonoBehaviour
         var duck = FindFirstObjectByType<DuckController>();
         if (duck != null)
         {
+            duck.PerformQuack();
+        }
+        else
+        {
             ProceduralAudio.Instance?.PlayQuack();
-            FloatingText.Spawn(duck.transform.position + Vector3.up * 1.6f, "¡CUAC!", Color.yellow, 0.32f);
         }
     }
 }

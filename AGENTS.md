@@ -35,8 +35,9 @@
 - **`E` / `Shift` / Clic Izquierdo (en el aire)**: **¡CULAZO! (Stomp)**. Pisotón en picado (`stompSpeed = 32m/s`) que activa los botones especiales de impacto y armas.
 - **`Q` / Clic Derecho**: **¡CUAC!** Graznido cómico con efecto de sonido, aleteo y texto flotante.
 
-- **Cámara Orbital Libre 360º con Anti-Recorte (Camera Collision Push-In)**:
-  - **Arrastrar Clic (Izquierdo / Derecho)**: Orbitar 360º alrededor de la cabina / pato.
+- **Cámara Orbital Libre 360º con Anti-Recorte y Anclaje de Ratón**:
+  - **Ratón (con cursor anclado)**: Mover el ratón orbita suavemente 360º alrededor de la cabina / pato.
+  - **`Alt` / `Esc` / `Tab` / Botón HUD**: Alternar anclaje del cursor (ancla para jugar / libera para interactuar con botones de interfaz o re-anclar con clic en pantalla).
   - **Rueda del Ratón (Scroll)**: Zoom continuo desde el interior de la cabina (primer plano) hasta vista exterior completa del Mecha Titán de 52 m (hasta 160 m).
   - **`C`**: Alternar modos de cámara (Órbita libre 360º, Fija de cabina, Dron exterior).
   - **Sistema Anti-Recorte (Push-In)**: Si la cámara se aproxima a las paredes interiores de la cabina (mampara trasera, techo, cristales) o a edificios/terreno exteriores, se empuja suave y automáticamente hacia el pato (hasta 0.85m) para que el jugador nunca pierda visibilidad ni atraviese geometrías.

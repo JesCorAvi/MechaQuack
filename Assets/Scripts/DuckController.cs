@@ -176,11 +176,13 @@ public class DuckController : MonoBehaviour
             PerformJump();
         }
 
+        bool mouseAllowed = CockpitCameraController.Instance == null || CockpitCameraController.Instance.IsCursorLocked;
+
         // Culazo / Pisotón (E / Shift / Clic Izq en el aire)
         bool stompKey = keyboard.eKey.wasPressedThisFrame ||
                         keyboard.leftShiftKey.wasPressedThisFrame ||
                         keyboard.rightShiftKey.wasPressedThisFrame ||
-                        (mouse != null && mouse.leftButton.wasPressedThisFrame && !isGrounded);
+                        (mouse != null && mouseAllowed && mouse.leftButton.wasPressedThisFrame && !isGrounded);
 
         if (stompKey)
         {
@@ -196,7 +198,7 @@ public class DuckController : MonoBehaviour
 
         // Graznido (Q / Clic Der)
         bool quackKey = keyboard.qKey.wasPressedThisFrame ||
-                        (mouse != null && mouse.rightButton.wasPressedThisFrame);
+                        (mouse != null && mouseAllowed && mouse.rightButton.wasPressedThisFrame);
 
         if (quackKey)
         {

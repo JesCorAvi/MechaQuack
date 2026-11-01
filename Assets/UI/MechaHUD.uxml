@@ -50,11 +50,12 @@
                 <ui:Label text="• Espacio: Saltar entre botones físicos" class="manual-line" />
                 <ui:Label text="• E / Shift / Clic Izq (Aire): ¡CULAZO! (Dispara GATLING y MISILES)" class="manual-line" />
                 <ui:Label text="• Q / Clic Der: ¡CUAC! (Graznido cómico)" class="manual-line" />
-                <ui:Label text="• Arrastrar Ratón: Órbita 360º | Rueda: Zoom | C: Alternar Cámara" class="manual-line" />
+                <ui:Label text="• Ratón: Órbita 360º | Rueda: Zoom | Alt / Esc: Anclar/Liberar Ratón" class="manual-line" />
             </ui:VisualElement>
 
             <!-- ACCIONES RÁPIDAS -->
             <ui:VisualElement class="actions-panel">
+                <ui:Button name="btn-cursor" text="🔒 RATÓN: ANCLADO (ALT/ESC)" class="action-btn btn-cursor-locked" />
                 <ui:Button name="btn-spawner" text="🚨 OLEADA ROBOT: INACTIVA" class="action-btn btn-spawner" />
                 <ui:Button name="btn-zoom" text="VER MECHA EXTERIOR / CABINA" class="action-btn" />
                 <ui:Button name="btn-cam" text="MODO (C): ÓRBITA LIBRE 360º" class="action-btn" />

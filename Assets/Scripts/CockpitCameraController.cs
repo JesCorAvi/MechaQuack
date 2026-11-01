@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UIElements;
+using Cursor = UnityEngine.Cursor;
 
 /// <summary>
 /// Sistema de cámara libre y orbital relativo a la cabina del Mecha.
@@ -25,6 +27,10 @@ public class CockpitCameraController : MonoBehaviour
     [SerializeField] private float zoomStep = 4.5f;
     [SerializeField] private float zoomSmoothing = 14f;
 
+    [Header("Control y Anclaje de Cursor")]
+    [SerializeField] private bool lockCursorOnStart = true;
+    private bool isCursorLocked = false;
+
     [Header("Modo Actual")]
     public CameraMode currentMode = CameraMode.FreeOrbit;
 
@@ -35,6 +41,7 @@ public class CockpitCameraController : MonoBehaviour
     private float dronePitch = 15f;
 
     public float CurrentDistance => currentDistance;
+    public bool IsCursorLocked => isCursorLocked;
 
     private void Awake()
     {
@@ -67,12 +74,80 @@ public class CockpitCameraController : MonoBehaviour
         pitch = 22f;
         currentDistance = 5.6f;
         targetDistance = 5.6f;
+
+        if (lockCursorOnStart)
+        {
+            SetCursorLock(true);
+        }
+    }
+
+    public void SetCursorLock(bool locked)
+    {
+        isCursorLocked = locked;
+        Cursor.lockState = locked ? CursorLockMode.Locked : CursorLockMode.None;
+        Cursor.visible = !locked;
+        MechaHUD.Instance?.UpdateCursorLockStatus(locked);
+    }
+
+    public void ToggleCursorLock()
+    {
+        SetCursorLock(!isCursorLocked);
+    }
+
+    private void OnApplicationFocus(bool hasFocus)
+    {
+        if (!hasFocus && isCursorLocked)
+        {
+            SetCursorLock(false);
+        }
+    }
+
+    private bool IsPointerOverUI()
+    {
+        if (MechaHUD.Instance != null && MechaHUD.Instance.UIDocumentComponent != null)
+        {
+            var rootEl = MechaHUD.Instance.UIDocumentComponent.rootVisualElement;
+            if (rootEl != null && rootEl.panel != null && Mouse.current != null)
+            {
+                Vector2 mousePos = Mouse.current.position.ReadValue();
+                Vector2 panelPos = new Vector2(mousePos.x, Screen.height - mousePos.y);
+                VisualElement picked = rootEl.panel.Pick(panelPos);
+                if (picked != null && picked != rootEl && picked.name != "damage-overlay" && picked.name != "hud-root")
+                {
+                    VisualElement curr = picked;
+                    while (curr != null && curr != rootEl)
+                    {
+                        if (curr is Button) return true;
+                        curr = curr.parent;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     private void Update()
     {
         var keyboard = Keyboard.current;
         var mouse = Mouse.current;
+
+        // Alternar anclaje del ratón con Alt, Escape o Tab
+        if (keyboard != null && (keyboard.leftAltKey.wasPressedThisFrame ||
+                                 keyboard.rightAltKey.wasPressedThisFrame ||
+                                 keyboard.escapeKey.wasPressedThisFrame ||
+                                 keyboard.tabKey.wasPressedThisFrame))
+        {
+            ToggleCursorLock();
+        }
+
+        // Si el ratón está liberado y el jugador hace clic izquierdo en el juego (fuera de la UI), re-anclar
+        if (!isCursorLocked && mouse != null && mouse.leftButton.wasPressedThisFrame)
+        {
+            if (!IsPointerOverUI())
+            {
+                SetCursorLock(true);
+            }
+        }
 
         // Alternar modo con tecla C
         if (keyboard != null && keyboard.cKey.wasPressedThisFrame)
@@ -97,12 +172,13 @@ public class CockpitCameraController : MonoBehaviour
         if (mouse != null)
         {
             bool isDragging = mouse.leftButton.isPressed || mouse.rightButton.isPressed;
+            bool shouldRotate = isCursorLocked || isDragging;
             Vector2 delta = mouse.delta.ReadValue();
 
-            if (isDragging && delta.sqrMagnitude > 0.01f)
+            if (shouldRotate && delta.sqrMagnitude > 0.001f)
             {
-                // Si estaba en modo fija de cabina, cambiar automáticamente a órbita libre
-                if (currentMode == CameraMode.FixedCockpit)
+                // Si estaba en modo fija de cabina, cambiar automáticamente a órbita libre al arrastrar
+                if (currentMode == CameraMode.FixedCockpit && isDragging)
                 {
                     currentMode = CameraMode.FreeOrbit;
                     MechaHUD.Instance?.UpdateCameraModeLabel(GetModeLabel());
@@ -113,7 +189,7 @@ public class CockpitCameraController : MonoBehaviour
                     droneYaw += delta.x * mouseSensitivity * 0.1f;
                     dronePitch = Mathf.Clamp(dronePitch - delta.y * mouseSensitivity * 0.1f, -80f, 80f);
                 }
-                else
+                else if (currentMode == CameraMode.FreeOrbit)
                 {
                     yaw += delta.x * mouseSensitivity * 0.15f;
                     pitch = Mathf.Clamp(pitch - delta.y * mouseSensitivity * 0.15f, -10f, 75f);

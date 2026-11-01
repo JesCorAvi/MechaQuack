@@ -235,6 +235,26 @@ Label, Button {
     scale: 0.97;
 }
 
+.btn-cursor-locked {
+    border-color: rgba(56, 189, 248, 0.6);
+}
+
+.btn-cursor-locked:hover {
+    background-color: rgba(14, 116, 144, 0.9);
+    border-color: #38bdf8;
+}
+
+.btn-cursor-unlocked {
+    border-color: rgba(250, 204, 21, 0.9);
+    background-color: rgba(113, 63, 18, 0.7);
+    color: #fef08a;
+}
+
+.btn-cursor-unlocked:hover {
+    background-color: rgba(161, 98, 7, 0.95);
+    border-color: #facc15;
+}
+
 .btn-quack {
     border-color: rgba(250, 204, 21, 0.6);
 }
