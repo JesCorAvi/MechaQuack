@@ -185,9 +185,9 @@ public static class MechaPrefabBuilder
             duckSO.FindProperty("leftWingTransform").objectReferenceValue = wingL.transform;
             duckSO.FindProperty("rightWingTransform").objectReferenceValue = wingR.transform;
             duckSO.FindProperty("dropShadowTransform").objectReferenceValue = dropShadow.transform;
-            duckSO.FindProperty("cockpitHalfX").floatValue = 10.2f;
-            duckSO.FindProperty("cockpitHalfZ").floatValue = 7.8f;
-            duckSO.FindProperty("cockpitMaxY").floatValue = 16.0f;
+            duckSO.FindProperty("cockpitHalfX").floatValue = 11.8f;
+            duckSO.FindProperty("cockpitHalfZ").floatValue = 8.8f;
+            duckSO.FindProperty("cockpitMaxY").floatValue = 16.5f;
             duckSO.FindProperty("moveSpeed").floatValue = 14.0f;
             duckSO.FindProperty("jumpForce").floatValue = 10.5f;
             duckSO.FindProperty("stompSpeed").floatValue = 32.0f;
@@ -248,8 +248,8 @@ public static class MechaPrefabBuilder
         CreateButtonPrefab("BWD", "▼ ATRÁS", CockpitFloorButton.ButtonType.Hold, matBtnAmber, 2.7f, 1.7f);
         CreateButtonPrefab("LEFT", "◄ GIRO IZQ", CockpitFloorButton.ButtonType.Hold, matBtnCyan, 2.6f, 1.6f);
         CreateButtonPrefab("RIGHT", "GIRO DER ►", CockpitFloorButton.ButtonType.Hold, matBtnCyan, 2.6f, 1.6f);
-        CreateButtonPrefab("GATLING", "GATLING\n[MANTENER / E]", CockpitFloorButton.ButtonType.Hold, matBtnAmber, 3.2f, 1.9f);
-        CreateButtonPrefab("MISSILES", "MISILES\n(CULAZO E)", CockpitFloorButton.ButtonType.Stomp, matBtnCyan, 3.2f, 1.9f);
+        CreateButtonPrefab("GATLING", "GATLING\n[MANTENER / E]", CockpitFloorButton.ButtonType.Hold, matBtnAmber, 2.7f, 1.65f);
+        CreateButtonPrefab("MISSILES", "MISILES\n(CULAZO E)", CockpitFloorButton.ButtonType.Stomp, matBtnCyan, 2.7f, 1.65f);
         CreateButtonPrefab("SPAWN", "ROBOTS\n[ACTIVAR / PAUSAR]", CockpitFloorButton.ButtonType.Toggle, matBtnRose, 2.6f, 1.7f);
 
         // Prefab de Plataforma Giroscópica de Puntería (Gunner Aim Pad)
@@ -409,74 +409,97 @@ public static class MechaPrefabBuilder
             }
 
             // --- PLANTA 1: CONDUCTOR / NAVEGACIÓN (Y = 0m) - BÚNKER BLINDADO ---
-            CreatePrimitive(PrimitiveType.Cube, "Floor_Level1", domeRoot.transform, new Vector3(0f, -0.2f, 0f), new Vector3(20.0f, 0.4f, 15.0f), Quaternion.identity, matFloor, true);
-            CreatePrimitive(PrimitiveType.Cube, "Rim_L1_L", domeRoot.transform, new Vector3(-10.1f, 0.3f, 0f), new Vector3(0.4f, 0.6f, 15.0f), Quaternion.identity, matWall);
-            CreatePrimitive(PrimitiveType.Cube, "Rim_L1_R", domeRoot.transform, new Vector3(10.1f, 0.3f, 0f), new Vector3(0.4f, 0.6f, 15.0f), Quaternion.identity, matWall);
-            CreatePrimitive(PrimitiveType.Cube, "Rim_L1_F", domeRoot.transform, new Vector3(0f, 0.3f, 7.4f), new Vector3(20.0f, 0.6f, 0.4f), Quaternion.identity, matHazard);
-            CreatePrimitive(PrimitiveType.Cube, "Rim_L1_B", domeRoot.transform, new Vector3(0f, 0.3f, -7.4f), new Vector3(20.0f, 0.6f, 0.4f), Quaternion.identity, matWall);
+            CreatePrimitive(PrimitiveType.Cube, "Floor_Level1", domeRoot.transform, new Vector3(0f, -0.2f, 0f), new Vector3(24.0f, 0.4f, 18.0f), Quaternion.identity, matFloor, true);
+            CreatePrimitive(PrimitiveType.Cube, "Rim_L1_L", domeRoot.transform, new Vector3(-12.1f, 0.3f, 0f), new Vector3(0.4f, 0.6f, 18.0f), Quaternion.identity, matWall);
+            CreatePrimitive(PrimitiveType.Cube, "Rim_L1_R", domeRoot.transform, new Vector3(12.1f, 0.3f, 0f), new Vector3(0.4f, 0.6f, 18.0f), Quaternion.identity, matWall);
+            CreatePrimitive(PrimitiveType.Cube, "Rim_L1_F", domeRoot.transform, new Vector3(0f, 0.3f, 8.9f), new Vector3(24.0f, 0.6f, 0.4f), Quaternion.identity, matHazard);
+            CreatePrimitive(PrimitiveType.Cube, "Rim_L1_B", domeRoot.transform, new Vector3(0f, 0.3f, -8.9f), new Vector3(24.0f, 0.6f, 0.4f), Quaternion.identity, matWall);
 
             // Muros perimetrales blindados de Planta 1 (Visión reducida: guiado por el Capitán)
-            CreatePrimitive(PrimitiveType.Cube, "Side_Armor_L1_L", domeRoot.transform, new Vector3(-10.0f, 2.2f, 0f), new Vector3(0.4f, 4.0f, 15.0f), Quaternion.identity, matGunmetal);
-            CreatePrimitive(PrimitiveType.Cube, "Side_Armor_L1_R", domeRoot.transform, new Vector3(10.0f, 2.2f, 0f), new Vector3(0.4f, 4.0f, 15.0f), Quaternion.identity, matGunmetal);
-            CreatePrimitive(PrimitiveType.Cube, "Rear_Armor_L1", domeRoot.transform, new Vector3(0f, 2.2f, -7.4f), new Vector3(20.0f, 4.0f, 0.4f), Quaternion.identity, matMilGreenDark);
+            CreatePrimitive(PrimitiveType.Cube, "Side_Armor_L1_L", domeRoot.transform, new Vector3(-12.0f, 2.2f, 0f), new Vector3(0.4f, 4.0f, 18.0f), Quaternion.identity, matGunmetal);
+            CreatePrimitive(PrimitiveType.Cube, "Side_Armor_L1_R", domeRoot.transform, new Vector3(12.0f, 2.2f, 0f), new Vector3(0.4f, 4.0f, 18.0f), Quaternion.identity, matGunmetal);
+            CreatePrimitive(PrimitiveType.Cube, "Rear_Armor_L1", domeRoot.transform, new Vector3(0f, 2.2f, -8.9f), new Vector3(24.0f, 4.0f, 0.4f), Quaternion.identity, matMilGreenDark);
 
             // Glacis blindado frontal y tronera estrecha de observación
-            CreatePrimitive(PrimitiveType.Cube, "Armor_Glacis_L1_Bottom", domeRoot.transform, new Vector3(0f, 0.35f, 7.5f), new Vector3(20.0f, 0.7f, 0.4f), Quaternion.identity, matMilGreen);
-            CreatePrimitive(PrimitiveType.Cube, "Armor_Glacis_L1_Top", domeRoot.transform, new Vector3(0f, 2.95f, 7.5f), new Vector3(20.0f, 2.7f, 0.4f), Quaternion.identity, matMilGreen);
-            CreatePrimitive(PrimitiveType.Cube, "Armor_Cheek_L1_L", domeRoot.transform, new Vector3(-8.5f, 1.15f, 7.5f), new Vector3(3.0f, 0.9f, 0.4f), Quaternion.identity, matGunmetal);
-            CreatePrimitive(PrimitiveType.Cube, "Armor_Cheek_L1_R", domeRoot.transform, new Vector3(8.5f, 1.15f, 7.5f), new Vector3(3.0f, 0.9f, 0.4f), Quaternion.identity, matGunmetal);
-            CreatePrimitive(PrimitiveType.Cube, "Windshield_Level1", domeRoot.transform, new Vector3(0f, 1.15f, 7.5f), new Vector3(14.0f, 0.9f, 0.12f), Quaternion.identity, matDomeGlass);
-            CreatePrimitive(PrimitiveType.Cube, "Slit_Frame_Top", domeRoot.transform, new Vector3(0f, 1.63f, 7.55f), new Vector3(14.2f, 0.12f, 0.25f), Quaternion.identity, matDarkSteel);
-            CreatePrimitive(PrimitiveType.Cube, "Slit_Frame_Bottom", domeRoot.transform, new Vector3(0f, 0.67f, 7.55f), new Vector3(14.2f, 0.12f, 0.25f), Quaternion.identity, matDarkSteel);
+            CreatePrimitive(PrimitiveType.Cube, "Armor_Glacis_L1_Bottom", domeRoot.transform, new Vector3(0f, 0.35f, 8.9f), new Vector3(24.0f, 0.7f, 0.4f), Quaternion.identity, matMilGreen);
+            CreatePrimitive(PrimitiveType.Cube, "Armor_Glacis_L1_Top", domeRoot.transform, new Vector3(0f, 2.95f, 8.9f), new Vector3(24.0f, 2.7f, 0.4f), Quaternion.identity, matMilGreen);
+            CreatePrimitive(PrimitiveType.Cube, "Armor_Cheek_L1_L", domeRoot.transform, new Vector3(-10.0f, 1.15f, 8.9f), new Vector3(4.0f, 0.9f, 0.4f), Quaternion.identity, matGunmetal);
+            CreatePrimitive(PrimitiveType.Cube, "Armor_Cheek_L1_R", domeRoot.transform, new Vector3(10.0f, 1.15f, 8.9f), new Vector3(4.0f, 0.9f, 0.4f), Quaternion.identity, matGunmetal);
+            CreatePrimitive(PrimitiveType.Cube, "Windshield_Level1", domeRoot.transform, new Vector3(0f, 1.15f, 8.95f), new Vector3(16.0f, 0.9f, 0.12f), Quaternion.identity, matDomeGlass);
+            CreatePrimitive(PrimitiveType.Cube, "Slit_Frame_Top", domeRoot.transform, new Vector3(0f, 1.63f, 9.0f), new Vector3(16.2f, 0.12f, 0.25f), Quaternion.identity, matDarkSteel);
+            CreatePrimitive(PrimitiveType.Cube, "Slit_Frame_Bottom", domeRoot.transform, new Vector3(0f, 0.67f, 9.0f), new Vector3(16.2f, 0.12f, 0.25f), Quaternion.identity, matDarkSteel);
 
             // Tramo de Escaleras 1 (Planta 1 -> Planta 2): de Y=0m a Y=4.5m
-            CreatePrefabStaircase("Stairs_Level1_to_Level2", domeRoot.transform, new Vector3(7.2f, 0.0f, -4.5f), new Vector3(7.2f, 4.5f, 3.5f), 2.6f, matDarkSteel, matHazard, matGunmetal);
+            CreatePrefabStaircase("Stairs_Level1_to_Level2", domeRoot.transform, new Vector3(8.5f, 0.0f, -5.0f), new Vector3(8.5f, 4.5f, 4.0f), 3.0f, matDarkSteel, matHazard, matGunmetal);
 
             // --- PLANTA 2: ARTILLERO / ARSENAL (Y = 4.5m) - MÁXIMA VISIBILIDAD PANORÁMICA ---
-            CreatePrimitive(PrimitiveType.Cube, "Floor_Level2_Center", domeRoot.transform, new Vector3(0f, 4.3f, 0f), new Vector3(11.8f, 0.4f, 15.0f), Quaternion.identity, matFloor, true);
-            CreatePrimitive(PrimitiveType.Cube, "Floor_Level2_Front", domeRoot.transform, new Vector3(0f, 4.3f, 5.5f), new Vector3(20.0f, 0.4f, 4.0f), Quaternion.identity, matFloor, true);
-            CreatePrimitive(PrimitiveType.Cube, "Floor_Level2_Rear", domeRoot.transform, new Vector3(0f, 4.3f, -6.0f), new Vector3(20.0f, 0.4f, 3.0f), Quaternion.identity, matFloor, true);
-            CreatePrimitive(PrimitiveType.Cube, "Floor_Level2_LeftWing", domeRoot.transform, new Vector3(-7.95f, 4.3f, -0.5f), new Vector3(4.1f, 0.4f, 8.0f), Quaternion.identity, matFloor, true);
-            CreatePrimitive(PrimitiveType.Cube, "Floor_Level2_RightOuter", domeRoot.transform, new Vector3(9.25f, 4.3f, -0.5f), new Vector3(1.5f, 0.4f, 8.0f), Quaternion.identity, matFloor, true);
+            CreatePrimitive(PrimitiveType.Cube, "Floor_Level2_Center", domeRoot.transform, new Vector3(0f, 4.3f, 0f), new Vector3(14.0f, 0.4f, 18.0f), Quaternion.identity, matFloor, true);
+            CreatePrimitive(PrimitiveType.Cube, "Floor_Level2_LeftWing", domeRoot.transform, new Vector3(-9.5f, 4.3f, 0f), new Vector3(5.0f, 0.4f, 18.0f), Quaternion.identity, matFloor, true);
+            CreatePrimitive(PrimitiveType.Cube, "Floor_Level2_RightFront", domeRoot.transform, new Vector3(9.5f, 4.3f, 6.75f), new Vector3(5.0f, 0.4f, 4.5f), Quaternion.identity, matFloor, true);
+            CreatePrimitive(PrimitiveType.Cube, "Floor_Level2_RightRear", domeRoot.transform, new Vector3(9.5f, 4.3f, -7.25f), new Vector3(5.0f, 0.4f, 3.5f), Quaternion.identity, matFloor, true);
+            CreatePrimitive(PrimitiveType.Cube, "Floor_Level2_RightOuter", domeRoot.transform, new Vector3(11.0f, 4.3f, -0.5f), new Vector3(2.0f, 0.4f, 10.0f), Quaternion.identity, matFloor, true);
 
-            CreatePrimitive(PrimitiveType.Cube, "L2_Stair1_Safety_Rail", domeRoot.transform, new Vector3(5.8f, 5.0f, -0.5f), new Vector3(0.12f, 1.0f, 8.0f), Quaternion.identity, matHazard);
-            CreatePrimitive(PrimitiveType.Cube, "Windshield_Level2", domeRoot.transform, new Vector3(0f, 6.8f, 7.5f), new Vector3(19.6f, 4.6f, 0.12f), Quaternion.identity, matDomeGlass);
-            CreatePrimitive(PrimitiveType.Cube, "Side_Glass_L2_L", domeRoot.transform, new Vector3(-10.0f, 6.8f, 0f), new Vector3(0.12f, 4.6f, 15.0f), Quaternion.identity, matDomeGlass);
-            CreatePrimitive(PrimitiveType.Cube, "Side_Glass_L2_R", domeRoot.transform, new Vector3(10.0f, 6.8f, 0f), new Vector3(0.12f, 4.6f, 15.0f), Quaternion.identity, matDomeGlass);
+            CreatePrimitive(PrimitiveType.Cube, "L2_Stair1_Safety_Rail", domeRoot.transform, new Vector3(6.85f, 5.0f, -0.5f), new Vector3(0.12f, 1.0f, 9.5f), Quaternion.identity, matHazard);
+            CreatePrimitive(PrimitiveType.Cube, "Windshield_Level2", domeRoot.transform, new Vector3(0f, 6.8f, 8.9f), new Vector3(23.6f, 4.6f, 0.12f), Quaternion.identity, matDomeGlass);
+            CreatePrimitive(PrimitiveType.Cube, "Side_Glass_L2_L", domeRoot.transform, new Vector3(-12.0f, 6.8f, 0f), new Vector3(0.12f, 4.6f, 18.0f), Quaternion.identity, matDomeGlass);
+            CreatePrimitive(PrimitiveType.Cube, "Side_Glass_L2_R", domeRoot.transform, new Vector3(12.0f, 6.8f, 0f), new Vector3(0.12f, 4.6f, 18.0f), Quaternion.identity, matDomeGlass);
 
             // Tramo de Escaleras 2 (Planta 2 -> Planta 3): de Y=4.5m a Y=9.0m
-            CreatePrefabStaircase("Stairs_Level2_to_Level3", domeRoot.transform, new Vector3(-7.2f, 4.5f, 3.5f), new Vector3(-7.2f, 9.0f, -4.5f), 2.6f, matDarkSteel, matHazard, matGunmetal);
+            CreatePrefabStaircase("Stairs_Level2_to_Level3", domeRoot.transform, new Vector3(-8.5f, 4.5f, 4.0f), new Vector3(-8.5f, 9.0f, -5.0f), 3.0f, matDarkSteel, matHazard, matGunmetal);
 
             // --- PLANTA 3: CABEZA DEL MECHA / CÁPSULA DEL CAPITÁN (Y = 9.0m) ---
             // Interior blindado cerebral: pasa automáticamente a 3ª persona exterior
-            CreatePrimitive(PrimitiveType.Cube, "Floor_Level3_Center", domeRoot.transform, new Vector3(0f, 8.8f, 0f), new Vector3(11.8f, 0.4f, 15.0f), Quaternion.identity, matFloor, true);
-            CreatePrimitive(PrimitiveType.Cube, "Floor_Level3_Front", domeRoot.transform, new Vector3(0f, 8.8f, 5.5f), new Vector3(20.0f, 0.4f, 4.0f), Quaternion.identity, matFloor, true);
-            CreatePrimitive(PrimitiveType.Cube, "Floor_Level3_Rear", domeRoot.transform, new Vector3(0f, 8.8f, -6.0f), new Vector3(20.0f, 0.4f, 3.0f), Quaternion.identity, matFloor, true);
-            CreatePrimitive(PrimitiveType.Cube, "Floor_Level3_RightWing", domeRoot.transform, new Vector3(7.95f, 8.8f, -0.5f), new Vector3(4.1f, 0.4f, 8.0f), Quaternion.identity, matFloor, true);
-            CreatePrimitive(PrimitiveType.Cube, "Floor_Level3_LeftOuter", domeRoot.transform, new Vector3(-9.25f, 8.8f, -0.5f), new Vector3(1.5f, 0.4f, 8.0f), Quaternion.identity, matFloor, true);
+            CreatePrimitive(PrimitiveType.Cube, "Floor_Level3_Center", domeRoot.transform, new Vector3(0f, 8.8f, 0f), new Vector3(14.0f, 0.4f, 18.0f), Quaternion.identity, matFloor, true);
+            CreatePrimitive(PrimitiveType.Cube, "Floor_Level3_RightWing", domeRoot.transform, new Vector3(9.5f, 8.8f, 0f), new Vector3(5.0f, 0.4f, 18.0f), Quaternion.identity, matFloor, true);
+            CreatePrimitive(PrimitiveType.Cube, "Floor_Level3_LeftFront", domeRoot.transform, new Vector3(-9.5f, 8.8f, 6.75f), new Vector3(5.0f, 0.4f, 4.5f), Quaternion.identity, matFloor, true);
+            CreatePrimitive(PrimitiveType.Cube, "Floor_Level3_LeftRear", domeRoot.transform, new Vector3(-9.5f, 8.8f, -7.25f), new Vector3(5.0f, 0.4f, 3.5f), Quaternion.identity, matFloor, true);
+            CreatePrimitive(PrimitiveType.Cube, "Floor_Level3_LeftOuter", domeRoot.transform, new Vector3(-11.0f, 8.8f, -0.5f), new Vector3(2.0f, 0.4f, 10.0f), Quaternion.identity, matFloor, true);
 
-            CreatePrimitive(PrimitiveType.Cube, "L3_Stair2_Safety_Rail", domeRoot.transform, new Vector3(-5.8f, 9.5f, -0.5f), new Vector3(0.12f, 1.0f, 8.0f), Quaternion.identity, matHazard);
+            CreatePrimitive(PrimitiveType.Cube, "L3_Stair2_Safety_Rail", domeRoot.transform, new Vector3(-6.85f, 9.5f, -0.5f), new Vector3(0.12f, 1.0f, 9.5f), Quaternion.identity, matHazard);
 
             // Estructura blindada de la Cabeza del Mecha
-            CreatePrimitive(PrimitiveType.Cube, "Head_Hull_Front", domeRoot.transform, new Vector3(0f, 11.5f, 7.2f), new Vector3(19.6f, 5.2f, 0.4f), Quaternion.identity, matMilGreen);
-            CreatePrimitive(PrimitiveType.Cube, "Head_Hull_Roof", domeRoot.transform, new Vector3(0f, 14.5f, 0f), new Vector3(19.2f, 0.4f, 14.5f), Quaternion.identity, matMilGreen);
-            CreatePrimitive(PrimitiveType.Cube, "Head_Hull_Side_L", domeRoot.transform, new Vector3(-9.8f, 11.5f, 0f), new Vector3(0.4f, 5.2f, 14.5f), Quaternion.identity, matGunmetal);
-            CreatePrimitive(PrimitiveType.Cube, "Head_Hull_Side_R", domeRoot.transform, new Vector3(9.8f, 11.5f, 0f), new Vector3(0.4f, 5.2f, 14.5f), Quaternion.identity, matGunmetal);
-            CreatePrimitive(PrimitiveType.Cube, "Head_Hull_Rear", domeRoot.transform, new Vector3(0f, 11.5f, -7.2f), new Vector3(19.6f, 5.2f, 0.4f), Quaternion.identity, matMilGreenDark);
+            CreatePrimitive(PrimitiveType.Cube, "Head_Hull_Front", domeRoot.transform, new Vector3(0f, 11.5f, 8.8f), new Vector3(23.6f, 5.2f, 0.4f), Quaternion.identity, matMilGreen);
+            CreatePrimitive(PrimitiveType.Cube, "Head_Hull_Roof", domeRoot.transform, new Vector3(0f, 14.5f, 0f), new Vector3(23.6f, 0.4f, 17.6f), Quaternion.identity, matMilGreen);
+            CreatePrimitive(PrimitiveType.Cube, "Head_Hull_Side_L", domeRoot.transform, new Vector3(-11.8f, 11.5f, 0f), new Vector3(0.4f, 5.2f, 17.6f), Quaternion.identity, matGunmetal);
+            CreatePrimitive(PrimitiveType.Cube, "Head_Hull_Side_R", domeRoot.transform, new Vector3(11.8f, 11.5f, 0f), new Vector3(0.4f, 5.2f, 17.6f), Quaternion.identity, matGunmetal);
+            CreatePrimitive(PrimitiveType.Cube, "Head_Hull_Rear", domeRoot.transform, new Vector3(0f, 11.5f, -8.8f), new Vector3(23.6f, 5.2f, 0.4f), Quaternion.identity, matMilGreenDark);
 
             // Nervaduras y pilares de la Cabeza
-            CreatePrimitive(PrimitiveType.Cube, "Head_Rib_Front_Brow", domeRoot.transform, new Vector3(0f, 14.4f, 7.2f), new Vector3(20.0f, 0.35f, 0.35f), Quaternion.identity, matDarkSteel);
-            CreatePrimitive(PrimitiveType.Cube, "Head_Rib_Mid_Hoop", domeRoot.transform, new Vector3(0f, 14.6f, 0f), new Vector3(20.0f, 0.35f, 0.35f), Quaternion.identity, matDarkSteel);
-            CreatePrimitive(PrimitiveType.Cube, "Head_Rib_Rear_Hoop", domeRoot.transform, new Vector3(0f, 14.4f, -7.2f), new Vector3(20.0f, 0.35f, 0.35f), Quaternion.identity, matDarkSteel);
+            CreatePrimitive(PrimitiveType.Cube, "Head_Rib_Front_Brow", domeRoot.transform, new Vector3(0f, 14.4f, 8.8f), new Vector3(24.0f, 0.35f, 0.35f), Quaternion.identity, matDarkSteel);
+            CreatePrimitive(PrimitiveType.Cube, "Head_Rib_Mid_Hoop", domeRoot.transform, new Vector3(0f, 14.6f, 0f), new Vector3(24.0f, 0.35f, 0.35f), Quaternion.identity, matDarkSteel);
+            CreatePrimitive(PrimitiveType.Cube, "Head_Rib_Rear_Hoop", domeRoot.transform, new Vector3(0f, 14.4f, -8.8f), new Vector3(24.0f, 0.35f, 0.35f), Quaternion.identity, matDarkSteel);
 
             // Anillo de telemetría neural holográfica
             CreatePrimitive(PrimitiveType.Cylinder, "Neural_Holo_Ring", domeRoot.transform, new Vector3(0f, 13.8f, 1.5f), new Vector3(6.5f, 0.08f, 6.5f), Quaternion.identity, matBtnCyan);
 
             // Pedestal de mando del Capitán
-            GameObject captainPedestal = CreatePrimitive(PrimitiveType.Cylinder, "Captain_Command_Pedestal", domeRoot.transform, new Vector3(0f, 9.2f, 1.5f), new Vector3(4.4f, 0.2f, 4.4f), Quaternion.identity, matGunmetal, true);
+            GameObject captainPedestal = CreatePrimitive(PrimitiveType.Cylinder, "Captain_Command_Pedestal", domeRoot.transform, new Vector3(0f, 9.2f, 1.5f), new Vector3(4.4f, 0.4f, 4.4f), Quaternion.identity, matGunmetal, true);
             captainPedestal.AddComponent<CaptainCommandPedestal>();
             CreatePrimitive(PrimitiveType.Cylinder, "Pedestal_Hazard_Ring", captainPedestal.transform, new Vector3(0f, 0.52f, 0f), new Vector3(1.02f, 0.2f, 1.02f), Quaternion.identity, matHazard);
             CreatePrimitive(PrimitiveType.Cylinder, "Captain_Holo_Disc", captainPedestal.transform, new Vector3(0f, 0.55f, 0f), new Vector3(0.7f, 0.05f, 0.7f), Quaternion.identity, matBtnCyan);
+
+            // Elementos industriales decorativos en CockpitDome.prefab (en los 4 vértices del hangar)
+            float[] colZ = new float[] { -8.2f, 8.2f };
+            foreach (float z in colZ)
+            {
+                for (int s = -1; s <= 1; s += 2)
+                {
+                    float x = s * 11.85f;
+                    CreatePrimitive(PrimitiveType.Cube, $"Column_{(s < 0 ? "L" : "R")}_{z:0.0}", domeRoot.transform, new Vector3(x, 7.2f, z), new Vector3(0.4f, 14.8f, 0.7f), Quaternion.identity, matGunmetal);
+                    for (int fl = 0; fl < 3; fl++)
+                    {
+                        CreatePrimitive(PrimitiveType.Cube, $"Col_Hazard_{(s < 0 ? "L" : "R")}_P{fl + 1}_{z:0.0}", domeRoot.transform, new Vector3(x, fl * 4.5f + 0.25f, z), new Vector3(0.5f, 0.5f, 0.8f), Quaternion.identity, matHazard);
+                    }
+                }
+            }
+
+            // Tuberías industriales perimetrales
+            for (int fl = 0; fl < 3; fl++)
+            {
+                float yFl = fl * 4.5f;
+                CreatePrimitive(PrimitiveType.Cylinder, $"Pipe_Chrome_L_P{fl + 1}", domeRoot.transform, new Vector3(-11.6f, yFl + 2.1f, 0f), new Vector3(0.24f, 8.8f, 0.24f), Quaternion.Euler(90f, 0f, 0f), matChrome);
+                CreatePrimitive(PrimitiveType.Cylinder, $"Pipe_Chrome_R_P{fl + 1}", domeRoot.transform, new Vector3(11.6f, yFl + 2.1f, 0f), new Vector3(0.24f, 8.8f, 0.24f), Quaternion.Euler(90f, 0f, 0f), matChrome);
+            }
 
             // Iluminación táctica multinivel
             void AddDomeLight(string name, Vector3 pos, Color c, float range, float intensity)
@@ -490,9 +513,9 @@ public static class MechaPrefabBuilder
                 l.intensity = intensity;
                 l.color = c;
             }
-            AddDomeLight("Pilot_Dome_Light", new Vector3(0f, 3.8f, 1.0f), new Color(0.85f, 0.95f, 1.0f), 16f, 1.8f);
-            AddDomeLight("Gunner_Dome_Light", new Vector3(0f, 8.2f, 1.8f), new Color(1.0f, 0.92f, 0.85f), 16f, 1.8f);
-            AddDomeLight("Captain_Dome_Light", new Vector3(0f, 14.0f, 0f), new Color(0.9f, 0.95f, 1.0f), 20f, 2.2f);
+            AddDomeLight("Pilot_Dome_Light", new Vector3(0f, 3.8f, 1.0f), new Color(0.85f, 0.95f, 1.0f), 18f, 1.8f);
+            AddDomeLight("Gunner_Dome_Light", new Vector3(0f, 8.2f, 1.8f), new Color(1.0f, 0.92f, 0.85f), 18f, 1.8f);
+            AddDomeLight("Captain_Dome_Light", new Vector3(0f, 14.0f, 0f), new Color(0.9f, 0.95f, 1.0f), 22f, 2.2f);
 
             string pathD = Path.Combine(COCKPIT_PATH, "CockpitDome.prefab").Replace("\\", "/");
             PrefabUtility.SaveAsPrefabAsset(domeRoot, pathD);

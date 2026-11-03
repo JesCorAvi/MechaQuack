@@ -50,7 +50,7 @@ public static class SetupGunnerAimPad
             Object.DestroyImmediate(oldAimPad.gameObject);
         }
 
-        GameObject padRoot = BuildAimPadHierarchy(cockpit, new Vector3(4.5f, 0.04f, 4.6f), matDarkSteel, matGunmetal, matChrome, matHazard, matBtnBase, matBtnCyan, matBtnGreen, matBtnAmber);
+        GameObject padRoot = BuildAimPadHierarchy(cockpit, new Vector3(0.0f, 4.54f, 5.2f), matDarkSteel, matGunmetal, matChrome, matHazard, matBtnBase, matBtnCyan, matBtnGreen, matBtnAmber);
 
         // Configurar referencias de gimbal en MechaController
         SerializedObject mechaSO = new SerializedObject(mecha);

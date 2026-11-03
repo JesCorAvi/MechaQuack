@@ -586,9 +586,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: da90c9045b761dc42b590fc4fe767245, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DuckController
-  cockpitHalfX: 10.2
-  cockpitHalfZ: 7.8
-  cockpitMaxY: 16
+  cockpitHalfX: 11.8
+  cockpitHalfZ: 8.8
+  cockpitMaxY: 16.5
   duckRadius: 0.5
   moveSpeed: 14
   acceleration: 60

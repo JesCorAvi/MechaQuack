@@ -11,9 +11,9 @@ public class DuckController : MonoBehaviour
     public static DuckController Instance { get; private set; }
 
     [Header("Límites de la Cabina Multinivel")]
-    [SerializeField] private float cockpitHalfX = 10.2f;
-    [SerializeField] private float cockpitHalfZ = 7.8f;
-    [SerializeField] private float cockpitMaxY = 16.0f;
+    [SerializeField] private float cockpitHalfX = 11.8f;
+    [SerializeField] private float cockpitHalfZ = 8.8f;
+    [SerializeField] private float cockpitMaxY = 16.5f;
     [SerializeField] private float duckRadius = 0.5f;
 
     [Header("Movimiento")]
@@ -471,7 +471,7 @@ public class DuckController : MonoBehaviour
     /// </summary>
     public bool IsInStairwell1(float x, float z)
     {
-        return (x >= 5.5f && x <= 8.9f && z >= -5.5f && z <= 4.5f);
+        return (x >= 6.8f && x <= 10.2f && z >= -7.2f && z <= 5.2f);
     }
 
     /// <summary>
@@ -479,7 +479,7 @@ public class DuckController : MonoBehaviour
     /// </summary>
     public bool IsInStairwell2(float x, float z)
     {
-        return (x >= -8.9f && x <= -5.5f && z >= -5.5f && z <= 4.5f);
+        return (x >= -10.2f && x <= -6.8f && z >= -7.2f && z <= 5.2f);
     }
 
     /// <summary>
@@ -496,12 +496,12 @@ public class DuckController : MonoBehaviour
         else if (y < 8.4f)
         {
             // Planta 2: si está en la caja de escalera 2, tiene hueco hacia arriba; si no, techo sólido a 8.1m
-            return IsInStairwell2(x, z) ? 13.8f : 8.1f;
+            return IsInStairwell2(x, z) ? 14.2f : 8.1f;
         }
         else
         {
-            // Planta 3: techo de la cabeza del Mecha a 13.8m
-            return 13.8f;
+            // Planta 3: techo abovedado de la cabeza del Mecha a 14.2m
+            return 14.2f;
         }
     }
 

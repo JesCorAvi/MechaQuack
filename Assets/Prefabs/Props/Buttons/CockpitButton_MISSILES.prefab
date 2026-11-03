@@ -52,7 +52,7 @@ MonoBehaviour:
     (CULAZO E)'
   type: 1
   buttonColor: {r: 0, g: 1, b: 0, a: 1}
-  detectionRadius: 1.9
+  detectionRadius: 1.65
   capTransform: {fileID: 4613484548423327935}
   pressDepth: 0.16
   sinkSpeed: 16
@@ -85,7 +85,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 1.05, z: 0}
-  m_LocalScale: {x: 0.074999996, y: 0.074999996, z: 0.074999996}
+  m_LocalScale: {x: 0.08888888, y: 0.08888888, z: 0.08888888}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4613484548423327935}
@@ -115,7 +115,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10100, guid: 0000000000000000e000000000000000, type: 0}
+  - {fileID: 0}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -281,7 +281,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 3.68, y: 0.22, z: 3.68}
+  m_LocalScale: {x: 3.105, y: 0.22, z: 3.105}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3338950197822384918}
@@ -372,7 +372,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0.28, z: 0}
-  m_LocalScale: {x: 3.2, y: 0.28, z: 3.2}
+  m_LocalScale: {x: 2.7, y: 0.28, z: 2.7}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 999970428351849711}

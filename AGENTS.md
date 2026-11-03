@@ -45,47 +45,51 @@
   - Tramo 1 (Planta 1 -> Planta 2): en estribor, de $Y = 0\text{m}$ a $Y = 4.5\text{m}$.
   - Tramo 2 (Planta 2 -> Planta 3): en babor, de $Y = 4.5\text{m}$ a $Y = 9.0\text{m}$.
 
-### Distribución de Botones Físicos en las 3 Plantas (`CockpitFloorButton`)
+### Distribución de Botones Físicos en las 3 Plantas (`CockpitFloorButton`) y Flujo Industrial
 
 ```
 ==================================================================================
 PLANTA 3 (Y = 9.0m) - CABEZA DEL MECHA / CÁPSULA DEL CAPITÁN [3ª PERSONA AUTOMÁTICA]
    - Estructura Blindada de la Cabeza del Mecha (Sin ventanas: visión externa neural)
-   - Pedestal Central de Mando del Capitán (X: 0.0, Y: 9.2, Z: +1.5) con anillo holo-disc
-   - Consola Táctica de Mando (X: 0.0, Y: 9.45, Z: +3.8, Y < 0.6m)
-   - [🚨 SPAWN] (X: 0.0, Y: 9.0, Z: -3.0) -> Conmutador Invasión Robots (Stomp)
-   ▲ Escalera 2 que desciende hacia Planta 2 en babor (X: -7.2)
+   - Superficie ampliada (24.0m x 18.0m) con mamparos estructurales y racks neurales
+   - Pedestal Central de Mando del Capitán (X: 0.0, Y: 9.2, Z: +1.5) con anillo holo-disc (R = 2.2m)
+   - Consola Táctica de Mando (X: 0.0, Y: 9.45, Z: +4.5, Y < 0.6m)
+   - [🚨 SPAWN] (X: 0.0, Y: 9.0, Z: -3.2) -> Conmutador Invasión Robots (Stomp)
+   ▲ Escalera 2 que desciende hacia Planta 2 en babor (X: -8.5, Z: +4.0 a -5.0, ancho 3.0m)
 ==================================================================================
 PLANTA 2 (Y = 4.5m) - ESTACIÓN DE ARTILLERÍA Y ARSENAL [MÁXIMA VISIBILIDAD PANORÁMICA]
-   - Gran ventanal frontal de 20m al 96% transparente y ventanas hacia armas
+   - Gran ventanal frontal de 23.6m al 96% transparente y ventanas hacia armas
+   - GRAN AVENIDA TRANSVERSAL LIBRE (Z: +2.4m a +3.8m) que conecta directamente ambas escaleras
+   - Tanques criogénicos de refrigerante y tuberías dobles perimetrales con manómetros
    - HUD Holográfico de Puntería proyector en parabrisas (Y = 6.8m)
-   - [🎯 AIM PAD] (X: 0.0, Y: 4.54, Z: +3.5) -> Giróscopo de Puntería 2D centralizado frente al HUD
-   - [🔫 GATLING] (X: -4.8, Y: 4.50, Z: +1.5) -> Ráfaga Gatling (Hold / Stomp) en ala babor
-   - [🚀 MISSILES] (X: +4.8, Y: 4.50, Z: +1.5) -> Salva Micromisiles Guiados (Stomp) en ala estribor
-   - Cubierta de tiro amplia y despejada (sin mesas ni elementos decorativos obstructivos)
-   ▲ Escalera 1 que desciende hacia Planta 1 en estribor (X: +7.2)
+   - [🎯 AIM PAD] (X: 0.0, Y: 4.54, Z: +5.2) -> Giróscopo 2D centralizado frente al parabrisas
+   - [🔫 GATLING] (X: -4.2, Y: 4.50, Z: +1.6) -> Ráfaga Gatling (Hold / Stomp) en ala babor
+   - [🚀 MISSILES] (X: +4.2, Y: 4.50, Z: +1.6) -> Salva Micromisiles Guiados (Stomp) en ala estribor
+   - Cubierta de tiro amplia, despejada e industrial con señalización hazard en suelo
+   ▲ Escalera 1 que desciende hacia Planta 1 en estribor (X: +8.5, Z: -5.0 a +4.0, ancho 3.0m)
 ==================================================================================
 PLANTA 1 (Y = 0.0m) - ESTACIÓN DE CONDUCCIÓN Y NAVEGACIÓN [BÚNKER BLINDADO MILITAR]
-   - Visibilidad Búnker Militar: Tronera militar estrecha (14m x 0.9m) a nivel de ojos (Y = 1.15m)
-   - Muros gruesos de blindaje (El conductor es guiado por las órdenes del Capitán)
-   - Consola de Navegación central con pantalla militar verde (X: 0.0, Z: +5.8)
-   - [▲ FWD] (X: 0.0, Y: 0.0, Z: +3.8) -> Marcha hacia adelante
-   - [▼ BWD] (X: 0.0, Y: 0.0, Z: -2.5) -> Marcha hacia atrás
-   - [◄ LEFT] (X: -4.8, Y: 0.0, Z: +0.65) -> Giro sobre eje a la izquierda
-   - [RIGHT ►] (X: +4.8, Y: 0.0, Z: +0.65) -> Giro sobre eje a la derecha
+   - Visibilidad Búnker Militar: Tronera militar estrecha (16.0m x 0.9m) a nivel de ojos (Y = 1.15m)
+   - Muros gruesos de blindaje, columnas estructurales en los 4 vértices del hangar (Z = +-8.2m) y celdas de baterías en popa
+   - Pasillo amplio de más de 4 metros hacia la escalera de subida en estribor
+   - Consola de Navegación central con pantalla militar verde (X: 0.0, Z: +7.2)
+   - [▲ FWD] (X: 0.0, Y: 0.0, Z: +4.2) -> Marcha hacia adelante
+   - [▼ BWD] (X: 0.0, Y: 0.0, Z: -2.2) -> Marcha hacia atrás
+   - [◄ LEFT] (X: -4.2, Y: 0.0, Z: +1.0) -> Giro sobre eje a la izquierda
+   - [RIGHT ►] (X: +4.2, Y: 0.0, Z: +1.0) -> Giro sobre eje a la derecha
 ==================================================================================
 ```
 
 | Nivel | Botón ID | Coordenadas Locales | Tipo | Función |
 | :--- | :--- | :--- | :--- | :--- |
-| **Planta 1** | **`FWD`** | `(0.0, 0.0, +3.8)` | `Hold` | Marcha hacia adelante del mecha |
-| **Planta 1** | **`BWD`** | `(0.0, 0.0, -2.5)` | `Hold` | Marcha hacia atrás del mecha |
-| **Planta 1** | **`LEFT`** | `(-4.8, 0.0, +0.65)` | `Hold` | Rotación sobre su eje a la izquierda |
-| **Planta 1** | **`RIGHT`** | `(+4.8, 0.0, +0.65)` | `Hold` | Rotación sobre su eje a la derecha |
-| **Planta 2** | **`AIM_PAD`** | `(0.0, 4.54, +3.5)` | `Hold` / `Stomp` | **Giroscopio de Puntería 2D**: Centralizado frente al HUD crosshair y parabrisas de 20m. Correr sobre la plataforma inclina analógicamente la mira y los gimbals de las armas (azimut $\pm 48^\circ$, elevación $-20^\circ$ a $+36^\circ$). **Culazo (Stomp)** ejecuta **Smart Lock-On** al enemigo más cercano. |
-| **Planta 2** | **`GATLING`** | `(-4.8, 4.50, +1.5)` | `Hold` / `Stomp` | **Fuego continuo orientado** al pisar (12 bps) o **ráfaga masiva de 10 tiros** al dar culazo, alineado con el brazo ametralladora izquierdo |
-| **Planta 2** | **`MISSILES`**| `(+4.8, 4.50, +1.5)` | `Stomp` | **Salva de 4 micromisiles guiados** lanzados desde el pod orientable, alineado con el hombro derecho de misiles (Cooldown 3.5s) |
-| **Planta 3** | **`SPAWN`** | `(0.0, 9.0, -3.0)` | `Toggle` | Activa/desactiva la invasión de robots enemigos (requiere culazo en el Puente de Mando) |
+| **Planta 1** | **`FWD`** | `(0.0, 0.0, +4.2)` | `Hold` | Marcha hacia adelante del mecha |
+| **Planta 1** | **`BWD`** | `(0.0, 0.0, -2.2)` | `Hold` | Marcha hacia atrás del mecha |
+| **Planta 1** | **`LEFT`** | `(-4.2, 0.0, +1.0)` | `Hold` | Rotación sobre su eje a la izquierda |
+| **Planta 1** | **`RIGHT`** | `(+4.2, 0.0, +1.0)` | `Hold` | Rotación sobre su eje a la derecha |
+| **Planta 2** | **`AIM_PAD`** | `(0.0, 4.54, +5.2)` | `Hold` / `Stomp` | **Giroscopio de Puntería 2D**: Centralizado frente al HUD crosshair y ventanal panorámico de 23.6m. Correr sobre la plataforma inclina analógicamente la mira y los gimbals de las armas (azimut $\pm 48^\circ$, elevación $-20^\circ$ a $+36^\circ$). **Culazo (Stomp)** ejecuta **Smart Lock-On** al enemigo más cercano. |
+| **Planta 2** | **`GATLING`** | `(-4.2, 4.50, +1.6)` | `Hold` / `Stomp` | **Fuego continuo orientado** al pisar (12 bps) o **ráfaga masiva de 10 tiros** al dar culazo, en ala babor |
+| **Planta 2** | **`MISSILES`**| `(+4.2, 4.50, +1.6)` | `Stomp` | **Salva de 4 micromisiles guiados** lanzados desde el pod orientable, en ala estribor (Cooldown 3.5s) |
+| **Planta 3** | **`SPAWN`** | `(0.0, 9.0, -3.2)` | `Toggle` | Activa/desactiva la invasión de robots enemigos (requiere culazo en el Puente de Mando) |
 
 ---
 
@@ -108,8 +112,9 @@ PLANTA 1 (Y = 0.0m) - ESTACIÓN DE CONDUCCIÓN Y NAVEGACIÓN [BÚNKER BLINDADO M
 
 ### B. Control del Pato y Físicas Multinivel
 - [`DuckController.cs`](file:///Assets/Scripts/DuckController.cs):
-  - Espacio local tridimensional de cabina expandido: `cockpitHalfX = 10.2m`, `cockpitHalfZ = 7.8m`, `cockpitMaxY = 16.0m`.
+  - Espacio local tridimensional de cabina expandido: `cockpitHalfX = 11.8m`, `cockpitHalfZ = 8.8m`, `cockpitMaxY = 16.5m`.
   - Detección continua de suelo y escalones mediante buffer prealocado `Physics.RaycastNonAlloc` con `stepSnapOffset = 0.85f`, permitiendo subir y bajar peldaños a 14 m/s con adherencia anti-deslizamiento.
+  - Escaleras industriales ensanchadas a 3.0m de paso (Tramo 1 en estribor $X = +8.5\text{m}$, Tramo 2 en babor $X = -8.5\text{m}$).
   - **Físicas Estrictas Anti-Salto entre Plantas**:
     - Fuerza de salto calibrada a `jumpForce = 10.5m/s` (elevación ágil de ~1.5m para botones y pedestales, muy por debajo de la altura entre pisos de 4.5m).
     - Techo físico dinámico (`GetCeilingCenterY`): Clamping de techo para Planta 1 (3.6m) y Planta 2 (8.1m) que frena en seco cualquier velocidad ascendente si la cabeza impacta la estructura.

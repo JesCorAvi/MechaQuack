@@ -428,12 +428,12 @@ public class CockpitCameraController : MonoBehaviour
 
         if (dirLocal.x > 0.0001f)
         {
-            float d = (9.6f - pivotLocal.x) / dirLocal.x;
+            float d = (11.2f - pivotLocal.x) / dirLocal.x;
             if (d > 0f && d < maxInteriorDist) maxInteriorDist = d;
         }
         else if (dirLocal.x < -0.0001f)
         {
-            float d = (-9.6f - pivotLocal.x) / dirLocal.x;
+            float d = (-11.2f - pivotLocal.x) / dirLocal.x;
             if (d > 0f && d < maxInteriorDist) maxInteriorDist = d;
         }
 
@@ -450,12 +450,12 @@ public class CockpitCameraController : MonoBehaviour
 
         if (dirLocal.z > 0.0001f)
         {
-            float d = (7.6f - pivotLocal.z) / dirLocal.z;
+            float d = (8.4f - pivotLocal.z) / dirLocal.z;
             if (d > 0f && d < maxInteriorDist) maxInteriorDist = d;
         }
         else if (dirLocal.z < -0.0001f)
         {
-            float d = (-6.8f - pivotLocal.z) / dirLocal.z;
+            float d = (-8.2f - pivotLocal.z) / dirLocal.z;
             if (d > 0f && d < maxInteriorDist) maxInteriorDist = d;
         }
 

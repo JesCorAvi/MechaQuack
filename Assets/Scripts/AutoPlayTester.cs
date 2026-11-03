@@ -85,13 +85,6 @@ public class AutoPlayTester : MonoBehaviour
         passedTests = 0;
         totalTests = 0;
 
-        // Esperar a que la escena, físicas y HUD inicialicen
-        yield return new WaitForSeconds(0.6f);
-
-        Debug.Log("==========================================================================");
-        Debug.Log("[AUTOTEST] >>> INICIANDO BATERÍA DE PRUEBAS AUTOMATIZADAS - MECHAQUACK <<<");
-        Debug.Log("==========================================================================");
-
         var mecha = MechaController.Instance ?? Object.FindFirstObjectByType<MechaController>();
         var duck = Object.FindFirstObjectByType<DuckController>();
         var spawner = EnemySpawner.Instance ?? Object.FindFirstObjectByType<EnemySpawner>();
@@ -103,6 +96,13 @@ public class AutoPlayTester : MonoBehaviour
             isTesting = false;
             yield break;
         }
+
+        // Esperar a que la escena, físicas y HUD inicialicen y el mecha aterrice y se asiente en el suelo
+        yield return new WaitForSeconds(2.0f);
+
+        Debug.Log("==========================================================================");
+        Debug.Log("[AUTOTEST] >>> INICIANDO BATERÍA DE PRUEBAS AUTOMATIZADAS - MECHAQUACK <<<");
+        Debug.Log("==========================================================================");
 
         CockpitFloorButton GetButton(string id)
         {
