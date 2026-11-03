@@ -14,11 +14,11 @@ public class MechaPhysicsConfig : ScriptableObject
     [Tooltip("Altura total del mecha erguido en metros")]
     public float totalHeight = 50.0f;
     [Tooltip("Altura nominal de la cadera/pelvis sobre el suelo en postura normal (m)")]
-    public float nominalRideHeight = 21.0f;
+    public float nominalRideHeight = 20.5f;
     [Tooltip("Extensión máxima física de la pierna desde la cadera hasta la suela (m). Más allá de esto NO hay contacto.")]
-    public float maxLegExtension = 23.5f;
+    public float maxLegExtension = 22.0f;
     [Tooltip("Compresión mínima de la pierna en sentadilla de impacto (m)")]
-    public float minLegCompression = 15.0f;
+    public float minLegCompression = 14.0f;
     [Tooltip("Posición local del Centro de Masa (CoM) respecto a la raíz de la pelvis (m)")]
     public Vector3 localCenterOfMass = new Vector3(0f, 6.2f, 0.05f);
     [Tooltip("Tensor de inercia explícito (kg·m²) para evitar que colliders mal escalados distorsionen el vuelco")]
@@ -123,9 +123,9 @@ public class MechaPhysicsConfig : ScriptableObject
     {
         mass = 48000f;
         totalHeight = 50.0f;
-        nominalRideHeight = 21.0f;
-        maxLegExtension = 23.5f;
-        minLegCompression = 15.0f;
+        nominalRideHeight = 20.5f;
+        maxLegExtension = 22.0f;
+        minLegCompression = 14.0f;
         localCenterOfMass = new Vector3(0f, 6.2f, 0.05f);
         inertiaTensor = new Vector3(880000f, 500000f, 950000f);
 

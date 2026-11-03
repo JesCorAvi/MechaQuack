@@ -50,7 +50,7 @@ public static class SetupGunnerAimPad
             Object.DestroyImmediate(oldAimPad.gameObject);
         }
 
-        GameObject padRoot = BuildAimPadHierarchy(cockpit, new Vector3(0.0f, 4.54f, 5.2f), matDarkSteel, matGunmetal, matChrome, matHazard, matBtnBase, matBtnCyan, matBtnGreen, matBtnAmber);
+        GameObject padRoot = BuildAimPadHierarchy(cockpit, new Vector3(0.0f, 4.54f, 5.2f), matDarkSteel, matGunmetal, matChrome, matHazard, matBtnBase, matBtnCyan, matBtnGreen, matBtnAmber, 1.2f);
 
         // Configurar referencias de gimbal en MechaController
         SerializedObject mechaSO = new SerializedObject(mecha);
@@ -66,8 +66,8 @@ public static class SetupGunnerAimPad
         if (hud == null)
         {
             GameObject hudObj = new GameObject("Windshield_HUD");
-            hudObj.transform.parent = cockpit;
-            hudObj.transform.localPosition = new Vector3(0f, 4.4f, 8.0f);
+            hudObj.transform.SetParent(cockpit, false);
+            hudObj.transform.localPosition = new Vector3(0f, 6.8f, 8.8f);
             hudObj.AddComponent<WindshieldHUDCrosshair>();
         }
 
@@ -88,90 +88,96 @@ public static class SetupGunnerAimPad
         Material matBtnBase,
         Material matBtnCyan,
         Material matBtnGreen,
-        Material matBtnAmber)
+        Material matBtnAmber,
+        float scale = 1.8f)
     {
-        GameObject CreateCylinder(string name, Transform p, Vector3 lPos, Vector3 scale, Quaternion lRot, Material m)
+        Material pbrAimMat = ProceduralTextureGenerator.GetMaterial("M_Floor2_AimPad") ?? matDarkSteel;
+
+        GameObject CreateCylinder(string name, Transform p, Vector3 lPos, Vector3 s, Quaternion lRot, Material m)
         {
             GameObject c = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             c.name = name;
-            c.transform.parent = p;
+            if (p != null) c.transform.SetParent(p, false);
             c.transform.localPosition = lPos;
             c.transform.localRotation = lRot;
-            c.transform.localScale = scale;
+            c.transform.localScale = s;
             if (m != null) c.GetComponent<MeshRenderer>().material = m;
             Object.DestroyImmediate(c.GetComponent<Collider>());
             return c;
         }
 
-        GameObject CreateBlock(string name, Transform p, Vector3 lPos, Vector3 scale, Quaternion lRot, Material m)
+        GameObject CreateBlock(string name, Transform p, Vector3 lPos, Vector3 s, Quaternion lRot, Material m)
         {
             GameObject b = GameObject.CreatePrimitive(PrimitiveType.Cube);
             b.name = name;
-            b.transform.parent = p;
+            if (p != null) b.transform.SetParent(p, false);
             b.transform.localPosition = lPos;
             b.transform.localRotation = lRot;
-            b.transform.localScale = scale;
+            b.transform.localScale = s;
             if (m != null) b.GetComponent<MeshRenderer>().material = m;
             Object.DestroyImmediate(b.GetComponent<Collider>());
             return b;
         }
 
-        GameObject CreateSphere(string name, Transform p, Vector3 lPos, Vector3 scale, Quaternion lRot, Material m)
+        GameObject CreateSphere(string name, Transform p, Vector3 lPos, Vector3 s, Quaternion lRot, Material m)
         {
-            GameObject s = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            s.name = name;
-            s.transform.parent = p;
-            s.transform.localPosition = lPos;
-            s.transform.localRotation = lRot;
-            s.transform.localScale = scale;
-            if (m != null) s.GetComponent<MeshRenderer>().material = m;
-            Object.DestroyImmediate(s.GetComponent<Collider>());
-            return s;
+            GameObject sObj = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            sObj.name = name;
+            if (p != null) sObj.transform.SetParent(p, false);
+            sObj.transform.localPosition = lPos;
+            sObj.transform.localRotation = lRot;
+            sObj.transform.localScale = s;
+            if (m != null) sObj.GetComponent<MeshRenderer>().material = m;
+            Object.DestroyImmediate(sObj.GetComponent<Collider>());
+            return sObj;
         }
 
         GameObject padRoot = new GameObject("Btn_AIM_PAD");
-        padRoot.transform.parent = parent;
+        if (parent != null) padRoot.transform.SetParent(parent, false);
         padRoot.transform.localPosition = localPos;
         padRoot.transform.localRotation = Quaternion.identity;
+        padRoot.transform.localScale = Vector3.one;
 
         // Base y anillo de seguridad con franjas hazard
-        GameObject housing = CreateCylinder("Housing", padRoot.transform, new Vector3(0f, 0.08f, 0f), new Vector3(3.5f, 0.16f, 3.5f), Quaternion.identity, matBtnBase);
+        GameObject housing = CreateCylinder("Housing", padRoot.transform, new Vector3(0f, 0.08f * scale, 0f), new Vector3(3.5f * scale, 0.16f * scale, 3.5f * scale), Quaternion.identity, matBtnBase);
         CreateCylinder("RimRing", housing.transform, new Vector3(0f, 0.52f, 0f), new Vector3(1.02f, 0.22f, 1.02f), Quaternion.identity, matHazard);
 
         // Rótula esférica central (gimbal ball)
-        CreateSphere("Gimbal_Ball", padRoot.transform, new Vector3(0f, 0.18f, 0f), Vector3.one * 1.4f, Quaternion.identity, matChrome);
+        CreateSphere("Gimbal_Ball", padRoot.transform, new Vector3(0f, 0.18f * scale, 0f), Vector3.one * (1.4f * scale), Quaternion.identity, matChrome);
 
         // 4 Pistones hidráulicos amortiguadores (N, S, E, O)
         Transform[] pistons = new Transform[4];
-        pistons[0] = CreateCylinder("Piston_N", padRoot.transform, new Vector3(0f, 0.18f, 1.25f), new Vector3(0.28f, 0.26f, 0.28f), Quaternion.identity, matChrome).transform;
-        pistons[1] = CreateCylinder("Piston_S", padRoot.transform, new Vector3(0f, 0.18f, -1.25f), new Vector3(0.28f, 0.26f, 0.28f), Quaternion.identity, matChrome).transform;
-        pistons[2] = CreateCylinder("Piston_E", padRoot.transform, new Vector3(1.25f, 0.18f, 0f), new Vector3(0.28f, 0.26f, 0.28f), Quaternion.identity, matChrome).transform;
-        pistons[3] = CreateCylinder("Piston_W", padRoot.transform, new Vector3(-1.25f, 0.18f, 0f), new Vector3(0.28f, 0.26f, 0.28f), Quaternion.identity, matChrome).transform;
+        pistons[0] = CreateCylinder("Piston_N", padRoot.transform, new Vector3(0f, 0.18f * scale, 1.25f * scale), new Vector3(0.28f * scale, 0.26f * scale, 0.28f * scale), Quaternion.identity, matChrome).transform;
+        pistons[1] = CreateCylinder("Piston_S", padRoot.transform, new Vector3(0f, 0.18f * scale, -1.25f * scale), new Vector3(0.28f * scale, 0.26f * scale, 0.28f * scale), Quaternion.identity, matChrome).transform;
+        pistons[2] = CreateCylinder("Piston_E", padRoot.transform, new Vector3(1.25f * scale, 0.18f * scale, 0f), new Vector3(0.28f * scale, 0.26f * scale, 0.28f * scale), Quaternion.identity, matChrome).transform;
+        pistons[3] = CreateCylinder("Piston_W", padRoot.transform, new Vector3(-1.25f * scale, 0.18f * scale, 0f), new Vector3(0.28f * scale, 0.26f * scale, 0.28f * scale), Quaternion.identity, matChrome).transform;
 
         // Disco superior orientable / inclinable (Aim Disc)
         GameObject aimDisc = new GameObject("Aim_Disc");
-        aimDisc.transform.parent = padRoot.transform;
-        aimDisc.transform.localPosition = new Vector3(0f, 0.28f, 0f);
+        aimDisc.transform.SetParent(padRoot.transform, false);
+        aimDisc.transform.localPosition = new Vector3(0f, 0.28f * scale, 0f);
+        aimDisc.transform.localRotation = Quaternion.identity;
+        aimDisc.transform.localScale = Vector3.one;
 
-        // Plancha de soporte con acabado de acero militar
-        CreateCylinder("Plate", aimDisc.transform, Vector3.zero, new Vector3(3.2f, 0.14f, 3.2f), Quaternion.identity, matDarkSteel);
-        CreateCylinder("Plate_Border", aimDisc.transform, new Vector3(0f, 0.08f, 0f), new Vector3(3.24f, 0.04f, 3.24f), Quaternion.identity, matGunmetal);
+        // Plancha de soporte con acabado de acero militar y textura PBR giroscópica
+        CreateCylinder("Plate", aimDisc.transform, Vector3.zero, new Vector3(3.2f * scale, 0.14f * scale, 3.2f * scale), Quaternion.identity, pbrAimMat);
+        CreateCylinder("Plate_Border", aimDisc.transform, new Vector3(0f, 0.08f * scale, 0f), new Vector3(3.24f * scale, 0.04f * scale, 3.24f * scale), Quaternion.identity, matGunmetal);
 
         // Núcleo central táctico con óptica cian de Lock-On
-        CreateCylinder("Hub_LockOn", aimDisc.transform, new Vector3(0f, 0.09f, 0f), new Vector3(1.25f, 0.08f, 1.25f), Quaternion.identity, matBtnCyan);
+        CreateCylinder("Hub_LockOn", aimDisc.transform, new Vector3(0f, 0.09f * scale, 0f), new Vector3(1.25f * scale, 0.08f * scale, 1.25f * scale), Quaternion.identity, matBtnCyan);
 
         // Indicadores direccionales tácticos en relieve sobre la plataforma
-        CreateBlock("Chevron_Up", aimDisc.transform, new Vector3(0f, 0.10f, 1.05f), new Vector3(0.85f, 0.05f, 0.38f), Quaternion.identity, matBtnGreen);
-        CreateBlock("Chevron_Down", aimDisc.transform, new Vector3(0f, 0.10f, -1.05f), new Vector3(0.85f, 0.05f, 0.38f), Quaternion.identity, matBtnAmber);
-        CreateBlock("Chevron_Left", aimDisc.transform, new Vector3(-1.05f, 0.10f, 0f), new Vector3(0.38f, 0.05f, 0.85f), Quaternion.identity, matBtnCyan);
-        CreateBlock("Chevron_Right", aimDisc.transform, new Vector3(1.05f, 0.10f, 0f), new Vector3(0.38f, 0.05f, 0.85f), Quaternion.identity, matBtnCyan);
+        CreateBlock("Chevron_Up", aimDisc.transform, new Vector3(0f, 0.10f * scale, 1.05f * scale), new Vector3(0.85f * scale, 0.05f * scale, 0.38f * scale), Quaternion.identity, matBtnGreen);
+        CreateBlock("Chevron_Down", aimDisc.transform, new Vector3(0f, 0.10f * scale, -1.05f * scale), new Vector3(0.85f * scale, 0.05f * scale, 0.38f * scale), Quaternion.identity, matBtnAmber);
+        CreateBlock("Chevron_Left", aimDisc.transform, new Vector3(-1.05f * scale, 0.10f * scale, 0f), new Vector3(0.38f * scale, 0.05f * scale, 0.85f * scale), Quaternion.identity, matBtnCyan);
+        CreateBlock("Chevron_Right", aimDisc.transform, new Vector3(1.05f * scale, 0.10f * scale, 0f), new Vector3(0.38f * scale, 0.05f * scale, 0.85f * scale), Quaternion.identity, matBtnCyan);
 
         // Rótulo central con texto 3D de control
         GameObject labelCenterObj = new GameObject("Label_Center");
-        labelCenterObj.transform.parent = aimDisc.transform;
-        labelCenterObj.transform.localPosition = new Vector3(0f, 0.15f, 0f);
+        labelCenterObj.transform.SetParent(aimDisc.transform, false);
+        labelCenterObj.transform.localPosition = new Vector3(0f, 0.15f * scale, 0f);
         labelCenterObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-        labelCenterObj.transform.localScale = Vector3.one * 0.18f;
+        labelCenterObj.transform.localScale = Vector3.one * (0.18f * scale);
         TextMesh ctm = labelCenterObj.AddComponent<TextMesh>();
         ctm.text = "🎯 MIRA\n[LOCK / CULAZO]";
         ctm.fontSize = 28;
@@ -186,10 +192,10 @@ public static class SetupGunnerAimPad
         void AddDirectionLabel(string text, Vector3 lPos, Color col)
         {
             GameObject lObj = new GameObject($"Label_{text}");
-            lObj.transform.parent = aimDisc.transform;
+            lObj.transform.SetParent(aimDisc.transform, false);
             lObj.transform.localPosition = lPos;
             lObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            lObj.transform.localScale = Vector3.one * 0.14f;
+            lObj.transform.localScale = Vector3.one * (0.14f * scale);
             TextMesh tm = lObj.AddComponent<TextMesh>();
             tm.text = text;
             tm.fontSize = 24;
@@ -201,17 +207,17 @@ public static class SetupGunnerAimPad
             TextShaderUtility.ApplyZTesting(tm);
         }
 
-        AddDirectionLabel("▲ ELEVAR (+)", new Vector3(0f, 0.15f, 1.25f), Color.green);
-        AddDirectionLabel("▼ BAJAR (-)", new Vector3(0f, 0.15f, -1.25f), new Color(1f, 0.7f, 0.2f));
-        AddDirectionLabel("◄ APUNTAR IZQ", new Vector3(-1.18f, 0.15f, 0f), Color.cyan);
-        AddDirectionLabel("APUNTAR DER ►", new Vector3(1.18f, 0.15f, 0f), Color.cyan);
+        AddDirectionLabel("▲ ELEVAR (+)", new Vector3(0f, 0.15f * scale, 1.25f * scale), Color.green);
+        AddDirectionLabel("▼ BAJAR (-)", new Vector3(0f, 0.15f * scale, -1.25f * scale), new Color(1f, 0.7f, 0.2f));
+        AddDirectionLabel("◄ APUNTAR IZQ", new Vector3(-1.18f * scale, 0.15f * scale, 0f), Color.cyan);
+        AddDirectionLabel("APUNTAR DER ►", new Vector3(1.18f * scale, 0.15f * scale, 0f), Color.cyan);
 
         // Configurar componente GunnerAimPad
         GunnerAimPad aimPadComp = padRoot.AddComponent<GunnerAimPad>();
         aimPadComp.buttonId = "AIM_PAD";
         aimPadComp.label = "🎯 GIROSCOPIO DE PUNTERÍA";
         aimPadComp.type = CockpitFloorButton.ButtonType.Hold;
-        aimPadComp.detectionRadius = 1.75f;
+        aimPadComp.detectionRadius = 1.75f * scale;
         aimPadComp.buttonColor = Color.cyan;
 
         SerializedObject padSO = new SerializedObject(aimPadComp);

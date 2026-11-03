@@ -27,8 +27,8 @@ Transform:
   m_GameObject: {fileID: 5524359475202305152}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.28, z: 0}
-  m_LocalScale: {x: 2.7, y: 0.28, z: 2.7}
+  m_LocalPosition: {x: 0, y: 0.22, z: 0}
+  m_LocalScale: {x: 2, y: 0.22, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4170150117064146219}
@@ -67,7 +67,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 30d86e7e3a2cac9479465fd937810aa7, type: 2}
+  - {fileID: 2100000, guid: dad10beaae6dc1c4c9a30b4e63570ad9, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -119,7 +119,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 3.105, y: 0.22, z: 3.105}
+  m_LocalScale: {x: 2.3, y: 0.18, z: 2.3}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 5893775000499038784}
@@ -319,12 +319,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CockpitFloorButton
   buttonId: GATLING
-  label: 'GATLING
-
-    [MANTENER / E]'
+  label: "\U0001F52B GATLING\n[MANTENER / E]"
   type: 0
   buttonColor: {r: 0, g: 1, b: 0, a: 1}
-  detectionRadius: 1.65
+  detectionRadius: 1.4
   capTransform: {fileID: 7125990178340212095}
   pressDepth: 0.16
   sinkSpeed: 16
@@ -357,7 +355,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 1.05, z: 0}
-  m_LocalScale: {x: 0.08888888, y: 0.08888888, z: 0.08888888}
+  m_LocalScale: {x: 0.12, y: 0.12, z: 0.12}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7125990178340212095}
@@ -419,16 +417,14 @@ TextMesh:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8730848773104691822}
-  m_Text: 'GATLING
-
-    [MANTENER / E]'
+  m_Text: "\U0001F52B GATLING\n[MANTENER / E]"
   m_OffsetZ: 0
-  m_CharacterSize: 0.26
+  m_CharacterSize: 0.28
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
   m_TabSize: 4
-  m_FontSize: 24
+  m_FontSize: 28
   m_FontStyle: 1
   m_RichText: 1
   m_Font: {fileID: 0}

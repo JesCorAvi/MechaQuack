@@ -27,8 +27,8 @@ Transform:
   m_GameObject: {fileID: 769099847558834172}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.28, z: 0}
-  m_LocalScale: {x: 2.7, y: 0.28, z: 2.7}
+  m_LocalPosition: {x: 0, y: 0.22, z: 0}
+  m_LocalScale: {x: 2, y: 0.22, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1617761345045423191}
@@ -67,7 +67,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 30d86e7e3a2cac9479465fd937810aa7, type: 2}
+  - {fileID: 2100000, guid: dad10beaae6dc1c4c9a30b4e63570ad9, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -119,7 +119,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 3.105, y: 0.22, z: 3.105}
+  m_LocalScale: {x: 2.3, y: 0.18, z: 2.3}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1490368803447357412}
@@ -232,7 +232,7 @@ MonoBehaviour:
   label: "\u25BC ATR\xC1S"
   type: 0
   buttonColor: {r: 0, g: 1, b: 0, a: 1}
-  detectionRadius: 1.7
+  detectionRadius: 1.4
   capTransform: {fileID: 3180486421315131793}
   pressDepth: 0.16
   sinkSpeed: 16
@@ -355,7 +355,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 1.05, z: 0}
-  m_LocalScale: {x: 0.08888888, y: 0.08888888, z: 0.08888888}
+  m_LocalScale: {x: 0.12, y: 0.12, z: 0.12}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3180486421315131793}
@@ -419,12 +419,12 @@ TextMesh:
   m_GameObject: {fileID: 7959748026619241680}
   m_Text: "\u25BC ATR\xC1S"
   m_OffsetZ: 0
-  m_CharacterSize: 0.26
+  m_CharacterSize: 0.28
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
   m_TabSize: 4
-  m_FontSize: 24
+  m_FontSize: 28
   m_FontStyle: 1
   m_RichText: 1
   m_Font: {fileID: 0}

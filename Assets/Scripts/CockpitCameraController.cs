@@ -19,14 +19,14 @@ public class CockpitCameraController : MonoBehaviour
     [SerializeField] private Transform mechaRoot;
 
     [Header("Configuración Órbita Libre (Modo 0)")]
-    [SerializeField] private float currentDistance = 5.6f;
-    [SerializeField] private float targetDistance = 5.6f;
-    [SerializeField] private float minDistance = 0.85f;
+    [SerializeField] private float currentDistance = 4.2f;
+    [SerializeField] private float targetDistance = 4.2f;
+    [SerializeField] private float minDistance = 0.5f;
     [SerializeField] private float maxDistance = 160.0f; // Permite ver todo el Mecha exterior colosal
-    [SerializeField] private float maxInteriorDistance = 6.2f; // Zoom interior máximo en Niveles 1 y 2
+    [SerializeField] private float maxInteriorDistance = 5.2f; // Zoom interior máximo en Niveles 1 y 2
     [SerializeField] private float captainExteriorDistance = 55.0f; // Zoom exterior automático al entrar en la cabeza del Mecha
     [SerializeField] private float mouseSensitivity = 2.4f;
-    [SerializeField] private float zoomStep = 4.5f;
+    [SerializeField] private float zoomStep = 2.5f;
     [SerializeField] private float zoomSmoothing = 14f;
 
     [Header("Control y Anclaje de Cursor")]
@@ -50,7 +50,7 @@ public class CockpitCameraController : MonoBehaviour
     [Tooltip("Radio de detección nominal para entrar al círculo de mando")]
     [SerializeField] private float captainCircleRadius = 2.2f;
     [Tooltip("Radio de histéresis para salir del círculo (evita oscilaciones rápidas en el borde)")]
-    [SerializeField] private float captainCircleExitRadius = 2.55f;
+    [SerializeField] private float captainCircleExitRadius = 2.5f;
     [SerializeField] private bool isInCaptainCircle = false;
     private bool wasInCaptainCircle = false;
 
@@ -92,11 +92,11 @@ public class CockpitCameraController : MonoBehaviour
             cam.nearClipPlane = 0.05f; // Evita recorte de polígonos al empujar la cámara cerca del pato o mamparas
         }
 
-        minDistance = 0.85f;
+        minDistance = 0.5f;
         yaw = 0f;
         pitch = 22f;
-        currentDistance = 5.6f;
-        targetDistance = 5.6f;
+        currentDistance = 4.2f;
+        targetDistance = 4.2f;
 
         // Auto-sincronización con el pedestal del capitán si está presente en la jerarquía
         if (CaptainCommandPedestal.Instance != null)
@@ -185,8 +185,8 @@ public class CockpitCameraController : MonoBehaviour
         if (duckTarget != null)
         {
             float dy = duckTarget.localPosition.y;
-            if (dy < 3.0f) detectedFloor = 1;
-            else if (dy < 8.4f) detectedFloor = 2; // Calibrado a 8.4m para que las escaleras no activen P3 a mitad de trayecto
+            if (dy < 6.0f) detectedFloor = 1;
+            else if (dy < 15.0f) detectedFloor = 2;
             else detectedFloor = 3;
         }
 
@@ -209,7 +209,7 @@ public class CockpitCameraController : MonoBehaviour
             else
             {
                 // Verificación analítica robusta con histéresis anti-rebote
-                bool atCaptainHeight = dLocal.y >= 8.4f && dLocal.y <= 15.0f;
+                bool atCaptainHeight = dLocal.y >= 7.0f && dLocal.y <= 16.0f;
                 if (atCaptainHeight)
                 {
                     float dx = dLocal.x - captainCircleCenter.x;
@@ -405,35 +405,35 @@ public class CockpitCameraController : MonoBehaviour
         // --- SISTEMA ANTI-RECORTE Y EMPUJE DE CÁMARA MULTINIVEL ---
         // Delimita los planos de suelo y techo analíticos según la planta en la que se encuentra el pato
         float boxMinY, boxMaxY;
-        if (pivotLocal.y < 3.8f)
+        if (pivotLocal.y < 2.5f)
         {
             // Planta 1: Conductor
-            boxMinY = 0.45f;
-            boxMaxY = 4.30f;
+            boxMinY = 0.25f;
+            boxMaxY = 3.65f;
         }
-        else if (pivotLocal.y < 8.2f)
+        else if (pivotLocal.y < 7.0f)
         {
             // Planta 2: Artillero
             boxMinY = 4.70f;
-            boxMaxY = 8.75f;
+            boxMaxY = 8.10f;
         }
         else
         {
             // Planta 3: Capitán
             boxMinY = 9.20f;
-            boxMaxY = 14.10f; // Calibrado para no recortar con el techo de la cabeza (14.5m)
+            boxMaxY = 14.30f; // Calibrado para la cúpula abovedada a 14.5m
         }
 
-        float maxInteriorDist = 12.0f;
+        float maxInteriorDist = 5.2f;
 
         if (dirLocal.x > 0.0001f)
         {
-            float d = (11.2f - pivotLocal.x) / dirLocal.x;
+            float d = (11.4f - pivotLocal.x) / dirLocal.x;
             if (d > 0f && d < maxInteriorDist) maxInteriorDist = d;
         }
         else if (dirLocal.x < -0.0001f)
         {
-            float d = (-11.2f - pivotLocal.x) / dirLocal.x;
+            float d = (-11.4f - pivotLocal.x) / dirLocal.x;
             if (d > 0f && d < maxInteriorDist) maxInteriorDist = d;
         }
 
@@ -455,15 +455,15 @@ public class CockpitCameraController : MonoBehaviour
         }
         else if (dirLocal.z < -0.0001f)
         {
-            float d = (-8.2f - pivotLocal.z) / dirLocal.z;
+            float d = (-8.4f - pivotLocal.z) / dirLocal.z;
             if (d > 0f && d < maxInteriorDist) maxInteriorDist = d;
         }
 
-        // Margen de seguridad de 0.20m para evitar que el plano cercano toque paredes
-        maxInteriorDist = Mathf.Max(minDistance, maxInteriorDist - 0.20f);
+        // Margen de seguridad de 0.15m para evitar que el plano cercano toque paredes
+        maxInteriorDist = Mathf.Max(minDistance, maxInteriorDist - 0.15f);
 
-        Vector3 camLocalPos;
-        Vector3 lookTargetLocal;
+        Vector3 worldCamPos;
+        Vector3 worldLookTarget;
 
         // REGLA ESTRICTA DE CÁMARA:
         // En Plantas 1 y 2, y en Planta 3 FUERA del círculo de mando, la vista está estrictamente restringida al interior.
@@ -472,21 +472,22 @@ public class CockpitCameraController : MonoBehaviour
         {
             // VISTA INTERIOR CABINA
             float safeCockpitDist = Mathf.Min(currentDistance, maxInteriorDist);
-            camLocalPos = pivotLocal + dirLocal * safeCockpitDist;
+            Vector3 camLocalPos = pivotLocal + dirLocal * safeCockpitDist;
             camLocalPos.y = Mathf.Clamp(camLocalPos.y, boxMinY, boxMaxY);
-            lookTargetLocal = pivotLocal + Vector3.up * 0.12f;
+            Vector3 lookTargetLocal = pivotLocal + Vector3.up * 0.12f;
+            worldCamPos = cockpitTr != null ? cockpitTr.TransformPoint(camLocalPos) : camLocalPos;
+            worldLookTarget = cockpitTr != null ? cockpitTr.TransformPoint(lookTargetLocal) : lookTargetLocal;
         }
         else
         {
-            // VISTA EXTERIOR MECHA EN 3ª PERSONA (Exclusiva de la Cabeza del Mecha en Planta 3)
+            // VISTA EXTERIOR MECHA EN 3ª PERSONA (Exclusiva del Pedestal del Capitán en Planta 3)
             float zoomProgress = Mathf.Clamp01((currentDistance - maxInteriorDistance) / (maxDistance - maxInteriorDistance));
-            Vector3 mechaCenterLocal = new Vector3(0f, 6.0f, 1.0f); // Centro superior de masa / torso del Mecha de 50m
-            lookTargetLocal = Vector3.Lerp(pivotLocal + Vector3.up * 0.12f, mechaCenterLocal, Mathf.SmoothStep(0f, 1f, zoomProgress));
-            camLocalPos = lookTargetLocal + dirLocal * currentDistance;
+            Vector3 worldPivot = duckTarget.position + Vector3.up * 0.5f;
+            Vector3 mechaCenterWorld = mechaRoot != null ? mechaRoot.position + Vector3.up * 8.0f : worldPivot;
+            worldLookTarget = Vector3.Lerp(worldPivot, mechaCenterWorld, Mathf.SmoothStep(0f, 1f, zoomProgress));
+            Vector3 worldDir = cockpitTr != null ? cockpitTr.TransformDirection(dirLocal) : dirLocal;
+            worldCamPos = worldLookTarget + worldDir * currentDistance;
         }
-
-        Vector3 worldCamPos = cockpitTr != null ? cockpitTr.TransformPoint(camLocalPos) : camLocalPos;
-        Vector3 worldLookTarget = cockpitTr != null ? cockpitTr.TransformPoint(lookTargetLocal) : lookTargetLocal;
 
         // 2. Colisión exterior con obstáculos del entorno (rascacielos, montañas, peñascos, puentes gigantes):
         // Usa SphereCastNonAlloc filtrando la estructura del propio Mecha y del Pato sin GC allocations.
@@ -558,9 +559,9 @@ public class CockpitCameraController : MonoBehaviour
         if (mechaRoot == null) return;
         Transform cockpitTr = duckTarget != null && duckTarget.parent != null ? duckTarget.parent : mechaRoot;
 
-        float floorBaseY = currentFloor == 1 ? 0f : (currentFloor == 2 ? 4.5f : 9.0f);
-        Vector3 cockpitCamOffset = cockpitTr.TransformPoint(new Vector3(0f, floorBaseY + 2.8f, -4.2f));
-        Vector3 lookTarget = cockpitTr.TransformPoint(new Vector3(0f, floorBaseY + 1.2f, 3.5f));
+        float floorBaseY = currentFloor == 1 ? 0f : (currentFloor == 2 ? 9.0f : 18.0f);
+        Vector3 cockpitCamOffset = cockpitTr.TransformPoint(new Vector3(0f, floorBaseY + 4.5f, -9.0f));
+        Vector3 lookTarget = cockpitTr.TransformPoint(new Vector3(0f, floorBaseY + 2.0f, 6.0f));
 
         transform.position = Vector3.Lerp(transform.position, cockpitCamOffset, Time.deltaTime * 14f);
         transform.LookAt(lookTarget);

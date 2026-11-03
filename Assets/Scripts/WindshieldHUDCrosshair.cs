@@ -369,8 +369,17 @@ public class WindshieldHUDCrosshair : MonoBehaviour
         bar.transform.localPosition = localPos;
         bar.transform.localRotation = Quaternion.identity;
         bar.transform.localScale = localScale;
-        bar.GetComponent<MeshRenderer>().material = mat;
-        Destroy(bar.GetComponent<Collider>());
+        if (mat == null)
+        {
+            mat = ProceduralTextureGenerator.GetMaterial("M_MechaCyanOptics");
+        }
+        var mr = bar.GetComponent<MeshRenderer>();
+        if (mr != null)
+        {
+            mr.sharedMaterial = mat;
+        }
+        var col = bar.GetComponent<Collider>();
+        if (col != null) DestroyImmediate(col);
         return bar;
     }
 

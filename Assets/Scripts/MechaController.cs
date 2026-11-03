@@ -38,6 +38,8 @@ public class MechaController : MonoBehaviour
 
     [Header("Configuración Física Modular (Sin Números Mágicos)")]
     [SerializeField] private MechaPhysicsConfig physicsConfig;
+    [SerializeField] private float targetRideHeight = 20.5f;
+    [SerializeField] private float legRayLength = 25.0f;
 
     [Header("Referencias de Piernas Procedurales")]
     [SerializeField] private ProceduralLeg leftLeg;
@@ -135,6 +137,24 @@ public class MechaController : MonoBehaviour
     public bool IsGatlingFiring => _isGatlingFiring || _gatlingRecoilZ > 0.05f;
     public float LaserCooldown => _currentMissileCooldown;
     public float MissileCooldown => _currentMissileCooldown;
+    public float TargetRideHeight
+    {
+        get => physicsConfig != null ? physicsConfig.nominalRideHeight : targetRideHeight;
+        set
+        {
+            targetRideHeight = value;
+            if (physicsConfig != null) physicsConfig.nominalRideHeight = value;
+        }
+    }
+    public float LegRayLength
+    {
+        get => physicsConfig != null ? physicsConfig.maxLegExtension : legRayLength;
+        set
+        {
+            legRayLength = value;
+            if (physicsConfig != null) physicsConfig.maxLegExtension = value;
+        }
+    }
     public float ShakeIntensity => _shakeIntensity;
     public float GunnerAimYaw => gunnerAimYaw;
     public float GunnerAimPitch => gunnerAimPitch;

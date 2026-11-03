@@ -17,11 +17,11 @@ public class CaptainCommandPedestal : MonoBehaviour
     [SerializeField] private float detectionRadius = 2.2f;
 
     [Tooltip("Margen de histéresis hacia el exterior para evitar fluctuaciones en el borde al caminar")]
-    [SerializeField] private float exitHysteresis = 0.35f;
+    [SerializeField] private float exitHysteresis = 0.3f;
 
     [Tooltip("Rango vertical mínimo y máximo relativo al pedestal para considerar al pato sobre la plataforma")]
-    [SerializeField] private float minHeightOffset = -0.8f;
-    [SerializeField] private float maxHeightOffset = 4.0f;
+    [SerializeField] private float minHeightOffset = -0.6f;
+    [SerializeField] private float maxHeightOffset = 3.5f;
 
     [Header("Componentes Visuales")]
     [SerializeField] private Transform holoDiscTransform;

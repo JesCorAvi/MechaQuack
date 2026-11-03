@@ -19,12 +19,12 @@ public class TwoBoneIKSolver
     public Vector3 defaultPoleOffset = new Vector3(0f, 0f, 3.5f);
 
     [Header("Dimensiones")]
-    [SerializeField] private float upperLength = 3.0f;
-    [SerializeField] private float lowerLength = 2.6f;
+    [SerializeField] private float upperLength = 10.5f;
+    [SerializeField] private float lowerLength = 10.0f;
     [SerializeField] private bool autoCalculateLengths = true;
 
-    public float UpperLength => upperLength;
-    public float LowerLength => lowerLength;
+    public float UpperLength { get => upperLength; set => upperLength = value; }
+    public float LowerLength { get => lowerLength; set => lowerLength = value; }
     public float TotalLength => upperLength + lowerLength;
 
     public void Initialize()
@@ -35,8 +35,8 @@ public class TwoBoneIKSolver
         {
             upperLength = Vector3.Distance(hip.position, knee.position);
             lowerLength = Vector3.Distance(knee.position, ankle.position);
-            if (upperLength < 0.01f) upperLength = 3.0f;
-            if (lowerLength < 0.01f) lowerLength = 2.6f;
+            if (upperLength < 0.01f) upperLength = 10.5f;
+            if (lowerLength < 0.01f) lowerLength = 10.0f;
         }
     }
 
@@ -48,7 +48,9 @@ public class TwoBoneIKSolver
         if (hip == null || knee == null || ankle == null) return;
 
         Vector3 hipPos = hip.position;
-        Vector3 polePos = poleTarget != null ? poleTarget.position : (hip.position + hip.forward * defaultPoleOffset.z + hip.up * defaultPoleOffset.y);
+        Vector3 forwardRef = hip.parent != null ? hip.parent.forward : hip.forward;
+        Vector3 upRef = hip.parent != null ? hip.parent.up : hip.up;
+        Vector3 polePos = poleTarget != null ? poleTarget.position : (hipPos + forwardRef * defaultPoleOffset.z + upRef * defaultPoleOffset.y);
 
         Vector3 toTarget = targetPosition - hipPos;
         float distToTarget = toTarget.magnitude;

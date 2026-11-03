@@ -9,7 +9,9 @@ public class ProceduralLeg : MonoBehaviour
 {
     [Header("Configuración IK y Dimensiones")]
     [SerializeField] private TwoBoneIKSolver ikSolver = new TwoBoneIKSolver();
-    [SerializeField] private float ankleToSoleOffset = 1.6f;
+    [SerializeField] private float femurLength = 10.5f;
+    [SerializeField] private float tibiaLength = 10.0f;
+    [SerializeField] private float ankleToSoleOffset = 1.2f;
 
     [Header("Referencias")]
     [SerializeField] private Transform bodyRoot;
@@ -28,8 +30,8 @@ public class ProceduralLeg : MonoBehaviour
     [Header("Escalones y Geometría de Pie")]
     [SerializeField] private float maxClimbableStepHeight = 4.5f;
     [SerializeField] private float stepAnticipationDistance = 5.5f;
-    [SerializeField] private float footToeForwardOffset = 5.6f;
-    [SerializeField] private float footHalfWidth = 3.4f;
+    [SerializeField] private float footToeForwardOffset = 4.2f;
+    [SerializeField] private float footHalfWidth = 2.6f;
     [SerializeField] private float footRadius = 1.3f;
 #pragma warning restore 0414
 
@@ -88,10 +90,12 @@ public class ProceduralLeg : MonoBehaviour
     public float CurrentSlopeAngle => _currentSlopeAngle;
     public Vector3 HomeTargetPosition => _homeTargetPos;
     public Vector3 HipWorldPosition => ikSolver != null && ikSolver.hip != null ? ikSolver.hip.position : transform.position;
-    public float MaxPhysicalReach => physicsConfig != null ? physicsConfig.maxLegExtension : 22.8f;
+    public float FemurLength { get => femurLength; set { femurLength = value; if (ikSolver != null) ikSolver.UpperLength = value; } }
+    public float TibiaLength { get => tibiaLength; set { tibiaLength = value; if (ikSolver != null) ikSolver.LowerLength = value; } }
+    public float MaxPhysicalReach => physicsConfig != null ? physicsConfig.maxLegExtension : (femurLength + tibiaLength);
     public TwoBoneIKSolver IKSolver => ikSolver;
     public float AnkleToSoleOffset => ankleToSoleOffset;
-    public float LegReach => ikSolver != null && ikSolver.TotalLength > 0.1f ? ikSolver.TotalLength : MaxPhysicalReach;
+    public float LegReach => femurLength + tibiaLength;
 
     public void SetLocalRestOffset(Vector3 offset) => localRestOffset = offset;
 
@@ -106,9 +110,11 @@ public class ProceduralLeg : MonoBehaviour
         if (groundMask.value == 0)
             groundMask = ~LayerMask.GetMask("Player", "Ignore Raycast");
 
+        ikSolver.UpperLength = femurLength;
+        ikSolver.LowerLength = tibiaLength;
         ikSolver.Initialize();
 
-        float defaultRide = physicsConfig != null ? physicsConfig.nominalRideHeight : 21.2f;
+        float defaultRide = physicsConfig != null ? physicsConfig.nominalRideHeight : 20.5f;
         Vector3 initPos = HipWorldPosition + Vector3.down * defaultRide;
         _currentFootPos = ikSolver.ankle != null ? ikSolver.ankle.position : initPos;
         _currentFootRot = bodyRoot != null ? bodyRoot.rotation : transform.rotation;

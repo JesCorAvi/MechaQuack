@@ -50,7 +50,7 @@ MonoBehaviour:
   label: "GIRO DER \u25BA"
   type: 0
   buttonColor: {r: 0, g: 1, b: 0, a: 1}
-  detectionRadius: 1.6
+  detectionRadius: 1.35
   capTransform: {fileID: 6433397402086369277}
   pressDepth: 0.16
   sinkSpeed: 16
@@ -82,8 +82,8 @@ Transform:
   m_GameObject: {fileID: 1741205530736278822}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.28, z: 0}
-  m_LocalScale: {x: 2.6, y: 0.28, z: 2.6}
+  m_LocalPosition: {x: 0, y: 0.22, z: 0}
+  m_LocalScale: {x: 1.9, y: 0.22, z: 1.9}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 5686160158523807125}
@@ -122,7 +122,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 5ffc808e1835d00419fd9edb98203962, type: 2}
+  - {fileID: 2100000, guid: f8aaa5cb188a5334cbaf4b948c1ec711, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -174,7 +174,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 2.9899998, y: 0.22, z: 2.9899998}
+  m_LocalScale: {x: 2.185, y: 0.18, z: 2.185}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6411570077209100779}
@@ -355,7 +355,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 1.05, z: 0}
-  m_LocalScale: {x: 0.092307694, y: 0.092307694, z: 0.092307694}
+  m_LocalScale: {x: 0.12631579, y: 0.12631579, z: 0.12631579}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6433397402086369277}
@@ -419,12 +419,12 @@ TextMesh:
   m_GameObject: {fileID: 7641981011034133041}
   m_Text: "GIRO DER \u25BA"
   m_OffsetZ: 0
-  m_CharacterSize: 0.26
+  m_CharacterSize: 0.28
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
   m_TabSize: 4
-  m_FontSize: 24
+  m_FontSize: 28
   m_FontStyle: 1
   m_RichText: 1
   m_Font: {fileID: 0}

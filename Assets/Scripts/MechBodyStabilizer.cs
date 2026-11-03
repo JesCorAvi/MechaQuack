@@ -124,8 +124,8 @@ public class MechBodyStabilizer : MonoBehaviour
             targetHeight = baseRideHeight - landingSquash;
 
             // 2. Roll (inclinación lateral por diferencia de altura entre pies)
-            // Ancho real entre caderas = 16.8m (±8.4m)
-            float rollRad = Mathf.Atan2(heightDelta, 16.8f);
+            // Ancho real entre caderas = 12.0m (±6.0m)
+            float rollRad = Mathf.Atan2(heightDelta, 12.0f);
             float terrainRoll = Mathf.Clamp(rollRad * Mathf.Rad2Deg, -maxTerrainTilt, maxTerrainTilt);
 
             // 3. Pitch (inclinación longitudinal según la normal del terreno)
