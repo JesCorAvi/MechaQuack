@@ -180,6 +180,7 @@ public static class SetupGunnerAimPad
         ctm.alignment = TextAlignment.Center;
         ctm.fontStyle = FontStyle.Bold;
         ctm.color = Color.white;
+        TextShaderUtility.ApplyZTesting(ctm);
 
         // Rótulos cardinales de puntería
         void AddDirectionLabel(string text, Vector3 lPos, Color col)
@@ -197,6 +198,7 @@ public static class SetupGunnerAimPad
             tm.alignment = TextAlignment.Center;
             tm.fontStyle = FontStyle.Bold;
             tm.color = col;
+            TextShaderUtility.ApplyZTesting(tm);
         }
 
         AddDirectionLabel("▲ ELEVAR (+)", new Vector3(0f, 0.15f, 1.25f), Color.green);

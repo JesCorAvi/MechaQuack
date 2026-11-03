@@ -72,10 +72,27 @@ public class WindshieldHUDCrosshair : MonoBehaviour
         {
             Destroy(oldBlueDot.gameObject);
         }
+
+        // Aplicar Z-Testing a todos los rótulos holográficos
+        TextShaderUtility.ApplyZTestingToAllChildren(gameObject);
     }
 
     private void Update()
     {
+        // Ocultar HUD del parabrisas cuando la cámara está en el exterior a gran distancia
+        if (CockpitCameraController.Instance != null)
+        {
+            bool isExteriorFar = CockpitCameraController.Instance.IsCaptainExteriorUnlocked && CockpitCameraController.Instance.CurrentDistance > 14f;
+            var renderers = GetComponentsInChildren<Renderer>();
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                if (renderers[i] != null && renderers[i].enabled == isExteriorFar)
+                {
+                    renderers[i].enabled = !isExteriorFar;
+                }
+            }
+        }
+
         UpdateHUDPositionOnWindshield();
         ScanForwardTargets();
         UpdateRecoilAndAnimation(Time.deltaTime);
@@ -372,6 +389,8 @@ public class WindshieldHUDCrosshair : MonoBehaviour
         tm.alignment = anchor == TextAnchor.MiddleLeft ? TextAlignment.Left : (anchor == TextAnchor.MiddleRight ? TextAlignment.Right : TextAlignment.Center);
         tm.fontStyle = FontStyle.Bold;
         tm.color = normalColor;
+
+        TextShaderUtility.ApplyZTesting(tm);
 
         return tm;
     }

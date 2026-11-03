@@ -632,73 +632,20 @@ public static class MechaProvingGroundsGenerator
         height = Mathf.Max(height, 68f); // 68m de altura libre para Mecha de 50m
         spanWidth = Mathf.Max(spanWidth, 96f);
 
-        // Postes y vigas sin colisionador
+        // Postes y vigas estructurales limpias sin textos flotantes
         CreateBlock("Pillar_L", gantry.transform, pos + new Vector3(-spanWidth * 0.5f, height * 0.5f, 0f), new Vector3(3.6f, height, 3.6f), Quaternion.identity, frameMat, false);
         CreateBlock("Pillar_R", gantry.transform, pos + new Vector3(spanWidth * 0.5f, height * 0.5f, 0f), new Vector3(3.6f, height, 3.6f), Quaternion.identity, frameMat, false);
         CreateBlock("Crossbeam", gantry.transform, pos + new Vector3(0f, height - 1.4f, 0f), new Vector3(spanWidth + 4.0f, 3.2f, 3.6f), Quaternion.identity, frameMat, false);
-
-        GameObject board = CreateBlock("SignBoard", gantry.transform, pos + new Vector3(0f, height - 1.4f, -1.8f), new Vector3(spanWidth - 8.0f, 5.5f, 0.7f), Quaternion.identity, frameMat, false);
-
-        GameObject textObj = new GameObject("Label3D");
-        textObj.transform.parent = board.transform;
-        textObj.transform.localPosition = new Vector3(0f, 0f, -0.6f);
-        textObj.transform.localRotation = Quaternion.identity;
-        textObj.transform.localScale = Vector3.one * 0.25f;
-
-        TextMesh tm = textObj.AddComponent<TextMesh>();
-        tm.text = text;
-        tm.fontSize = 44;
-        tm.characterSize = 0.5f;
-        tm.anchor = TextAnchor.MiddleCenter;
-        tm.alignment = TextAlignment.Center;
-        tm.fontStyle = FontStyle.Bold;
-        tm.color = textMat != null ? textMat.color : Color.cyan;
     }
 
     private static void CreateDirectionPillar(Transform parent, Vector3 pos, string text, MaterialPalette pal)
     {
-        GameObject pillar = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        pillar.name = "Central_Info_Kiosk";
-        pillar.transform.parent = parent;
-        pillar.transform.position = pos + Vector3.up * 7.0f;
-        pillar.transform.localScale = new Vector3(4.5f, 7.0f, 4.5f);
-        if (pal.matWall != null) pillar.GetComponent<MeshRenderer>().material = pal.matWall;
-
-        var col = pillar.GetComponent<Collider>();
-        if (col != null) UnityEngine.Object.DestroyImmediate(col);
-
-        GameObject textObj = new GameObject("InfoText");
-        textObj.transform.parent = pillar.transform;
-        textObj.transform.localPosition = new Vector3(0f, 0.3f, -1.35f);
-        textObj.transform.localRotation = Quaternion.identity;
-        textObj.transform.localScale = Vector3.one * 0.15f;
-
-        TextMesh tm = textObj.AddComponent<TextMesh>();
-        tm.text = text;
-        tm.fontSize = 32;
-        tm.characterSize = 0.28f;
-        tm.anchor = TextAnchor.MiddleCenter;
-        tm.alignment = TextAlignment.Center;
-        tm.fontStyle = FontStyle.Bold;
-        tm.color = Color.white;
+        // Sin textos flotantes en el mapa
     }
 
     private static void CreateGroundLabel(Transform parent, Vector3 pos, string text, MaterialPalette pal)
     {
-        GameObject labelObj = new GameObject($"Label_{pos.x:F0}_{pos.z:F0}");
-        labelObj.transform.parent = parent;
-        labelObj.transform.position = pos;
-        labelObj.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
-        labelObj.transform.localScale = Vector3.one * 0.18f;
-
-        TextMesh tm = labelObj.AddComponent<TextMesh>();
-        tm.text = text;
-        tm.fontSize = 30;
-        tm.characterSize = 0.32f;
-        tm.anchor = TextAnchor.MiddleCenter;
-        tm.alignment = TextAlignment.Center;
-        tm.fontStyle = FontStyle.Bold;
-        tm.color = pal.matHazard != null ? pal.matHazard.color : Color.yellow;
+        // Sin textos flotantes en el mapa
     }
     #endregion
 }

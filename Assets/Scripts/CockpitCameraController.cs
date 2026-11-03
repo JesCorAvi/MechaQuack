@@ -44,6 +44,16 @@ public class CockpitCameraController : MonoBehaviour
     private int currentFloor = 1;
     private int previousFloor = 1;
 
+    [Header("Zona de Mando del Capitán (Círculo Planta 3)")]
+    [Tooltip("Centro local del círculo de mando del Capitán en coordenadas de cabina")]
+    [SerializeField] private Vector3 captainCircleCenter = new Vector3(0f, 9.2f, 1.5f);
+    [Tooltip("Radio de detección nominal para entrar al círculo de mando")]
+    [SerializeField] private float captainCircleRadius = 2.2f;
+    [Tooltip("Radio de histéresis para salir del círculo (evita oscilaciones rápidas en el borde)")]
+    [SerializeField] private float captainCircleExitRadius = 2.55f;
+    [SerializeField] private bool isInCaptainCircle = false;
+    private bool wasInCaptainCircle = false;
+
     // Buffer preasignado para evitar GC allocations en SphereCast
     private readonly RaycastHit[] camObstacleHits = new RaycastHit[16];
 
@@ -51,7 +61,10 @@ public class CockpitCameraController : MonoBehaviour
     public float TargetDistance => targetDistance;
     public bool IsCursorLocked => isCursorLocked;
     public int CurrentFloor => currentFloor;
-    public bool IsCaptainExteriorUnlocked => currentFloor == 3;
+    public bool IsInCaptainCircle => isInCaptainCircle;
+    public bool IsCaptainExteriorUnlocked => isInCaptainCircle;
+    public Vector3 CaptainCircleCenter => captainCircleCenter;
+    public float CaptainCircleRadius => captainCircleRadius;
 
     private void Awake()
     {
@@ -84,6 +97,32 @@ public class CockpitCameraController : MonoBehaviour
         pitch = 22f;
         currentDistance = 5.6f;
         targetDistance = 5.6f;
+
+        // Auto-sincronización con el pedestal del capitán si está presente en la jerarquía
+        if (CaptainCommandPedestal.Instance != null)
+        {
+            captainCircleCenter = CaptainCommandPedestal.Instance.transform.localPosition;
+            captainCircleRadius = CaptainCommandPedestal.Instance.Radius;
+            captainCircleExitRadius = CaptainCommandPedestal.Instance.ExitRadius;
+        }
+        else if (mechaRoot != null)
+        {
+            var allTransforms = mechaRoot.GetComponentsInChildren<Transform>(true);
+            for (int i = 0; i < allTransforms.Length; i++)
+            {
+                if (allTransforms[i] != null && allTransforms[i].name == "Captain_Command_Pedestal")
+                {
+                    captainCircleCenter = allTransforms[i].localPosition;
+                    float r = allTransforms[i].localScale.x * 0.5f;
+                    if (r > 0.5f)
+                    {
+                        captainCircleRadius = r;
+                        captainCircleExitRadius = r + 0.35f;
+                    }
+                    break;
+                }
+            }
+        }
 
         if (lockCursorOnStart)
         {
@@ -141,37 +180,69 @@ public class CockpitCameraController : MonoBehaviour
         var keyboard = Keyboard.current;
         var mouse = Mouse.current;
 
-        // 1. Detectar planta del pato para aplicar reglas de cámara
+        // 1. Detectar planta del pato para aplicar reglas de navegación y HUD
         int detectedFloor = currentFloor;
         if (duckTarget != null)
         {
             float dy = duckTarget.localPosition.y;
             if (dy < 3.0f) detectedFloor = 1;
-            else if (dy < 7.5f) detectedFloor = 2;
+            else if (dy < 8.4f) detectedFloor = 2; // Calibrado a 8.4m para que las escaleras no activen P3 a mitad de trayecto
             else detectedFloor = 3;
         }
 
-        // Transición de planta: el Capitán sube a la cabeza del Mecha y no necesita ver por ventanas
-        // porque al entrar pasa AUTOMÁTICAMENTE a vista exterior en 3ª persona.
         if (detectedFloor != currentFloor)
         {
             previousFloor = currentFloor;
             currentFloor = detectedFloor;
+        }
 
-            if (currentFloor == 3)
+        // 2. Detección física estricta del Círculo Marcado del Capitán (Planta 3)
+        // La cámara exterior en 3ª persona NO se activa por pisar la planta, sino ÚNICAMENTE al entrar en el círculo marcado
+        bool insideCircle = false;
+        if (duckTarget != null)
+        {
+            Vector3 dLocal = duckTarget.localPosition;
+            if (CaptainCommandPedestal.Instance != null)
             {
-                // ¡ENTRADA A LA CABEZA DEL MECHA!
+                insideCircle = CaptainCommandPedestal.Instance.CheckDuckInside(dLocal, isInCaptainCircle);
+            }
+            else
+            {
+                // Verificación analítica robusta con histéresis anti-rebote
+                bool atCaptainHeight = dLocal.y >= 8.4f && dLocal.y <= 15.0f;
+                if (atCaptainHeight)
+                {
+                    float dx = dLocal.x - captainCircleCenter.x;
+                    float dz = dLocal.z - captainCircleCenter.z;
+                    float distXZ = Mathf.Sqrt(dx * dx + dz * dz);
+                    float threshold = isInCaptainCircle ? captainCircleExitRadius : captainCircleRadius;
+                    insideCircle = distXZ <= threshold;
+                }
+            }
+        }
+
+        isInCaptainCircle = insideCircle;
+
+        // Transición reactiva exclusiva de entrada/salida del círculo de mando
+        if (isInCaptainCircle != wasInCaptainCircle)
+        {
+            wasInCaptainCircle = isInCaptainCircle;
+
+            if (isInCaptainCircle)
+            {
+                // ¡ENTRADA AL CÍRCULO MARCADO DEL CAPITÁN!
                 // Activar automáticamente la cámara exterior en 3ª persona del titán de 50 metros
                 targetDistance = captainExteriorDistance;
                 pitch = 18f;
                 if (duckTarget != null)
                 {
-                    FloatingText.Spawn(duckTarget.position + Vector3.up * 1.5f, "👑 CABEZA DEL MECHA: ¡3ª PERSONA AUTOMÁTICA!", Color.cyan, 0.45f);
+                    FloatingText.Spawn(duckTarget.position + Vector3.up * 1.5f, "👑 PUESTO DEL CAPITÁN: ¡3ª PERSONA ACTIVADA!", Color.cyan, 0.45f);
                 }
+                ProceduralAudio.Instance?.PlayButtonClick();
             }
-            else if (previousFloor == 3)
+            else
             {
-                // Salida de la cabeza del Mecha hacia Planta 2 (Artillero) o Planta 1 (Conductor):
+                // ¡SALIDA DEL CÍRCULO MARCADO!
                 // Replegar inmediatamente la cámara al interior estricto de la cabina
                 targetDistance = maxInteriorDistance;
                 if (currentMode == CameraMode.SpectatorDrone)
@@ -179,11 +250,15 @@ public class CockpitCameraController : MonoBehaviour
                     currentMode = CameraMode.FreeOrbit;
                     MechaHUD.Instance?.UpdateCameraModeLabel(GetModeLabel());
                 }
+                if (duckTarget != null)
+                {
+                    FloatingText.Spawn(duckTarget.position + Vector3.up * 1.5f, "🛡️ CABINA INTERIOR: VISTA REPLEGADA", Color.white, 0.35f);
+                }
             }
         }
 
-        // REGLA ESTRICTA: En Niveles 1 (Conductor) y 2 (Artillero), vista exterior estrictamente bloqueada
-        if (currentFloor < 3)
+        // REGLA ESTRICTA: Fuera del círculo del capitán, la vista exterior permanece estrictamente bloqueada
+        if (!isInCaptainCircle)
         {
             if (targetDistance > maxInteriorDistance)
             {
@@ -249,7 +324,7 @@ public class CockpitCameraController : MonoBehaviour
                     MechaHUD.Instance?.UpdateCameraModeLabel(GetModeLabel());
                 }
 
-                if (currentMode == CameraMode.SpectatorDrone && currentFloor == 3)
+                if (currentMode == CameraMode.SpectatorDrone && IsCaptainExteriorUnlocked)
                 {
                     droneYaw += delta.x * mouseSensitivity * 0.1f;
                     dronePitch = Mathf.Clamp(dronePitch - delta.y * mouseSensitivity * 0.1f, -80f, 80f);
@@ -286,7 +361,7 @@ public class CockpitCameraController : MonoBehaviour
             MechaHUD.Instance?.UpdateCameraModeLabel(GetModeLabel());
         }
 
-        float effectiveMaxDist = currentFloor == 3 ? maxDistance : maxInteriorDistance;
+        float effectiveMaxDist = IsCaptainExteriorUnlocked ? maxDistance : maxInteriorDistance;
 
         // Escala dinámica: más veloz a mayor distancia para no tener que dar mil vueltas a la rueda
         float dynamicSpeed = zoomStep * (1f + (targetDistance / maxDistance) * 1.5f);
@@ -346,7 +421,7 @@ public class CockpitCameraController : MonoBehaviour
         {
             // Planta 3: Capitán
             boxMinY = 9.20f;
-            boxMaxY = 15.0f;
+            boxMaxY = 14.10f; // Calibrado para no recortar con el techo de la cabeza (14.5m)
         }
 
         float maxInteriorDist = 12.0f;
@@ -391,9 +466,9 @@ public class CockpitCameraController : MonoBehaviour
         Vector3 lookTargetLocal;
 
         // REGLA ESTRICTA DE CÁMARA:
-        // En Plantas 1 y 2, siempre restringido al interior.
-        // En Planta 3 (Capitán / Cabeza del Mecha), la vista exterior en 3ª persona encuadra al titán colosal de 50 metros.
-        if (currentFloor < 3 || targetDistance <= maxInteriorDistance)
+        // En Plantas 1 y 2, y en Planta 3 FUERA del círculo de mando, la vista está estrictamente restringida al interior.
+        // Únicamente cuando el pato entra al CÍRCULO MARCADO del Capitán, la vista exterior en 3ª persona se activa.
+        if (!IsCaptainExteriorUnlocked || targetDistance <= maxInteriorDistance)
         {
             // VISTA INTERIOR CABINA
             float safeCockpitDist = Mathf.Min(currentDistance, maxInteriorDist);
@@ -455,7 +530,7 @@ public class CockpitCameraController : MonoBehaviour
 
     private void UpdateSpectatorDrone()
     {
-        if (currentFloor < 3)
+        if (!IsCaptainExteriorUnlocked)
         {
             currentMode = CameraMode.FreeOrbit;
             return;
@@ -493,13 +568,13 @@ public class CockpitCameraController : MonoBehaviour
 
     public void ToggleMode()
     {
-        if (currentFloor < 3)
+        if (!IsCaptainExteriorUnlocked)
         {
-            // En Niveles 1 y 2, sólo se puede alternar entre Órbita Libre y Fija de Cabina (Dron bloqueado)
+            // Fuera del círculo del capitán, sólo se puede alternar entre Órbita Libre y Fija de Cabina (Dron bloqueado)
             currentMode = currentMode == CameraMode.FreeOrbit ? CameraMode.FixedCockpit : CameraMode.FreeOrbit;
             if (duckTarget != null)
             {
-                FloatingText.Spawn(duckTarget.position + Vector3.up * 1.4f, "⚠️ 3ª PERSONA / DRON: EXCLUSIVO DEL CAPITÁN (PLANTA 3)", Color.yellow, 0.35f);
+                FloatingText.Spawn(duckTarget.position + Vector3.up * 1.4f, "⚠️ 3ª PERSONA / DRON: EXCLUSIVO DEL CÍRCULO DEL CAPITÁN", Color.yellow, 0.35f);
             }
         }
         else
@@ -519,7 +594,7 @@ public class CockpitCameraController : MonoBehaviour
 
     public void SetTargetZoom(float dist)
     {
-        float maxD = currentFloor == 3 ? maxDistance : maxInteriorDistance;
+        float maxD = IsCaptainExteriorUnlocked ? maxDistance : maxInteriorDistance;
         targetDistance = Mathf.Clamp(dist, minDistance, maxD);
         if (currentMode == CameraMode.FixedCockpit)
         {
@@ -546,6 +621,19 @@ public class CockpitCameraController : MonoBehaviour
             case CameraMode.SpectatorDrone: return "DRON VUELO (FLECHAS)";
             case CameraMode.FixedCockpit: return "FIJA CABINA";
             default: return "ÓRBITA LIBRE";
+        }
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        Transform tr = duckTarget != null && duckTarget.parent != null ? duckTarget.parent : transform;
+        if (tr != null)
+        {
+            Vector3 worldCenter = tr.TransformPoint(captainCircleCenter);
+            Gizmos.color = isInCaptainCircle ? Color.cyan : new Color(0f, 1f, 1f, 0.35f);
+            Gizmos.DrawWireSphere(worldCenter, captainCircleRadius);
+            Gizmos.color = new Color(1f, 0.92f, 0.016f, 0.25f);
+            Gizmos.DrawWireSphere(worldCenter, captainCircleExitRadius);
         }
     }
 }

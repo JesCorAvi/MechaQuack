@@ -23,7 +23,7 @@ public class DuckController : MonoBehaviour
     [SerializeField] private float rotationSpeed = 16f;
 
     [Header("Salto y Culazo")]
-    [SerializeField] private float jumpForce = 15.5f;
+    [SerializeField] private float jumpForce = 10.5f;
     [SerializeField] private float stompSpeed = 32f;
     [SerializeField] private float gravity = 36f;
     [SerializeField] private float stepSnapOffset = 0.85f; // Absorción suave de escalones al correr
@@ -75,15 +75,15 @@ public class DuckController : MonoBehaviour
     /// <summary>
     /// Nivel actual del pato dentro de la cabina de 3 pisos:
     /// 1 = Planta Conductor (Y < 3.0m)
-    /// 2 = Planta Artillero (3.0m <= Y < 7.5m)
-    /// 3 = Planta Capitán / Puente de Mando (Y >= 7.5m)
+    /// 2 = Planta Artillero (3.0m <= Y < 8.4m)
+    /// 3 = Planta Capitán / Puente de Mando (Y >= 8.4m)
     /// </summary>
     public int CurrentFloorLevel
     {
         get
         {
             if (localPos.y < 3.0f) return 1;
-            if (localPos.y < 7.5f) return 2;
+            if (localPos.y < 8.4f) return 2; // Calibrado a 8.4m para no detectar Planta 3 a mitad de la escalera física
             return 3;
         }
     }
@@ -96,7 +96,11 @@ public class DuckController : MonoBehaviour
             {
                 case 1: return "PLANTA 1: CONDUCTOR [Búnker Blindado - Guiado por Capitán]";
                 case 2: return "PLANTA 2: ARTILLERO [Ventanales Panorámicos - Puntería Despejada]";
-                case 3: return "PLANTA 3: CABEZA DEL MECHA [Capitán - 3ª Persona Automática]";
+                case 3:
+                    if (CockpitCameraController.Instance != null && CockpitCameraController.Instance.IsInCaptainCircle)
+                        return "PLANTA 3: CABEZA DEL MECHA [Puesto de Mando - 3ª Persona Activa]";
+                    else
+                        return "PLANTA 3: CABEZA DEL MECHA [Puente de Mando - Interior]";
                 default: return "PLANTA 1: CONDUCTOR";
             }
         }
@@ -105,6 +109,12 @@ public class DuckController : MonoBehaviour
     private void Awake()
     {
         Instance = this;
+
+        // Limitar la fuerza de salto para no atravesar techos entre plantas (máximo 10.5 m/s)
+        if (jumpForce > 11.5f)
+        {
+            jumpForce = 10.5f;
+        }
 
         // Si tenía Rigidbody o Colliders que causen conflictos, asegurarlos
         Rigidbody rb = GetComponent<Rigidbody>();
@@ -123,7 +133,8 @@ public class DuckController : MonoBehaviour
 
         if (visualTransform != null)
         {
-            initialVisualScale = visualTransform.localScale;
+            initialVisualScale = Vector3.one;
+            visualTransform.localScale = Vector3.one;
             if (leftWingTransform == null) leftWingTransform = visualTransform.Find("Duck_Wing_L");
             if (rightWingTransform == null) rightWingTransform = visualTransform.Find("Duck_Wing_R");
         }
@@ -132,8 +143,49 @@ public class DuckController : MonoBehaviour
         localYaw = transform.localEulerAngles.y;
     }
 
+    private static bool mapTextsCleaned = false;
+
+    private void Start()
+    {
+        CleanFloatingMapTexts();
+    }
+
+    private void CleanFloatingMapTexts()
+    {
+        if (mapTextsCleaned) return;
+        mapTextsCleaned = true;
+
+        var textMeshes = Object.FindObjectsByType<TextMesh>(FindObjectsSortMode.None);
+        for (int i = 0; i < textMeshes.Length; i++)
+        {
+            var tm = textMeshes[i];
+            if (tm == null) continue;
+            if (tm.transform.IsChildOf(transform)) continue;
+            if (transform.parent != null && tm.transform.IsChildOf(transform.parent)) continue;
+
+            Destroy(tm.gameObject);
+        }
+
+        var transforms = Object.FindObjectsByType<Transform>(FindObjectsSortMode.None);
+        for (int i = 0; i < transforms.Length; i++)
+        {
+            var tr = transforms[i];
+            if (tr == null) continue;
+            string n = tr.name;
+            if (n == "SignBoard" || n == "Central_Info_Kiosk" || n == "Label3D" || n == "InfoText" || n.StartsWith("Label_"))
+            {
+                if (transform.parent == null || !tr.IsChildOf(transform.parent))
+                {
+                    Destroy(tr.gameObject);
+                }
+            }
+        }
+    }
+
     private void Update()
     {
+        if (!mapTextsCleaned) CleanFloatingMapTexts();
+
         if (MechaController.Instance != null && MechaController.Instance.IsGameOver)
         {
             localVel = Vector3.zero;
@@ -279,15 +331,18 @@ public class DuckController : MonoBehaviour
         localPos.x += localVel.x * dt;
         localPos.z += localVel.z * dt;
 
+        // Determinar altura de techo permitida según la planta y si está en caja de escaleras
+        float ceilingCenterY = GetCeilingCenterY(localPos.x, localPos.y, localPos.z);
+
         // 2. Detección de suelo multinivel robusta (Planta 1, Planta 2, Planta 3 y Escaleras)
         float detectedFloorY = 0f;
         bool foundFloor = false;
 
         if (parentCockpit != null)
         {
-            // Lanzar raycast vertical desde una altura suficiente (localPos.y + 1.2m)
-            // para que el origen NUNCA quede dentro de un escalón o rampa ascendente
-            Vector3 worldOrigin = parentCockpit.TransformPoint(new Vector3(localPos.x, localPos.y + 1.2f, localPos.z));
+            // El origen del raycast nunca debe exceder el techo de la planta actual
+            float rayOriginY = Mathf.Min(localPos.y + 1.0f, ceilingCenterY + 0.35f);
+            Vector3 worldOrigin = parentCockpit.TransformPoint(new Vector3(localPos.x, rayOriginY, localPos.z));
             Vector3 worldDown = parentCockpit.TransformDirection(Vector3.down);
             int hitCount = Physics.RaycastNonAlloc(worldOrigin, worldDown, groundHits, 24.0f, ~LayerMask.GetMask("Player", "Ignore Raycast"), QueryTriggerInteraction.Ignore);
 
@@ -301,6 +356,17 @@ public class DuckController : MonoBehaviour
                 if (h.collider.transform.IsChildOf(transform)) continue;
 
                 Vector3 localHitPoint = parentCockpit.InverseTransformPoint(h.point);
+
+                // FILTRADO ESTRICTO DE SUELO:
+                // Tránsito vertical EXCLUSIVO por escaleras. Prohibido saltar o teleportarse entre plantas.
+                // 1) Si está en Planta 1 y fuera de la caja de escaleras 1, rechazar suelo de plantas superiores (Y >= 3.0m)
+                if (localPos.y < 3.8f && !IsInStairwell1(localPos.x, localPos.z) && localHitPoint.y >= 3.0f)
+                    continue;
+
+                // 2) Si está en Planta 2 y fuera de la caja de escaleras 2, rechazar suelo de Planta 3 (Y >= 7.5m)
+                if (localPos.y >= 3.8f && localPos.y < 8.4f && !IsInStairwell2(localPos.x, localPos.z) && localHitPoint.y >= 7.5f)
+                    continue;
+
                 // Considerar impactos en o por debajo del pato (con holgura de escalón stepSnapOffset)
                 if (localHitPoint.y <= localPos.y + stepSnapOffset + 0.35f && localHitPoint.y > highestLocalY)
                 {
@@ -315,9 +381,9 @@ public class DuckController : MonoBehaviour
             }
             else
             {
-                // Fallback seguro por plantas para evitar caídas catastróficas al vacío si un raycast falla
-                if (localPos.y >= 7.0f) detectedFloorY = 9.0f;
-                else if (localPos.y >= 2.5f) detectedFloorY = 4.5f;
+                // Fallback seguro que conserva la planta actual del pato y NUNCA lo catapulta arriba
+                if (localPos.y >= 8.4f) detectedFloorY = 9.0f;
+                else if (localPos.y >= 3.8f) detectedFloorY = 4.5f;
                 else detectedFloorY = 0.0f;
             }
         }
@@ -341,14 +407,17 @@ public class DuckController : MonoBehaviour
             }
             else if (diff > stepSnapOffset)
             {
-                // El pato ha dejado de tocar suelo (salto voluntario o caída libre por el hueco)
+                // El pato ha dejado de tocar suelo (salto voluntario o caída libre)
                 isGrounded = false;
             }
             else if (diff < -stepSnapOffset)
             {
-                // El pato se encuentra por debajo de una rampa que sube rápido: ajustar a la superficie
-                localPos.y = currentFloorY;
-                localVel.y = 0f;
+                // Solo ajustar a rampas cercanas (no saltar plantas completas)
+                if (Mathf.Abs(diff) <= stepSnapOffset * 1.5f)
+                {
+                    localPos.y = currentFloorY;
+                    localVel.y = 0f;
+                }
             }
         }
 
@@ -357,6 +426,13 @@ public class DuckController : MonoBehaviour
         {
             localVel.y -= gravity * dt;
             localPos.y += localVel.y * dt;
+
+            // Bloqueo de techo físico: frenar en seco al chocar la cabeza contra el techo
+            if (localPos.y > ceilingCenterY)
+            {
+                localPos.y = ceilingCenterY;
+                if (localVel.y > 0f) localVel.y = 0f;
+            }
 
             if (localPos.y <= currentFloorY)
             {
@@ -380,6 +456,53 @@ public class DuckController : MonoBehaviour
         if (localPos.z >  cockpitHalfZ) { localPos.z =  cockpitHalfZ; localVel.z *= -0.3f; }
         if (localPos.y >  cockpitMaxY)  { localPos.y =  cockpitMaxY;  localVel.y = 0f; }
         if (localPos.y <  0.5f)         { localPos.y =  0.5f;          localVel.y = 0f; isGrounded = true; }
+    }
+
+    /// <summary>
+    /// Simula un paso de físicas locales para verificación y pruebas.
+    /// </summary>
+    public void SimulatePhysicsStep(float dt)
+    {
+        UpdatePhysics(dt);
+    }
+
+    /// <summary>
+    /// Comprueba si las coordenadas locales corresponden a la caja de la escalera 1 (Planta 1 -> Planta 2).
+    /// </summary>
+    public bool IsInStairwell1(float x, float z)
+    {
+        return (x >= 5.5f && x <= 8.9f && z >= -5.5f && z <= 4.5f);
+    }
+
+    /// <summary>
+    /// Comprueba si las coordenadas locales corresponden a la caja de la escalera 2 (Planta 2 -> Planta 3).
+    /// </summary>
+    public bool IsInStairwell2(float x, float z)
+    {
+        return (x >= -8.9f && x <= -5.5f && z >= -5.5f && z <= 4.5f);
+    }
+
+    /// <summary>
+    /// Calcula la altura máxima de techo (en coordenadas locales de cabina) permitida para el centro del pato
+    /// según su posición actual. Evita atravesar techos a otras plantas a menos que esté en la escalera.
+    /// </summary>
+    public float GetCeilingCenterY(float x, float y, float z)
+    {
+        if (y < 3.8f)
+        {
+            // Planta 1: si está en la caja de escalera 1, tiene hueco hacia arriba; si no, techo sólido a 3.6m
+            return IsInStairwell1(x, z) ? 8.1f : 3.6f;
+        }
+        else if (y < 8.4f)
+        {
+            // Planta 2: si está en la caja de escalera 2, tiene hueco hacia arriba; si no, techo sólido a 8.1m
+            return IsInStairwell2(x, z) ? 13.8f : 8.1f;
+        }
+        else
+        {
+            // Planta 3: techo de la cabeza del Mecha a 13.8m
+            return 13.8f;
+        }
     }
 
     private void CheckButtons()
@@ -506,6 +629,7 @@ public class DuckController : MonoBehaviour
     {
         localPos = targetLocalPos;
         localVel = Vector3.zero;
+        currentFloorY = targetLocalPos.y;
         transform.localPosition = localPos;
         isGrounded = true;
         isStomping = false;
@@ -536,6 +660,9 @@ public class DuckController : MonoBehaviour
 
     private void TriggerSquash(float horizontalScale, float verticalScale, float duration)
     {
+        // En modo edición no alterar la escala para no serializar el pato deformado en la escena
+        if (!Application.isPlaying) return;
+
         squashTimer = duration;
         if (visualTransform != null)
         {

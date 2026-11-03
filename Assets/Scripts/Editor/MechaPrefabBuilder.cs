@@ -189,7 +189,7 @@ public static class MechaPrefabBuilder
             duckSO.FindProperty("cockpitHalfZ").floatValue = 7.8f;
             duckSO.FindProperty("cockpitMaxY").floatValue = 16.0f;
             duckSO.FindProperty("moveSpeed").floatValue = 14.0f;
-            duckSO.FindProperty("jumpForce").floatValue = 15.5f;
+            duckSO.FindProperty("jumpForce").floatValue = 10.5f;
             duckSO.FindProperty("stompSpeed").floatValue = 32.0f;
             duckSO.ApplyModifiedProperties();
 
@@ -229,6 +229,7 @@ public static class MechaPrefabBuilder
             tm.alignment = TextAlignment.Center;
             tm.fontStyle = FontStyle.Bold;
             tm.color = Color.white;
+            TextShaderUtility.ApplyZTesting(tm);
 
             SerializedObject btnSO = new SerializedObject(cfb);
             btnSO.FindProperty("buttonId").stringValue = btnId;
@@ -473,6 +474,7 @@ public static class MechaPrefabBuilder
 
             // Pedestal de mando del Capitán
             GameObject captainPedestal = CreatePrimitive(PrimitiveType.Cylinder, "Captain_Command_Pedestal", domeRoot.transform, new Vector3(0f, 9.2f, 1.5f), new Vector3(4.4f, 0.2f, 4.4f), Quaternion.identity, matGunmetal, true);
+            captainPedestal.AddComponent<CaptainCommandPedestal>();
             CreatePrimitive(PrimitiveType.Cylinder, "Pedestal_Hazard_Ring", captainPedestal.transform, new Vector3(0f, 0.52f, 0f), new Vector3(1.02f, 0.2f, 1.02f), Quaternion.identity, matHazard);
             CreatePrimitive(PrimitiveType.Cylinder, "Captain_Holo_Disc", captainPedestal.transform, new Vector3(0f, 0.55f, 0f), new Vector3(0.7f, 0.05f, 0.7f), Quaternion.identity, matBtnCyan);
 

@@ -13,9 +13,9 @@
 - **Mecánica Central de Control**: El pato no dispone de mandos convencionales; para controlar la locomoción y el arsenal del mecha debe **correr, saltar y dar culazos/pisotones** directamente sobre botones físicos gigantes instalados en las plataformas de la cabina.
 - **Complejo Interior Vertical de 3 Plantas**:
   - **Planta 1 (Nivel 1 - Y = 0.0m)**: *Estación de Navegación del Conductor*. Marcha hacia adelante, atrás y giros sobre su eje. **Visibilidad deliberadamente reducida tipo Búnker Blindado** con tronera militar estrecha (`Slit_Visor_Glass`), muros gruesos y pantallas de navegación; el Conductor es guiado exclusivamente por la telemetría y órdenes del Capitán.
-  - **Planta 2 (Nivel 2 - Y = 4.5m)**: *Estación de Artillería y Arsenal*. **La mejor visibilidad de la cabina**: gran ventanal frontal panorámico de 20m al 96% de transmisión óptica y ventanales laterales despejados hacia los brazos/hombros, plataforma giroscópica de puntería analógica 2D (`AIM_PAD`), HUD Holográfico (`WindshieldHUDCrosshair`), disparador Gatling, pod lanzamisiles guiados y puesto del maquinista copiloto.
-  - **Planta 3 (Nivel 3 - Y = 9.0m)**: *Cabeza del Mecha / Cápsula de Mando del Capitán*. Estructura blindada de la cabeza del Mecha con pedestal central, interfaz neural holográfica cian y botón de invasión (`SPAWN`). **No requiere ventanales transparentes directos**: al entrar a la cabeza, la cámara **pasa AUTOMÁTICAMENTE a Tercera Persona Exterior** del Mecha Titán de 50m.
-- **Exclusividad y Automatismo de Cámara en 3ª Persona**: El Conductor (P1) y el Artillero (P2) operan con la cámara **estrictamente bloqueada en el interior de la cabina**, observando el exterior únicamente a través de las aspilleras o ventanales de su planta. Al subir por la escalera 2 a la Planta 3 (Cabeza del Mecha), la cámara **pasa AUTOMÁTICAMENTE a Tercera Persona Exterior del Titán de 50m** con zoom de hasta 160m y encuadre cinemático superior. Al descender de vuelta a Planta 2 o 1, la cámara **se repliega de forma automática e inmediata al interior**.
+  - **Planta 2 (Nivel 2 - Y = 4.5m)**: *Estación de Artillería y Arsenal*. **La mejor visibilidad de la cabina**: gran ventanal frontal panorámico de 20m al 96% de transmisión óptica y ventanales laterales despejados hacia los brazos/hombros, plataforma giroscópica de puntería analógica 2D (`AIM_PAD`), HUD Holográfico (`WindshieldHUDCrosshair`), disparador Gatling, pod lanzamisiles guiados y cubierta de tiro totalmente diáfana y despejada.
+  - **Planta 3 (Nivel 3 - Y = 9.0m)**: *Cabeza del Mecha / Cápsula de Mando del Capitán*. Estructura blindada de la cabeza del Mecha con pedestal central, interfaz neural holográfica cian y botón de invasión (`SPAWN`). **Visión interior dentro del puente**: mientras el pato camine por el suelo, escaleras o pulse el botón SPAWN, la cámara permanece en interior. Al posicionarse físicamente dentro del **CÍRCULO MARCADO** del pedestal (`Captain_Command_Pedestal`, $R = 2.2\text{m}$), la cámara **pasa AUTOMÁTICAMENTE a Tercera Persona Exterior** del Mecha Titán de 50m.
+- **Exclusividad y Automatismo de Cámara en 3ª Persona**: El Conductor (P1) y el Artillero (P2), así como el Capitán fuera de su pedestal, operan con la cámara **estrictamente bloqueada en el interior de la cabina**. Al entrar físicamente al círculo marcado de mando en Planta 3, la cámara **pasa AUTOMÁTICAMENTE a Tercera Persona Exterior del Titán de 50m** con zoom de hasta 160m y encuadre cinemático superior. Al salir del círculo marcado o descender hacia Planta 2 o 1, la cámara **se repliega de forma automática e inmediata al interior**.
 - **Entorno**: Megaterreno post-apocalíptico de 1200m x 1200m con pórtico gantry de 68m de altura libre, rascacielos derruidos de hasta 165m, desniveles rocosos, un cañón de ácido tóxico corrosivo de 440m y oleadas de robots enemigos hostiles (`EnemyBot`).
 
 ---
@@ -35,7 +35,7 @@
 
 ### Cabina del Mecha (Pato)
 - **`W`, `A`, `S`, `D` / Flechas**: Mover al pato por el suelo y escaleras de la cabina (movimiento relativo a la cámara con fricción y resistencia a la inclinación, velocidad calibrada a 14 m/s).
-- **`Espacio`**: Saltar entre plataformas, peldaños y botones físicos (`jumpForce = 15.5m/s`).
+- **`Espacio`**: Saltar entre plataformas, peldaños y botones físicos (`jumpForce = 10.5m/s` para un salto ágil y preciso que nunca traspasa techos).
 - **`E` / `Shift` / Clic Izquierdo (en el aire)**: **¡CULAZO! (Stomp)**. Pisotón en picado (`stompSpeed = 32m/s`) que activa botones especiales de impacto y armas.
 - **`Q` / Clic Derecho**: **¡CUAC!** Graznido cómico con efecto de sonido, aleteo y texto flotante.
 
@@ -62,7 +62,7 @@ PLANTA 2 (Y = 4.5m) - ESTACIÓN DE ARTILLERÍA Y ARSENAL [MÁXIMA VISIBILIDAD PA
    - [🎯 AIM PAD] (X: 0.0, Y: 4.54, Z: +3.5) -> Giróscopo de Puntería 2D centralizado frente al HUD
    - [🔫 GATLING] (X: -4.8, Y: 4.50, Z: +1.5) -> Ráfaga Gatling (Hold / Stomp) en ala babor
    - [🚀 MISSILES] (X: +4.8, Y: 4.50, Z: +1.5) -> Salva Micromisiles Guiados (Stomp) en ala estribor
-   - Puesto Copiloto Maquinista Artillero (X: 0.0, Y: 4.5, Z: -4.5)
+   - Cubierta de tiro amplia y despejada (sin mesas ni elementos decorativos obstructivos)
    ▲ Escalera 1 que desciende hacia Planta 1 en estribor (X: +7.2)
 ==================================================================================
 PLANTA 1 (Y = 0.0m) - ESTACIÓN DE CONDUCCIÓN Y NAVEGACIÓN [BÚNKER BLINDADO MILITAR]
@@ -110,6 +110,11 @@ PLANTA 1 (Y = 0.0m) - ESTACIÓN DE CONDUCCIÓN Y NAVEGACIÓN [BÚNKER BLINDADO M
 - [`DuckController.cs`](file:///Assets/Scripts/DuckController.cs):
   - Espacio local tridimensional de cabina expandido: `cockpitHalfX = 10.2m`, `cockpitHalfZ = 7.8m`, `cockpitMaxY = 16.0m`.
   - Detección continua de suelo y escalones mediante buffer prealocado `Physics.RaycastNonAlloc` con `stepSnapOffset = 0.85f`, permitiendo subir y bajar peldaños a 14 m/s con adherencia anti-deslizamiento.
+  - **Físicas Estrictas Anti-Salto entre Plantas**:
+    - Fuerza de salto calibrada a `jumpForce = 10.5m/s` (elevación ágil de ~1.5m para botones y pedestales, muy por debajo de la altura entre pisos de 4.5m).
+    - Techo físico dinámico (`GetCeilingCenterY`): Clamping de techo para Planta 1 (3.6m) y Planta 2 (8.1m) que frena en seco cualquier velocidad ascendente si la cabeza impacta la estructura.
+    - Detección de suelo por raycast con filtrado de planta: si el pato no se encuentra dentro de las cajas de escalera (`IsInStairwell1`, `IsInStairwell2`), se descarta cualquier superficie de plantas superiores.
+    - Fallback de planta conservador: conserva la planta actual del pato y previene cualquier teletransporte indeseado hacia arriba.
   - Detección de planta en tiempo real (`CurrentFloorLevel = 1, 2 ó 3` y `CurrentFloorName`).
   - **Aislamiento Vertical de Botones**: Validación tridimensional estricta en `CockpitFloorButton` (`|Y_pato - Y_boton| < 1.6f`) para evitar activaciones accidentales entre plantas superpuestas.
 
@@ -121,10 +126,10 @@ PLANTA 1 (Y = 0.0m) - ESTACIÓN DE CONDUCCIÓN Y NAVEGACIÓN [BÚNKER BLINDADO M
     - Modo espectador / dron (`C`) desactivado.
     - Sistema Push-In anti-recorte con bounding boxes volumétricas adaptadas a la altura de cada planta.
   - **Planta 3 (Puente del Capitán)**:
-    - Se desbloquea la visión en **Tercera Persona Exterior** del Mecha colosal de 50 metros.
-    - Zoom exterior con rueda de ratón hasta 160.0m.
-    - Cambio a Modo Dron libre (`C`) habilitado.
-    - **Replegado Automático**: Al descender por las escaleras hacia Planta 2 o Planta 1, la cámara se repliega de forma inmediata y automática al interior de la cabina (`targetDistance = maxInteriorDistance`).
+    - En el suelo, escaleras y consola: cámara bloqueada en **vista interior** para máxima maniobrabilidad.
+    - Al entrar en el **Círculo Marcado del Pedestal** (`Captain_Command_Pedestal`, $X=0, Z=+1.5, R=2.2\text{m}$): se desbloquea y activa la visión en **Tercera Persona Exterior** del Mecha colosal de 50 metros.
+    - Zoom exterior con rueda de ratón hasta 160.0m y modo dron (`C`) habilitados exclusivamente dentro del círculo.
+    - **Replegado Automático**: Al salir del círculo marcado o descender hacia Planta 2 o Planta 1, la cámara se repliega de forma inmediata y automática al interior de la cabina (`targetDistance = maxInteriorDistance`).
 
 ### D. Arsenal Orientable y Sistema de Puntería (Planta 2)
 - [`GunnerAimPad.cs`](file:///Assets/Scripts/GunnerAimPad.cs):

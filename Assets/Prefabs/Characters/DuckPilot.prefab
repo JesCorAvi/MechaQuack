@@ -594,7 +594,7 @@ MonoBehaviour:
   acceleration: 60
   friction: 0.88
   rotationSpeed: 16
-  jumpForce: 15.5
+  jumpForce: 10.5
   stompSpeed: 32
   gravity: 36
   stepSnapOffset: 0.85

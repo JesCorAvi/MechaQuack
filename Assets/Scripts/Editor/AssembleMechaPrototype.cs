@@ -496,6 +496,7 @@ public static class AssembleMechaPrototype
         ptm.alignment = TextAlignment.Center;
         ptm.fontStyle = FontStyle.Bold;
         ptm.color = Color.green;
+        TextShaderUtility.ApplyZTesting(ptm);
 
         // TRAMO DE ESCALERAS 1 (Planta 1 -> Planta 2): Ubicado en ala estribor, sube de Y=0m a Y=4.5m
         CreateIndustrialStaircase("Stairs_Level1_to_Level2", cockpit.transform, new Vector3(7.2f, 0f, -4.5f), new Vector3(7.2f, 4.5f, 3.5f), 2.6f, matDarkSteel, matHazard, matGunmetal);
@@ -544,6 +545,7 @@ public static class AssembleMechaPrototype
         gtm.alignment = TextAlignment.Center;
         gtm.fontStyle = FontStyle.Bold;
         gtm.color = new Color(1.0f, 0.45f, 0.1f);
+        TextShaderUtility.ApplyZTesting(gtm);
 
         // TRAMO DE ESCALERAS 2 (Planta 2 -> Planta 3): Ubicado en ala babor, sube de Y=4.5m a Y=9.0m
         CreateIndustrialStaircase("Stairs_Level2_to_Level3", cockpit.transform, new Vector3(-7.2f, 4.5f, 3.5f), new Vector3(-7.2f, 9.0f, -4.5f), 2.6f, matDarkSteel, matHazard, matGunmetal);
@@ -584,6 +586,7 @@ public static class AssembleMechaPrototype
 
         // PEDESTAL DE MANDO DEL CAPITÁN (En el centro de la Cabeza del Mecha)
         GameObject captainPedestal = CreateCylinder("Captain_Command_Pedestal", cockpit.transform, new Vector3(0f, 9.2f, 1.5f), new Vector3(4.4f, 0.4f, 4.4f), Quaternion.identity, matGunmetal, true);
+        captainPedestal.AddComponent<CaptainCommandPedestal>();
         CreateCylinder("Pedestal_Hazard_Ring", captainPedestal.transform, new Vector3(0f, 0.52f, 0f), new Vector3(1.02f, 0.2f, 1.02f), Quaternion.identity, matHazard);
         CreateCylinder("Captain_Holo_Disc", captainPedestal.transform, new Vector3(0f, 0.55f, 0f), new Vector3(0.7f, 0.05f, 0.7f), Quaternion.identity, matCyanOptics);
 
@@ -597,13 +600,14 @@ public static class AssembleMechaPrototype
         capLabelObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
         capLabelObj.transform.localScale = Vector3.one * 0.22f;
         TextMesh ctm = capLabelObj.AddComponent<TextMesh>();
-        ctm.text = "★ CABEZA DEL MECHA - PUENTE DE MANDO DEL CAPITÁN ★\n[VISTA EXTERIOR 3ª PERSONA AUTOMÁTICA]";
+        ctm.text = "★ CABEZA DEL MECHA - PUENTE DE MANDO DEL CAPITÁN ★\n[ENTRA AL CÍRCULO MARCADO PARA 3ª PERSONA EXTERIOR]";
         ctm.fontSize = 28;
         ctm.characterSize = 0.28f;
         ctm.anchor = TextAnchor.MiddleCenter;
         ctm.alignment = TextAlignment.Center;
         ctm.fontStyle = FontStyle.Bold;
         ctm.color = new Color(0.0f, 0.95f, 1.0f);
+        TextShaderUtility.ApplyZTesting(ctm);
 
         // Iluminación táctica suave en cada nivel
         void AddCockpitDownlight(string lName, Vector3 localPos, Color color, float range = 18f, float intensity = 2.0f)
@@ -761,58 +765,8 @@ public static class AssembleMechaPrototype
         }
         CreateBlock("Thumb", hand.transform, new Vector3(-1.7f, -0.6f, 0.8f), new Vector3(0.7f, 0.8f, 1.6f), Quaternion.Euler(0f, -35f, 20f), matGunmetal);
 
-        // 8. PUESTO DE MANDO DEL MAQUINISTA ARTILLERO (Ubicado en Planta 2 - Popa)
-        GameObject gunnerStationObj = new GameObject("Machinist_Gunner_Station");
-        gunnerStationObj.transform.parent = cockpit.transform;
-        gunnerStationObj.transform.localPosition = new Vector3(0f, 4.5f, -4.5f);
+        // 8. PUESTO DE ARTILLERÍA: La planta 2 queda diáfana y despejada frente a los ventanales panorámicos y el HUD.
 
-        CreateBlock("Station_Platform", gunnerStationObj.transform, new Vector3(0f, 0.3f, 0f), new Vector3(6.5f, 0.6f, 3.2f), Quaternion.identity, matWall);
-        CreateBlock("Platform_Safety_Rail", gunnerStationObj.transform, new Vector3(0f, 0.9f, 1.5f), new Vector3(6.4f, 0.6f, 0.16f), Quaternion.identity, matHazard);
-
-        GameObject consoleBase = CreateBlock("Machinist_Console", gunnerStationObj.transform, new Vector3(0f, 1.0f, 0.6f), new Vector3(3.6f, 0.8f, 1.2f), Quaternion.identity, matGunmetal);
-        GameObject screenObj = CreateBlock("Screen_Radar_Holo", consoleBase.transform, new Vector3(0f, 0.85f, 0.15f), new Vector3(2.6f, 1.2f, 0.16f), Quaternion.Euler(-18f, 0f, 0f), matBtnCyan);
-
-        GameObject screenLightObj = new GameObject("Screen_Tactical_Light");
-        screenLightObj.transform.parent = screenObj.transform;
-        screenLightObj.transform.localPosition = new Vector3(0f, 0f, 0.4f);
-        Light screenLight = screenLightObj.AddComponent<Light>();
-        screenLight.type = LightType.Point;
-        screenLight.range = 8f;
-        screenLight.intensity = 2.0f;
-        screenLight.color = Color.cyan;
-
-        GameObject seat = CreateBlock("Machinist_Bucket_Seat", gunnerStationObj.transform, new Vector3(0f, 0.8f, -0.3f), new Vector3(2.2f, 0.6f, 2.0f), Quaternion.identity, matMilGreenDark);
-        CreateBlock("Seat_Backrest", seat.transform, new Vector3(0f, 1.0f, -0.9f), new Vector3(2.2f, 1.8f, 0.4f), Quaternion.identity, matGunmetal);
-
-        GameObject joyL = CreateBlock("Joystick_Left", consoleBase.transform, new Vector3(-1.2f, 0.8f, -0.15f), new Vector3(0.25f, 0.9f, 0.25f), Quaternion.identity, matBtnAmber);
-        GameObject joyR = CreateBlock("Joystick_Right", consoleBase.transform, new Vector3(1.2f, 0.8f, -0.15f), new Vector3(0.25f, 0.9f, 0.25f), Quaternion.identity, matBtnAmber);
-
-        // MODELO DEL PATITO MAQUINISTA COPILOTO
-        GameObject gunnerDuck = new GameObject("Gunner_Duck_Machinist");
-        gunnerDuck.transform.parent = gunnerStationObj.transform;
-        gunnerDuck.transform.localPosition = new Vector3(0f, 1.15f, -0.2f);
-
-        GameObject gBody = CreateSphere("Gunner_Body", gunnerDuck.transform, new Vector3(0f, 0.5f, 0f), new Vector3(1.2f, 1.1f, 1.4f), Quaternion.identity, matDuckYellow);
-        GameObject gHead = CreateSphere("Gunner_Head", gunnerDuck.transform, new Vector3(0f, 1.3f, 0.3f), new Vector3(0.85f, 0.85f, 0.85f), Quaternion.identity, matDuckYellow);
-
-        GameObject cap = CreateCylinder("Machinist_Cap", gHead.transform, new Vector3(0f, 0.45f, -0.07f), new Vector3(0.95f, 0.2f, 0.95f), Quaternion.Euler(-12f, 0f, 0f), matDuckBlack);
-        CreateBlock("Cap_Visor", cap.transform, new Vector3(0f, -0.03f, 0.5f), new Vector3(0.98f, 0.11f, 0.55f), Quaternion.Euler(18f, 0f, 0f), matHazard);
-        CreateBlock("Tactical_Goggles", gHead.transform, new Vector3(0f, 0.08f, 0.45f), new Vector3(0.78f, 0.25f, 0.25f), Quaternion.identity, matCyanOptics);
-
-        CreateBlock("Gunner_Beak", gHead.transform, new Vector3(0f, -0.11f, 0.5f), new Vector3(0.36f, 0.17f, 0.39f), Quaternion.identity, matDuckOrange);
-        CreateSphere("Gunner_Wing_L", gBody.transform, new Vector3(-0.65f, 0.07f, 0.14f), new Vector3(0.2f, 0.5f, 0.7f), Quaternion.Euler(0f, 0f, 25f), matDuckYellow);
-        CreateSphere("Gunner_Wing_R", gBody.transform, new Vector3(0.65f, 0.07f, 0.14f), new Vector3(0.2f, 0.5f, 0.7f), Quaternion.Euler(0f, 0f, -25f), matDuckYellow);
-
-        MechaMachinistGunner gunnerComp = gunnerStationObj.AddComponent<MechaMachinistGunner>();
-        SerializedObject gunnerSO = new SerializedObject(gunnerComp);
-        gunnerSO.FindProperty("mecha").objectReferenceValue = mechaCtrl;
-        gunnerSO.FindProperty("gunnerBodyTransform").objectReferenceValue = gBody.transform;
-        gunnerSO.FindProperty("gunnerHeadTransform").objectReferenceValue = gHead.transform;
-        gunnerSO.FindProperty("joystickLeft").objectReferenceValue = joyL.transform;
-        gunnerSO.FindProperty("joystickRight").objectReferenceValue = joyR.transform;
-        gunnerSO.FindProperty("targetingScreenTransform").objectReferenceValue = screenObj.transform;
-        gunnerSO.FindProperty("tacticalScreenLight").objectReferenceValue = screenLight;
-        gunnerSO.ApplyModifiedProperties();
 
         // 9. BOTONES FÍSICOS DISTRIBUIDOS VERTICALMENTE EN LAS 3 PLANTAS
         void CreateFloorButton(string id, string label, Vector3 localPos, float radius, Material capMat, CockpitFloorButton.ButtonType bType, float detectionRadius = 1.6f)
@@ -839,6 +793,7 @@ public static class AssembleMechaPrototype
             tm.alignment = TextAlignment.Center;
             tm.fontStyle = FontStyle.Bold;
             tm.color = Color.white;
+            TextShaderUtility.ApplyZTesting(tm);
 
             CockpitFloorButton comp = bObj.AddComponent<CockpitFloorButton>();
             comp.buttonId = id;
@@ -909,6 +864,7 @@ public static class AssembleMechaPrototype
         duckSO.FindProperty("cockpitHalfZ").floatValue = 7.8f;
         duckSO.FindProperty("cockpitMaxY").floatValue = 16.0f;
         duckSO.FindProperty("moveSpeed").floatValue = 14.0f;
+        duckSO.FindProperty("jumpForce").floatValue = 10.5f;
         duckSO.ApplyModifiedProperties();
 
         // 11. CONECTAR REFERENCIAS EN MECHACONTROLLER

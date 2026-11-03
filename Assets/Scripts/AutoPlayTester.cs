@@ -571,6 +571,14 @@ public class AutoPlayTester : MonoBehaviour
             p2CamLocked = (!camCtrl.IsCaptainExteriorUnlocked && camCtrl.TargetDistance <= 6.25f);
 
             // 3. Planta 3 (Cabeza del Mecha - Cápsula del Capitán, Y = 9.0m)
+            // 3a. Planta 3 FUERA del círculo de mando (junto al botón SPAWN en Z = -3.0):
+            // La cámara debe permanecer ESTRICTAMENTE BLOQUEADA en el interior
+            duck.TeleportToLocal(new Vector3(0f, 9.2f, -3.0f));
+            yield return new WaitForSeconds(0.15f);
+            bool p3OutsideCircleOk = (duck.CurrentFloorLevel == 3 && !camCtrl.IsCaptainExteriorUnlocked && camCtrl.TargetDistance <= 6.25f);
+
+            // 3b. Planta 3 DENTRO del Círculo Marcado del Capitán (X: 0, Z: 1.5):
+            // Activación automática de la cámara exterior en 3ª persona
             duck.TeleportToLocal(new Vector3(0f, 9.5f, 1.5f));
             yield return new WaitForSeconds(0.15f);
             p3FloorOk = (duck.CurrentFloorLevel == 3);
@@ -578,7 +586,7 @@ public class AutoPlayTester : MonoBehaviour
 
             camCtrl.SetTargetZoom(65.0f);
             yield return new WaitForSeconds(0.05f);
-            p3CamUnlocked = (camCtrl.IsCaptainExteriorUnlocked && camCtrl.TargetDistance >= 50.0f && p3AutoTransitionOk);
+            p3CamUnlocked = (camCtrl.IsCaptainExteriorUnlocked && camCtrl.TargetDistance >= 50.0f && p3AutoTransitionOk && p3OutsideCircleOk);
 
             // 4. Regreso a Planta 1: La cámara debe replegarse automáticamente al interior
             duck.TeleportToLocal(new Vector3(0f, 0.5f, 0.65f));
@@ -588,11 +596,11 @@ public class AutoPlayTester : MonoBehaviour
             if (p1FloorOk && p1CamLocked && p1ButtonIsolationOk && p2FloorOk && p2CamLocked && p3FloorOk && p3CamUnlocked && returnP1Ok)
             {
                 passedTests++;
-                Debug.Log($"[TEST] OK: Complejo de 3 plantas y exclusividad de cámara del Capitán verificados con éxito (P1: {p1FloorOk}, P2: {p2FloorOk}, P3: {p3FloorOk}, 3ª persona exclusiva P3: {p3CamUnlocked}, Replegado interior: {returnP1Ok})");
+                Debug.Log($"[TEST] OK: Complejo de 3 plantas y exclusividad de cámara del Capitán verificados con éxito (P1: {p1FloorOk}, P2: {p2FloorOk}, P3 Fuera Círculo Bloqueado: {p3OutsideCircleOk}, P3 En Círculo 3ª Persona: {p3CamUnlocked}, Replegado interior: {returnP1Ok})");
             }
             else
             {
-                Debug.LogWarning($"[TEST] FAIL: Error en validación de plantas o cámara (P1: {p1FloorOk}, P1 CamLock: {p1CamLocked}, P1 Aislamiento Botón: {p1ButtonIsolationOk}, P2: {p2FloorOk}, P2 CamLock: {p2CamLocked}, P3: {p3FloorOk}, P3 3ª Persona: {p3CamUnlocked}, Replegado: {returnP1Ok})");
+                Debug.LogWarning($"[TEST] FAIL: Error en validación de plantas o cámara (P1: {p1FloorOk}, P1 CamLock: {p1CamLocked}, P1 Aislamiento Botón: {p1ButtonIsolationOk}, P2: {p2FloorOk}, P2 CamLock: {p2CamLocked}, P3 Fuera Círculo Bloqueado: {p3OutsideCircleOk}, P3: {p3FloorOk}, P3 3ª Persona: {p3CamUnlocked}, Replegado: {returnP1Ok})");
             }
         }
         else

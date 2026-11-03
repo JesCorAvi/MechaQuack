@@ -248,10 +248,11 @@ public class MechaHUD : MonoBehaviour
         if (floorIndicatorText != null && DuckController.Instance != null)
         {
             int floorLevel = DuckController.Instance.CurrentFloorLevel;
-            if (floorLevel != lastFloorLevel)
+            string floorName = DuckController.Instance.CurrentFloorName;
+            if (floorLevel != lastFloorLevel || floorIndicatorText.text != floorName)
             {
                 lastFloorLevel = floorLevel;
-                floorIndicatorText.text = DuckController.Instance.CurrentFloorName;
+                floorIndicatorText.text = floorName;
                 floorIndicatorText.RemoveFromClassList("floor-level-1");
                 floorIndicatorText.RemoveFromClassList("floor-level-2");
                 floorIndicatorText.RemoveFromClassList("floor-level-3");
@@ -435,12 +436,12 @@ public class MechaHUD : MonoBehaviour
     {
         if (CockpitCameraController.Instance != null)
         {
-            if (CockpitCameraController.Instance.CurrentFloor < 3)
+            if (!CockpitCameraController.Instance.IsCaptainExteriorUnlocked)
             {
                 var duck = DuckController.Instance;
                 if (duck != null)
                 {
-                    FloatingText.Spawn(duck.transform.position + Vector3.up * 1.5f, "⚠️ SUBE AL NIVEL 3 (CAPITÁN) PARA VISTA EXTERIOR", Color.yellow, 0.4f);
+                    FloatingText.Spawn(duck.transform.position + Vector3.up * 1.5f, "⚠️ ENTRA EN EL CÍRCULO DEL CAPITÁN PARA VISTA EXTERIOR", Color.yellow, 0.4f);
                 }
                 CockpitCameraController.Instance.SetTargetZoom(5.2f);
             }

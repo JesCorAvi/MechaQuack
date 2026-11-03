@@ -32,6 +32,7 @@ public class CockpitFloorButton : MonoBehaviour
     protected Color initialEmissive;
     protected float stompCooldownTimer = 0f;
     protected float hintCooldownTimer = 0f;
+    protected MeshRenderer labelMeshRenderer;
 
     private void Awake()
     {
@@ -48,6 +49,16 @@ public class CockpitFloorButton : MonoBehaviour
             {
                 capMaterial = mr.material;
             }
+        }
+    }
+
+    protected virtual void Start()
+    {
+        var tm = GetComponentInChildren<TextMesh>();
+        if (tm != null)
+        {
+            labelMeshRenderer = tm.GetComponent<MeshRenderer>();
+            TextShaderUtility.ApplyZTesting(tm);
         }
     }
 
@@ -83,6 +94,16 @@ public class CockpitFloorButton : MonoBehaviour
             {
                 capMaterial.SetColor("_EmissionColor", emissiveCol);
                 capMaterial.EnableKeyword("_EMISSION");
+            }
+        }
+
+        // Ocultar etiquetas de la cabina cuando la cámara exterior está alejada en 3ª persona
+        if (labelMeshRenderer != null && CockpitCameraController.Instance != null)
+        {
+            bool isExteriorFar = CockpitCameraController.Instance.IsCaptainExteriorUnlocked && CockpitCameraController.Instance.CurrentDistance > 14f;
+            if (labelMeshRenderer.enabled == isExteriorFar)
+            {
+                labelMeshRenderer.enabled = !isExteriorFar;
             }
         }
     }

@@ -24,9 +24,12 @@ public class GunnerAimPad : CockpitFloorButton
     private float servoAudioTimer = 0f;
     private Quaternion initialDiscLocalRot = Quaternion.identity;
     private readonly Vector3[] pistonInitialOffsets = new Vector3[4];
+    private MeshRenderer[] aimPadTextRenderers;
 
-    private void Start()
+    protected override void Start()
     {
+        base.Start();
+
         buttonId = "AIM_PAD";
         label = "🎯 GIROSCOPIO DE PUNTERÍA";
         type = ButtonType.Hold;
@@ -50,10 +53,32 @@ public class GunnerAimPad : CockpitFloorButton
                     pistonInitialOffsets[i] = hydraulicPistons[i].localPosition;
             }
         }
+
+        // Aplicar shader con prueba de profundidad ZTest a todos los rótulos
+        TextShaderUtility.ApplyZTestingToAllChildren(gameObject);
+        var tms = GetComponentsInChildren<TextMesh>(true);
+        aimPadTextRenderers = new MeshRenderer[tms.Length];
+        for (int i = 0; i < tms.Length; i++)
+        {
+            if (tms[i] != null) aimPadTextRenderers[i] = tms[i].GetComponent<MeshRenderer>();
+        }
     }
 
     private void LateUpdate()
     {
+        // Ocultar textos de puntería cuando la cámara exterior está alejada
+        if (aimPadTextRenderers != null && CockpitCameraController.Instance != null)
+        {
+            bool isExteriorFar = CockpitCameraController.Instance.IsCaptainExteriorUnlocked && CockpitCameraController.Instance.CurrentDistance > 14f;
+            for (int i = 0; i < aimPadTextRenderers.Length; i++)
+            {
+                if (aimPadTextRenderers[i] != null && aimPadTextRenderers[i].enabled == isExteriorFar)
+                {
+                    aimPadTextRenderers[i].enabled = !isExteriorFar;
+                }
+            }
+        }
+
         // Si el pato no está sobre la plataforma, amortiguar inclinación hacia la posición horizontal neutral
         if (!isPressed && padDiscTransform != null)
         {
